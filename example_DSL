@@ -1,0 +1,46 @@
+
+
+OUTPUT{
+  name:    "[A-Za-z0-9_-]+"      // name in the code, e.g. "BSP_LED1_On()"
+  pin:     P[A-Z][0-9]+          // physical MCU-Pin
+? init:    (high|low|none)       // initial value (none: don't set default value, maybe bootloader has
+                                                       already set default value and don't change that)
+? active:  (high|low)            // if on is logical high or low
+? pull:    (up|down|none)        // internal resistor (e.g. open drain)
+? drive:   (pushpull|opendrain)  // pushpull: high or low;  opendrain(low or floating)
+? speed:   (low|medium|high)     // speed output can change
+? enabled: (true|flase)          // if one wants to disable the output from being generated (e.g. debug)
+? comment: "[A-Za-z0-9_-][A-Za-z0-9_- ]*[A-Za-z0-9_-]" //to comment something, will show up in generated file (max lenght = ?)
+}
+
+INPUT{
+  name:    "[A-Za-z0-9_-]+"      // name in the code, e.g. "BSP_BTN1_Read()"
+  pin:     P[A-Z][0-9]+          // physical MCU-Pin
+  pull:    (up|down|none)        // internal resistor
+? init:    (high|low|none)       // initial value (none: don't set default value, maybe bootloader has
+      
+
+
+
+- UART?
+-PWM?
+
+
+Evtl für MCU layout (mal schauen ob sinnvoll)
+------------------------------------------------------------------------------------------------------------------------------------
+
+MCU {
+  name: "STM32F413ZH"
+  ports {
+    A: {0..5, 8, 10..15}
+    B: {0..15}
+    C: {13}
+  }
+
+  // Optional: wofür Pins genutzt werden dürfen (Mux/AF-Check)
+  af {
+    UART1.tx: [PA9,  PB6]
+    UART1.rx: [PA10, PB7]
+    SPI1.sck: [PA5,  PB3]
+  }
+}

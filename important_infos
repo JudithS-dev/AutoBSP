@@ -1,0 +1,5 @@
+pushpull: (pmos + nmos = either high or low) if only unidirectional information/signals => LED, SPI, UART etc. (Master-Slave)
+
+Open-drain: (only nmos = either low or floating) if bidirectional information/signals. 
+Needs (external?) pull-up resistor => no short circuit possible
+used in I2C
