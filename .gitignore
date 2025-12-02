@@ -1,0 +1,11 @@
+# --- Build artefacts ---
+*.o
+
+# --- Flex/Bison generated files ---
+generator/lexerInC.c
+
+# --- Compiled binary ---
+generator/AutoBSP
+
+# --- Old backup files ---
+generator/old_lexerDefinition.l
