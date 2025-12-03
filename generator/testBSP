@@ -21,6 +21,6 @@ AutoBSP{
     
     active:  low
     
-    enable:  true
+    enabel:  true
   }    
 }

@@ -1,8 +1,10 @@
 %{
  #include <stdio.h>
+
+ #include "lexer_helper.h"
 %}
 
-%option noyywrap nounput noinput
+%option noyywrap nounput noinput yylineno
 
   /* -------------------------------------------- */
   /*               Dynamic patterns               */
@@ -19,13 +21,16 @@ CONTROLLER_PATTERN    (STM32F446RE)
 
   /* GPIO specific */
 TYPE_PATTERN          (pushpull|opendrain)
+  /* TODO: none is not a valid option for pull and init, fix it */
 PULL_PATTERN          (up|down|none)
 SPEED_PATTERN         ({HIGH_LOW_PATTERN}|medium|very_high)
 INIT_PATTERN          (on|off|none)
 ACTIVE_PATTERN        ({HIGH_LOW_PATTERN})
 
-  /* Single chars */
-SINGLE_CHARS (\{|\}|:)
+  /* Special chars */
+SINGLE_CHARS    [\{\}:]
+WHITESPACE      [\ \n\t]+
+INVALID_TOKENS  [^ \n\t\{\}:]+
 
   /* -------------------------------------------- */
   /*                Fixed patterns                */
@@ -54,6 +59,7 @@ ENABLE          enable
   /*           Rules for fixed patterns           */
   /* -------------------------------------------- */
 
+  /* TODO: Replace pattern-names with patters e.g. instead of '{AUTO_BSP}' use '"AutoBSP"' directly */
 {AUTO_BSP}          { printf("AutoBSP");    }
 {CONTROLLER}        { printf("controller"); }
 {OUTPUT}            { printf("OUTPUT");     }
@@ -86,12 +92,20 @@ ENABLE          enable
 {INIT_PATTERN}        { printf("%s", yytext); }
 {ACTIVE_PATTERN}      { printf("%s", yytext); }
 
-  /* Single chars */
-{SINGLE_CHARS}     { printf("%s", yytext); }
-
-
-(\ |\n|\t)          { printf("%s", yytext); }  /* TODO: ignoring all whitespace */ 
-.                   { printf("\nERROR: unknown '%c'\n", yytext[0]); }
+  /* Special chars */
+{SINGLE_CHARS}        { printf("%s", yytext); }
+{WHITESPACE}          { printf("%s", yytext); }  /* TODO: ignoring all whitespace */ 
+{INVALID_TOKENS}      { const char* unknown_word = yytext; 
+                        const char* suggested_word = find_closest_keyword(unknown_word);
+                        if(suggested_word)
+                          fprintf(stderr, "ERROR: Unknown token '%s' at line %d\n       Did you mean  '%s'?\n", unknown_word, yylineno, suggested_word);
+                        else
+                          fprintf(stderr, "ERROR: Unknown token '%s' at line %d\n", unknown_word, yylineno);
+                        exit(1);
+                      }
+.                     { fprintf(stderr, "ERROR: This should not happen, because unknown characters are handled b< 'INVALID_TOKENS'. Found '%s' at line %d\n", yytext, yylineno); 
+                        exit(1);
+                      }
 
 %%
 
