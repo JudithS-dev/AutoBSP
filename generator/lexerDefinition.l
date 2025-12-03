@@ -4,7 +4,7 @@
  #include "lexer_helper.h"
 %}
 
-%option noyywrap nounput noinput yylineno
+%option yylineno noyywrap noinput nounput 
 
   /* -------------------------------------------- */
   /*               Dynamic patterns               */
@@ -60,14 +60,14 @@ INVALID_TOKENS  [^ \n\t\{\}:]+
 "STM32F446RE"       { printf("STM32F446RE");  }
 
   /* GPIO specific parameter values */
-"pushpull"          { printf("%s", yytext);   }
-"opendrain"         { printf("%s", yytext);   }
-"up"                { printf("%s", yytext);   }
-"down"              { printf("%s", yytext);   }
-"medium"            { printf("%s", yytext);   }
-"very_high"         { printf("%s", yytext);   }
-"on"                { printf("%s", yytext);   }
-"off"               { printf("%s", yytext);   }
+"pushpull"          { printf("pushpull");     }
+"opendrain"         { printf("opendrain");    }
+"up"                { printf("up");           }
+"down"              { printf("down");         }
+"medium"            { printf("medium");       }
+"very_high"         { printf("very_high");    }
+"on"                { printf("on");           }
+"off"               { printf("off");          }
 
 
   /* -------------------------------------------- */
