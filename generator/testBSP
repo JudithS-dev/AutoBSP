@@ -9,7 +9,7 @@ AutoBSP{
     speed:   medium
     
     init:    on
-    active:  low
+    active:  LOW
     
     enable:  true
   }
@@ -21,6 +21,6 @@ AutoBSP{
     
     active:  low
     
-    enabel:  true
+    enable:  true
   }    
 }

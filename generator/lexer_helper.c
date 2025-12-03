@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <string.h>
+#include <ctype.h>
 
 /**
  * @brief list of all keywords recognized by the lexer
@@ -57,7 +58,7 @@ int min_3_values(int a, int b, int c){
 }
 
 /**
- * @brief calulates the levenshtein distance between two strings (s1 and s2)
+ * @brief calulates the case insensitive levenshtein distance between two strings (s1 and s2)
  * 
  * @param s1 first string
  * @param s2 second string
@@ -68,7 +69,10 @@ int min_3_values(int a, int b, int c){
  * The levenshtein distance is a measure of the difference between two strings.
  * It is defined as the minimum number of single-character edits (insertions, deletions or substitutions)
  * required to change one string (s1) into the other (s2).
- * Is commutative, i.e., distance(s1, s2) == distance(s2, s1)
+ * It has the following properties:
+ * - Non-negative, i.e., distance(s1, s2) >= 0
+ * - Identity, i.e., distance(s1, s2) == 0 if and only if s1 == s2
+ * - Symmetric, i.e., distance(s1, s2) == distance(s2, s1)
  */
 unsigned int levenshtein_distance(const char *s1, const char *s2){
   unsigned int len1, len2;
@@ -83,7 +87,9 @@ unsigned int levenshtein_distance(const char *s1, const char *s2){
   for(i = 1; i <= len2; i++){
     for(j = 1; j <= len1; j++){
       // check if characters are the same
-      unsigned int cost = (s1[j - 1] == s2[i - 1]) ? 0 : 1;
+      char c1 = (char)tolower(s1[j - 1]);
+      char c2 = (char)tolower(s2[i - 1]);
+      unsigned int cost = (c1 == c2) ? 0 : 1;
       // calculate next matrix cell value
       matrix[i][j] = min_3_values(
         matrix[i - 1][j] + 1,
