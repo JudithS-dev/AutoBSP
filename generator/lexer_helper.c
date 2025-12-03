@@ -1,8 +1,10 @@
 #include "lexer_helper.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <limits.h>
 #include <string.h>
+#include <stdbool.h>
 #include <ctype.h>
 
 /**
@@ -102,30 +104,38 @@ unsigned int levenshtein_distance(const char *s1, const char *s2){
 }
 
 /**
- * @brief finds the closest matching keyword to the given string
+ * @brief prints the closest matching keyword(s) to the provided string
  * 
- * @param string input string
- * @return const char* closest matching keyword or NULL if no close match found
- * 
+ * @param string input string to compare against keywords
+ * @note only suggests keywords if the distance is below a certain threshold
  * @note uses the levenshtein distance to find the closest match
  */
-const char* find_closest_keyword(const char* string){
+void print_closest_keywords(const char* string){
+  unsigned int keyword_distances[lexer_keywords_count];
   unsigned int cur_best_distance = UINT_MAX;
-  const char* cur_keyword = NULL;
   
-  // iterate through all keywords to find the closest match
+  // iterate through all keywords and calculate their distance to the input string
   for(int i = 0; i < lexer_keywords_count; i++){
-    unsigned int distance = levenshtein_distance(string, lexer_keywords[i]);
-    if(distance < cur_best_distance){
-      cur_best_distance = distance;
-      cur_keyword = lexer_keywords[i];
+    keyword_distances[i] = levenshtein_distance(string, lexer_keywords[i]);
+    if(keyword_distances[i] < cur_best_distance){
+      cur_best_distance = keyword_distances[i];
     }
   }
   
-  // only return a keyword if the distance is small enough (max 3 edits)
-  if(cur_best_distance <= 3){
-    return cur_keyword;
-  } else {
-    return NULL;
+  // only suggest keywords if the distance is below a certain threshold
+  const unsigned int DISTANCE_THRESHOLD = 3;
+  if(cur_best_distance <= DISTANCE_THRESHOLD){
+    fprintf(stderr, "       Did you mean ");
+    bool first_word = true;
+    for(int i = 0; i < lexer_keywords_count; i++){
+      if(keyword_distances[i] == cur_best_distance){
+        if(!first_word){
+          fprintf(stderr, " or ");
+        }
+        fprintf(stderr, "'%s'", lexer_keywords[i]);
+        first_word = false;
+      }
+    }
+    fprintf(stderr, "?\n");
   }
 }

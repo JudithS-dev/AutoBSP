@@ -96,11 +96,8 @@ ENABLE          enable
 {SINGLE_CHARS}        { printf("%s", yytext); }
 {WHITESPACE}          { printf("%s", yytext); }  /* TODO: ignoring all whitespace */ 
 {INVALID_TOKENS}      { const char* unknown_word = yytext; 
-                        const char* suggested_word = find_closest_keyword(unknown_word);
-                        if(suggested_word)
-                          fprintf(stderr, "ERROR: Unknown token '%s' at line %d\n       Did you mean  '%s'?\n", unknown_word, yylineno, suggested_word);
-                        else
-                          fprintf(stderr, "ERROR: Unknown token '%s' at line %d\n", unknown_word, yylineno);
+                        fprintf(stderr, "ERROR: Unknown token '%s' at line %d\n", unknown_word, yylineno);
+                        print_closest_keywords(unknown_word);
                         exit(1);
                       }
 .                     { fprintf(stderr, "ERROR: This should not happen, because unknown characters are handled b< 'INVALID_TOKENS'. Found '%s' at line %d\n", yytext, yylineno); 
