@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include <ctype.h>
 
+// TODO: keep this list in sync with the keywords defined in the lexer (lexerDefinition.l)
 /**
  * @brief list of all keywords recognized by the lexer
  * @note used for finding closest matching keyword
@@ -104,27 +105,27 @@ unsigned int levenshtein_distance(const char *s1, const char *s2){
 }
 
 /**
- * @brief prints the closest matching keyword(s) to the provided string
+ * @brief prints the closest matching keyword(s) to the provided word
  * 
- * @param string input string to compare against keywords
- * @note only suggests keywords if the distance is below a certain threshold
+ * @param word input string to compare against keywords
+ * @note only suggests keywords if the distance is below a dynamic threshold (floor(strlen(word) / 2))
  * @note uses the levenshtein distance to find the closest match
  */
-void print_closest_keywords(const char* string){
+void print_closest_keywords(const char* word){
   unsigned int keyword_distances[lexer_keywords_count];
   unsigned int cur_best_distance = UINT_MAX;
   
-  // iterate through all keywords and calculate their distance to the input string
+  // iterate through all keywords and calculate their distance to the input word
   for(int i = 0; i < lexer_keywords_count; i++){
-    keyword_distances[i] = levenshtein_distance(string, lexer_keywords[i]);
+    keyword_distances[i] = levenshtein_distance(word, lexer_keywords[i]);
     if(keyword_distances[i] < cur_best_distance){
       cur_best_distance = keyword_distances[i];
     }
   }
   
-  // only suggest keywords if the distance is below a certain threshold
-  const unsigned int DISTANCE_THRESHOLD = 3;
-  if(cur_best_distance <= DISTANCE_THRESHOLD){
+  // only suggest keywords if the distance is below dynamic threshold (floor(strlen(word) / 2))
+  unsigned int distance_threshold = (strlen(word) / 2);
+  if(cur_best_distance <= distance_threshold){
     fprintf(stderr, "       Did you mean ");
     bool first_word = true;
     for(int i = 0; i < lexer_keywords_count; i++){
