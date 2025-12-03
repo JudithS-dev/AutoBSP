@@ -9,7 +9,7 @@ AutoBSP{
     speed:   medium
     
     init:    on
-    active:  zzz
+    active:  high
     
     enable:  true
   }

@@ -10,47 +10,14 @@
   /*               Dynamic patterns               */
   /* -------------------------------------------- */
 
-  /*  Multiple used */
+  /*  Multiple used patterns*/
 IDENTIFIER_PATTERN    \"[A-Za-z_][A-Za-z0-9_]*\"
 PIN_PATTERN           P[A-Z]((0-9)|1[0-5])
-ENABLE_PATTERN        (true|false)
-HIGH_LOW_PATTERN      (high|low)
-
-  /* supported microcontrollers */
-CONTROLLER_PATTERN    (STM32F446RE)
-
-  /* GPIO specific */
-TYPE_PATTERN          (pushpull|opendrain)
-  /* TODO: none is not a valid option for pull and init, fix it */
-PULL_PATTERN          (up|down|none)
-SPEED_PATTERN         ({HIGH_LOW_PATTERN}|medium|very_high)
-INIT_PATTERN          (on|off|none)
-ACTIVE_PATTERN        ({HIGH_LOW_PATTERN})
 
   /* Special chars */
 SINGLE_CHARS    [\{\}:]
 WHITESPACE      [\ \n\t]+
 INVALID_TOKENS  [^ \n\t\{\}:]+
-
-  /* -------------------------------------------- */
-  /*                Fixed patterns                */
-  /* -------------------------------------------- */
-
-AUTO_BSP        AutoBSP
-CONTROLLER      controller
-OUTPUT          OUTPUT
-INPUT           INPUT
-
-NAME            name
-PIN             pin
-TYPE            type
-PULL            pull
-SPEED           speed
-INIT            init
-ACTIVE          active
-ENABLE          enable
-
-
 
 %%
   /* Rules */
@@ -59,38 +26,57 @@ ENABLE          enable
   /*           Rules for fixed patterns           */
   /* -------------------------------------------- */
 
-  /* TODO: Replace pattern-names with patters e.g. instead of '{AUTO_BSP}' use '"AutoBSP"' directly */
-{AUTO_BSP}          { printf("AutoBSP");    }
-{CONTROLLER}        { printf("controller"); }
-{OUTPUT}            { printf("OUTPUT");     }
-{INPUT}             { printf("INPUT");      }
-{NAME}              { printf("name");       }
-{PIN}               { printf("pin");        }
-{TYPE}              { printf("type");       }
-{PULL}              { printf("pull");       }
-{SPEED}             { printf("speed");      }
-{INIT}              { printf("init");       }
-{ACTIVE}            { printf("active");     }
-{ENABLE}            { printf("enable");     }
+  /* -------------- File structure -------------- */
+"AutoBSP"           { printf("AutoBSP");      }
+"OUTPUT"            { printf("OUTPUT");       }
+"INPUT"             { printf("INPUT");        }
+
+  /* -------------- Parameter names -------------- */
+  /* Multiple used parameter names */
+"controller"        { printf("controller");   }
+"name"              { printf("name");         }
+"pin"               { printf("pin");          }
+
+  /* GPIO specific parameter names */
+"type"              { printf("type");         }
+"pull"              { printf("pull");         }
+"speed"             { printf("speed");        }
+"init"              { printf("init");         }
+"active"            { printf("active");       }
+"enable"            { printf("enable");       }
+
+  /* -------------- Parameter values ------------- */
+  /* Multiple used parameter values */
+  /* Used for 'enable' and '?lock?' */
+"true"              { printf("true");         }
+"false"             { printf("false");        }
+  /* Used for 'active' and 'speed' */
+"low"               { printf("low");          }
+"high"              { printf("high");         }
+  /* Used for 'pull' 'init' and '?trigger?' */
+"none"              { printf("none");         }
+
+  /* Supported microcontrollers */
+"STM32F446RE"       { printf("STM32F446RE");  }
+
+  /* GPIO specific parameter values */
+"pushpull"          { printf("%s", yytext);   }
+"opendrain"         { printf("%s", yytext);   }
+"up"                { printf("%s", yytext);   }
+"down"              { printf("%s", yytext);   }
+"medium"            { printf("%s", yytext);   }
+"very_high"         { printf("%s", yytext);   }
+"on"                { printf("%s", yytext);   }
+"off"               { printf("%s", yytext);   }
+
 
   /* -------------------------------------------- */
   /*           Rules for dynamic patterns         */
   /* -------------------------------------------- */
 
-  /* Multiple used */
+  /* Multiple used patterns */
 {IDENTIFIER_PATTERN}  { printf("%s", yytext); }
 {PIN_PATTERN}         { printf("%s", yytext); }
-{ENABLE_PATTERN}      { printf("%s", yytext); }
-
-  /* supported microcontrollers */
-{CONTROLLER_PATTERN}  { printf("%s", yytext); }
-
-  /* GPIO specific */
-{TYPE_PATTERN}        { printf("%s", yytext); }
-{PULL_PATTERN}        { printf("%s", yytext); }
-{SPEED_PATTERN}       { printf("%s", yytext); }
-{INIT_PATTERN}        { printf("%s", yytext); }
-{ACTIVE_PATTERN}      { printf("%s", yytext); }
 
   /* Special chars */
 {SINGLE_CHARS}        { printf("%s", yytext); }
