@@ -2,6 +2,7 @@
  #include <stdio.h>
 
  #include "lexer_helper.h"
+ #include "logging.h"
 %}
 
   /* activate line number tracking, stack usage (for context switches), and disable unused functions */
@@ -15,8 +16,8 @@
   /* -------------------------------------------- */
 
   /*  Multiple used patterns*/
-IDENTIFIER_PATTERN    \"[A-Za-z_][A-Za-z0-9_]*\"
-PIN_PATTERN           P[A-Z]((0-9)|1[0-5])
+NAME_PATTERN        \"[A-Za-z_][A-Za-z0-9_]*\"
+PIN_PATTERN         P[A-Z]((0-9)|1[0-5])
 
   /* Comment patterns */
 COM_LINE            \/\/
@@ -24,10 +25,10 @@ COM_BLOCK_START     \/\*
 COM_BLOCK_END       \*\/
 
   /* Special chars */
-SINGLE_CHARS    [\{\}:]
-WHITESPACE      [\ \n\t]+
-COMMENT_CHARS   [\/\*]
-INVALID_TOKENS  ([^ \n\t\{\}:\/\*]+|{COMMENT_CHARS})
+SINGLE_CHARS        [\{\}:]
+WHITESPACE          [\ \n\t]+
+COMMENT_CHARS       [\/\*]
+INVALID_TOKENS      ([^ \n\t\{\}:\/\*]+|{COMMENT_CHARS})
 
 %%
   /* Rules */
@@ -53,72 +54,102 @@ INVALID_TOKENS  ([^ \n\t\{\}:\/\*]+|{COMMENT_CHARS})
   /* -------------------------------------------- */
 
   /* -------------- File structure -------------- */
-"AutoBSP"           { printf("AutoBSP");      }
-"OUTPUT"            { printf("OUTPUT");       }
-"INPUT"             { printf("INPUT");        }
+"AutoBSP"           { log_info("\"AutoBSP\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
+"OUTPUT"            { log_info("\"OUTPUT\"",  LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
+"INPUT"             { log_info("\"INPUT\"",   LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
 
   /* -------------- Parameter names -------------- */
   /* Multiple used parameter names */
-"controller"        { printf("controller");   }
-"name"              { printf("name");         }
-"pin"               { printf("pin");          }
+"controller"        { log_info("\"controller\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
+"name"              { log_info("\"name\"",       LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
+"pin"               { log_info("\"pin\"",        LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
 
   /* GPIO specific parameter names */
-"type"              { printf("type");         }
-"pull"              { printf("pull");         }
-"speed"             { printf("speed");        }
-"init"              { printf("init");         }
-"active"            { printf("active");       }
-"enable"            { printf("enable");       }
-
+"type"              { log_info("\"type\"",   LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
+"pull"              { log_info("\"pull\"",   LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
+"speed"             { log_info("\"speed\"",  LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
+"init"              { log_info("\"init\"",   LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
+"active"            { log_info("\"active\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
+"enable"            { log_info("\"enable\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
   /* -------------- Parameter values ------------- */
   /* Multiple used parameter values */
   /* Used for 'enable' and '?lock?' */
-"true"              { printf("true");         }
-"false"             { printf("false");        }
+"true"              { log_info("\"true\"",  LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
+"false"             { log_info("\"false\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
   /* Used for 'active' and 'speed' */
-"low"               { printf("low");          }
-"high"              { printf("high");         }
+"low"               { log_info("\"low\"",  LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
+"high"              { log_info("\"high\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
   /* Used for 'pull' 'init' and '?trigger?' */
-"none"              { printf("none");         }
+"none"              { log_info("\"none\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
 
   /* Supported microcontrollers */
-"STM32F446RE"       { printf("STM32F446RE");  }
+"STM32F446RE"       { log_info("\"STM32F446RE\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
 
   /* GPIO specific parameter values */
-"pushpull"          { printf("pushpull");     }
-"opendrain"         { printf("opendrain");    }
-"up"                { printf("up");           }
-"down"              { printf("down");         }
-"medium"            { printf("medium");       }
-"very_high"         { printf("very_high");    }
-"on"                { printf("on");           }
-"off"               { printf("off");          }
-
+"pushpull"          { log_info("\"pushpull\"",  LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
+"opendrain"         { log_info("\"opendrain\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
+"up"                { log_info("\"up\"",        LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
+"down"              { log_info("\"down\"",      LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
+"medium"            { log_info("\"medium\"",    LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
+"very_high"         { log_info("\"very_high\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
+"on"                { log_info("\"on\"",        LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
+"off"               { log_info("\"off\"",       LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
 
   /* -------------------------------------------- */
   /*           Rules for dynamic patterns         */
   /* -------------------------------------------- */
 
   /* Multiple used patterns */
-{IDENTIFIER_PATTERN}  { printf("%s", yytext); }
-{PIN_PATTERN}         { printf("%s", yytext); }
-
+{NAME_PATTERN}        { log_info("{NAME_PATTERN}", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);       }
+{PIN_PATTERN}         { log_info("{PIN_PATTERN}",        LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
+  
   /* Special chars */
-{SINGLE_CHARS}        { printf("%s", yytext); }
-{WHITESPACE}          { printf("%s", yytext); }  /* TODO: ignoring all whitespace */ 
+{SINGLE_CHARS}        { log_info("{SINGLE_CHARS}", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
+
+  /* Whitespace */
+{WHITESPACE}          { /* ignore all whitespace */ }   
 {INVALID_TOKENS}      { const char* unknown_word = yytext; 
-                        fprintf(stderr, "ERROR: Unknown token '%s' at line %d\n", unknown_word, yylineno);
+                        // TODO fix this: only one Error should be printed and the suggestion is also printed in log file
+                        fprintf(stderr, "ERROR: Unknown token '%s' found at line %d\n", unknown_word, yylineno);
                         print_closest_keywords(unknown_word);
-                        exit(1);
+                        log_error("Lexer", 0, "Unknown token '%s' found at line %d", unknown_word, yylineno);
                       }
-.                     { fprintf(stderr, "ERROR: This should not happen, because unknown characters are handled by 'INVALID_TOKENS'. Found '%s' at line %d\n", yytext, yylineno); 
-                        exit(1);
-                      }
+.                     { log_error(".", yylineno, "This should not happen, because unknown characters are handled by 'INVALID_TOKENS'. Found '%s' at line %d", yytext, yylineno); }
 
 %%
 
-int main() {
+int main(int argc, char *argv[]){
+  if(argc < 2 || argc > 3){
+    fprintf(stderr, "\nERROR 'main': Incorrect number of arguments.\n              Usage: %s <codefile_name> [<logfile_name>]\n", argv[0]);
+    return 1;
+  }
+  
+  // Get the program file path
+  char *code_file = argv[1];
+  FILE *input = fopen(code_file, "r");
+  if(!input){
+    fprintf(stderr, "\nERROR 'main': Error opening code file '%s'\n", code_file);
+    return 1;
+  }
+  yyin = input;
+  
+  // Determine log file path
+  char *log_file;
+  if(argc == 3) // Use provided log path
+    log_file = argv[2];
+  else // Default to "AutoBSP.log" in the current directory
+    log_file = "AutoBSP.log";
+  
+  init_logging(log_file);
+  
+  // Start lexing
+  log_info("START", LOG_OTHER, 0, "Start lexing the DSL code in '%s'", code_file);
   yylex();
+  log_info("END", LOG_OTHER, 0, "Finished lexing the DSL code");
+  
+  // Clean up
+  close_logging();
+  fclose(input);
+  
   return 0;
 }
