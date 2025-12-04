@@ -1,5 +1,8 @@
 AutoBSP{
   controller: STM32F446RE
+  //name This is a test line comment
+  /*pin This is a /* multi-layered // test comment
+      block*/ pushpull*/
   
   OUTPUT{
     name:    "LED_1"

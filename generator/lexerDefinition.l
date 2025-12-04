@@ -4,7 +4,11 @@
  #include "lexer_helper.h"
 %}
 
-%option yylineno noyywrap noinput nounput 
+  /* activate line number tracking, stack usage (for context switches), and disable unused functions */
+%option yylineno stack noyywrap noinput nounput noyy_top_state
+
+%x COMMENT_LINE 
+%x COMMENT_BLOCK
 
   /* -------------------------------------------- */
   /*               Dynamic patterns               */
@@ -14,13 +18,35 @@
 IDENTIFIER_PATTERN    \"[A-Za-z_][A-Za-z0-9_]*\"
 PIN_PATTERN           P[A-Z]((0-9)|1[0-5])
 
+  /* Comment patterns */
+COM_LINE            \/\/
+COM_BLOCK_START     \/\*
+COM_BLOCK_END       \*\/
+
   /* Special chars */
 SINGLE_CHARS    [\{\}:]
 WHITESPACE      [\ \n\t]+
-INVALID_TOKENS  [^ \n\t\{\}:]+
+COMMENT_CHARS   [\/\*]
+INVALID_TOKENS  ([^ \n\t\{\}:\/\*]+|{COMMENT_CHARS})
 
 %%
   /* Rules */
+  /* -------------------------------------------- */
+  /*          Rules for context switching         */
+  /* -------------------------------------------- */
+
+  /* Line comments */
+{COM_LINE}                  { BEGIN(COMMENT_LINE);     }
+<COMMENT_LINE>\n            { BEGIN(INITIAL);          }
+<COMMENT_LINE>.             { /* ignore everything  */ }
+
+  /* Block comments */
+<INITIAL,COMMENT_BLOCK>{COM_BLOCK_START}    { yy_push_state(YYSTATE);
+                                              BEGIN(COMMENT_BLOCK);   }
+<COMMENT_BLOCK>{COM_BLOCK_END}              { yy_pop_state();         }
+<COMMENT_BLOCK>(.|\n)                       { /* ignore everything */ }
+
+
 
   /* -------------------------------------------- */
   /*           Rules for fixed patterns           */
@@ -86,7 +112,7 @@ INVALID_TOKENS  [^ \n\t\{\}:]+
                         print_closest_keywords(unknown_word);
                         exit(1);
                       }
-.                     { fprintf(stderr, "ERROR: This should not happen, because unknown characters are handled b< 'INVALID_TOKENS'. Found '%s' at line %d\n", yytext, yylineno); 
+.                     { fprintf(stderr, "ERROR: This should not happen, because unknown characters are handled by 'INVALID_TOKENS'. Found '%s' at line %d\n", yytext, yylineno); 
                         exit(1);
                       }
 
