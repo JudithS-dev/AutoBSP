@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <ctype.h>
+#include "logging.h"
 
 // TODO: keep this list in sync with the keywords defined in the lexer (lexerDefinition.l)
 /**
@@ -105,9 +106,10 @@ unsigned int levenshtein_distance(const char *s1, const char *s2){
 }
 
 /**
- * @brief prints the closest matching keyword(s) to the provided word
+ * @brief prints the closest matching keyword(s) to the provided word to stderr and logs
  * 
  * @param word input string to compare against keywords
+ * 
  * @note only suggests keywords if the distance is below a dynamic threshold (floor(strlen(word) / 2))
  * @note uses the levenshtein distance to find the closest match
  */
@@ -126,17 +128,92 @@ void print_closest_keywords(const char* word){
   // only suggest keywords if the distance is below dynamic threshold (floor(strlen(word) / 2))
   unsigned int distance_threshold = (strlen(word) / 2);
   if(cur_best_distance <= distance_threshold){
-    fprintf(stderr, "       Did you mean ");
+    // build suggestion into buffer safely before printing
+    char suggest_buf[512];
+    size_t buf_pos = 0;
+    size_t remaining_buf = sizeof(suggest_buf) - buf_pos;
+    int written; // is not actually the written number of chars, but the number that snprintf would have written if enough space was available
+    
+    
+    if(remaining_buf > 0){
+      written = snprintf(suggest_buf + buf_pos, remaining_buf, "                Did you mean ");
+      
+      // check for snprintf errors
+      if(written < 0)
+        log_error("print_closest_keywords", 0, "Error while using snprintf to build suggestion string.");
+      
+      // update buffer position
+      if((size_t)written >= remaining_buf){
+        // buffer is full, ensure '\0' termination and stop building
+        buf_pos = sizeof(suggest_buf) - 1;
+        suggest_buf[buf_pos] = '\0';
+      } else {
+        buf_pos += (size_t)written;
+      }
+    }
+    
     bool first_word = true;
+    
     for(int i = 0; i < lexer_keywords_count; i++){
       if(keyword_distances[i] == cur_best_distance){
+        
+        // append " or " if not the first word
         if(!first_word){
-          fprintf(stderr, " or ");
+          remaining_buf = sizeof(suggest_buf) - buf_pos;
+          if(remaining_buf > 0){
+            written = snprintf(suggest_buf + buf_pos, remaining_buf, " or ");
+            if(written < 0)
+              log_error("print_closest_keywords", 0, "Error while using snprintf to build suggestion string.");
+            
+            if((size_t)written >= remaining_buf){
+              // buffer is full, ensure '\0' termination and stop building
+              buf_pos = sizeof(suggest_buf) - 1;
+              suggest_buf[buf_pos] = '\0';
+            }
+            else 
+              buf_pos += (size_t)written;
+          }
         }
-        fprintf(stderr, "'%s'", lexer_keywords[i]);
+        
+        // append keyword surrounded by single quotes
+        remaining_buf = sizeof(suggest_buf) - buf_pos;
+        if(remaining_buf > 0){
+          written = snprintf(suggest_buf + buf_pos, remaining_buf, "'%s'", lexer_keywords[i]);
+          if(written < 0)
+            log_error("print_closest_keywords", 0, "Error while using snprintf to build suggestion string.");
+          
+          if((size_t)written >= remaining_buf){
+            // buffer is full, ensure '\0' termination and stop building
+            buf_pos = sizeof(suggest_buf) - 1;
+            suggest_buf[buf_pos] = '\0';
+          }
+          else 
+            buf_pos += (size_t)written;
+        }
+        
         first_word = false;
       }
     }
-    fprintf(stderr, "?\n");
+    
+    // append question mark at the end
+    remaining_buf = sizeof(suggest_buf) - buf_pos;
+    if(remaining_buf > 0){
+      written = snprintf(suggest_buf + buf_pos, remaining_buf, "?");
+      if(written < 0)
+        log_error("print_closest_keywords", 0, "Error while using snprintf to build suggestion string.");
+      
+      if((size_t)written >= remaining_buf){
+        // buffer is full, ensure '\0' termination and stop building
+        buf_pos = sizeof(suggest_buf) - 1;
+        suggest_buf[buf_pos] = '\0';
+      }
+      else 
+        buf_pos += (size_t)written;
+    }
+    
+    // print suggestion to stderr
+    fprintf(stderr, "%s\n", suggest_buf);
+    // write suggestion to log file
+    log_write("%s", suggest_buf);
   }
 }

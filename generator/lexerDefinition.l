@@ -109,10 +109,10 @@ INVALID_TOKENS      ([^ \n\t\{\}:\/\*]+|{COMMENT_CHARS})
   /* Whitespace */
 {WHITESPACE}          { /* ignore all whitespace */ }   
 {INVALID_TOKENS}      { const char* unknown_word = yytext; 
-                        // TODO fix this: only one Error should be printed and the suggestion is also printed in log file
-                        fprintf(stderr, "ERROR: Unknown token '%s' found at line %d\n", unknown_word, yylineno);
+                        log_error_no_exit("Lexer", 0, " Unknown token '%s' found at line %d", unknown_word, yylineno);
                         print_closest_keywords(unknown_word);
-                        log_error("Lexer", 0, "Unknown token '%s' found at line %d", unknown_word, yylineno);
+                        close_logging();
+                        exit(1);
                       }
 .                     { log_error(".", yylineno, "This should not happen, because unknown characters are handled by 'INVALID_TOKENS'. Found '%s' at line %d", yytext, yylineno); }
 

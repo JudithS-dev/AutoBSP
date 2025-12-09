@@ -13,6 +13,10 @@ void init_logging(const char *file_path);
 void close_logging();
 
 void log_error(const char *function_name, int line_nr, const char *message, ...);
+void log_error_no_exit(const char *function_name, int line_nr, const char *message, ...);
+
 void log_info(const char *function_name, int log_category, int line_nr, const char *message, ...);
+
+void log_write(const char *message, ...);
 
 #endif //__LOGGING_H__
