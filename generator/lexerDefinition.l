@@ -3,6 +3,8 @@
 
  #include "lexer_helper.h"
  #include "logging.h"
+
+ #include "parserInC.h"
 %}
 
   /* activate line number tracking, stack usage (for context switches), and disable unused functions */
@@ -54,57 +56,115 @@ INVALID_TOKENS      ([^ \n\t\{\}:\/\*]+|{COMMENT_CHARS})
   /* -------------------------------------------- */
 
   /* -------------- File structure -------------- */
-"AutoBSP"           { log_info("\"AutoBSP\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
-"OUTPUT"            { log_info("\"OUTPUT\"",  LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
-"INPUT"             { log_info("\"INPUT\"",   LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
+"AutoBSP"           { log_info("\"AutoBSP\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return kw_autobsp;
+                    }
+"OUTPUT"            { log_info("\"OUTPUT\"",  LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return kw_output;
+                    }
+"INPUT"             { log_info("\"INPUT\"",   LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return kw_input;
+                    }
 
   /* -------------- Parameter names -------------- */
   /* Multiple used parameter names */
-"controller"        { log_info("\"controller\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
-"name"              { log_info("\"name\"",       LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
-"pin"               { log_info("\"pin\"",        LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
+"controller"        { log_info("\"controller\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return kw_controller;
+                    }
+"name"              { log_info("\"name\"",       LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return kw_name;
+                    }
+"pin"               { log_info("\"pin\"",        LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return kw_pin;
+                    }
 
   /* GPIO specific parameter names */
-"type"              { log_info("\"type\"",   LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
-"pull"              { log_info("\"pull\"",   LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
-"speed"             { log_info("\"speed\"",  LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
-"init"              { log_info("\"init\"",   LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
-"active"            { log_info("\"active\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
-"enable"            { log_info("\"enable\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
+"type"              { log_info("\"type\"",   LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return kw_gpio_type;
+                    }
+"pull"              { log_info("\"pull\"",   LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return kw_gpio_pull;
+                    }
+"speed"             { log_info("\"speed\"",  LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return kw_gpio_speed;
+                    }
+"init"              { log_info("\"init\"",   LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return kw_gpio_init;
+                    }
+"active"            { log_info("\"active\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return kw_gpio_active;
+                    }
+"enable"            { log_info("\"enable\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return kw_gpio_enable;
+                    }
   /* -------------- Parameter values ------------- */
   /* Multiple used parameter values */
   /* Used for 'enable' and '?lock?' */
-"true"              { log_info("\"true\"",  LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
-"false"             { log_info("\"false\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
+"true"              { log_info("\"true\"",  LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return val_gpio_bool;
+                    }
+"false"             { log_info("\"false\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return val_gpio_bool;
+                    }
   /* Used for 'active' and 'speed' */
-"low"               { log_info("\"low\"",  LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
-"high"              { log_info("\"high\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
+"low"               { log_info("\"low\"",  LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return val_gpio_level;
+                    }
+"high"              { log_info("\"high\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return val_gpio_level;
+                    }
   /* Used for 'pull' 'init' and '?trigger?' */
-"none"              { log_info("\"none\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
+"none"              { log_info("\"none\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return val_gpio_none;
+                    }
 
   /* Supported microcontrollers */
-"STM32F446RE"       { log_info("\"STM32F446RE\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
+"STM32F446RE"       { log_info("\"STM32F446RE\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return val_mcu;
+                    }
 
   /* GPIO specific parameter values */
-"pushpull"          { log_info("\"pushpull\"",  LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
-"opendrain"         { log_info("\"opendrain\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
-"up"                { log_info("\"up\"",        LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
-"down"              { log_info("\"down\"",      LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
-"medium"            { log_info("\"medium\"",    LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
-"very_high"         { log_info("\"very_high\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
-"on"                { log_info("\"on\"",        LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
-"off"               { log_info("\"off\"",       LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
+"pushpull"          { log_info("\"pushpull\"",  LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return val_gpio_type;
+                    }
+"opendrain"         { log_info("\"opendrain\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return val_gpio_type;
+                    }
+"up"                { log_info("\"up\"",        LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return val_gpio_pull;
+                    }
+"down"              { log_info("\"down\"",      LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return val_gpio_pull;
+                    }
+"medium"            { log_info("\"medium\"",    LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return val_gpio_speed;
+                    }
+"very_high"         { log_info("\"very_high\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return val_gpio_speed;
+                    }
+"on"                { log_info("\"on\"",        LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return val_gpio_init;
+                    }
+"off"               { log_info("\"off\"",       LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return val_gpio_init;
+                    }
 
   /* -------------------------------------------- */
   /*           Rules for dynamic patterns         */
   /* -------------------------------------------- */
 
   /* Multiple used patterns */
-{NAME_PATTERN}        { log_info("{NAME_PATTERN}", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);       }
-{PIN_PATTERN}         { log_info("{PIN_PATTERN}",        LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
+{NAME_PATTERN}        { log_info("{NAME_PATTERN}", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                        return val_name;
+                      }
+{PIN_PATTERN}         { log_info("{PIN_PATTERN}",        LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                        return val_pin;
+                      }
   
   /* Special chars */
-{SINGLE_CHARS}        { log_info("{SINGLE_CHARS}", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); }
+{SINGLE_CHARS}        { log_info("{SINGLE_CHARS}", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); 
+                        return yytext[0];
+                      }
 
   /* Whitespace */
 {WHITESPACE}          { /* ignore all whitespace */ }   

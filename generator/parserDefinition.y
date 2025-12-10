@@ -15,6 +15,34 @@
 
 %start START
 
+  /* Token Definitions  */
+  /* -------------------------------------------- */
+  /*           Tokens for fixed patterns          */
+  /* -------------------------------------------- */
+  
+  /* -------------- File structure -------------- */
+%token kw_autobsp kw_output kw_input
+
+  /* -------------- Parameter names -------------- */
+  /* Multiple used parameter names */
+%token kw_controller kw_name kw_pin
+  /* GPIO specific parameter names */
+%token kw_gpio_type kw_gpio_pull kw_gpio_speed kw_gpio_init kw_gpio_active kw_gpio_enable
+
+  /* -------------- Parameter values ------------- */
+  /* Multiple used parameter values */
+%token val_gpio_bool val_gpio_level val_gpio_none
+  /* Supported microcontrollers */
+%token val_mcu
+  /* GPIO specific parameter values */
+%token val_gpio_type val_gpio_pull val_gpio_speed val_gpio_init 
+
+  /* -------------------------------------------- */
+  /*           Rules for dynamic patterns         */
+  /* -------------------------------------------- */
+  /* Multiple used patterns */
+%token val_name val_pin
+
 %%
 
 START: /* empty */
