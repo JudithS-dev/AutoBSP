@@ -3,6 +3,8 @@
 
 # --- Flex/Bison generated files ---
 generator/lexerInC.c
+generator/parserInC.c
+generator/parserInC.h
 
 # --- Compiled binary ---
 generator/AutoBSP
@@ -12,3 +14,4 @@ generator/AutoBSP
 
 # --- Old backup files ---
 generator/old_lexerDefinition.l
+generator/old_parserDefinition.y

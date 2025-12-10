@@ -117,39 +117,3 @@ INVALID_TOKENS      ([^ \n\t\{\}:\/\*]+|{COMMENT_CHARS})
 .                     { log_error(".", yylineno, "This should not happen, because unknown characters are handled by 'INVALID_TOKENS'. Found '%s' at line %d", yytext, yylineno); }
 
 %%
-
-int main(int argc, char *argv[]){
-  if(argc < 2 || argc > 3){
-    fprintf(stderr, "\nERROR 'main': Incorrect number of arguments.\n              Usage: %s <codefile_name> [<logfile_name>]\n", argv[0]);
-    return 1;
-  }
-  
-  // Get the program file path
-  char *code_file = argv[1];
-  FILE *input = fopen(code_file, "r");
-  if(!input){
-    fprintf(stderr, "\nERROR 'main': Error opening code file '%s'\n", code_file);
-    return 1;
-  }
-  yyin = input;
-  
-  // Determine log file path
-  char *log_file;
-  if(argc == 3) // Use provided log path
-    log_file = argv[2];
-  else // Default to "AutoBSP.log" in the current directory
-    log_file = "AutoBSP.log";
-  
-  init_logging(log_file);
-  
-  // Start lexing
-  log_info("START", LOG_OTHER, 0, "Start lexing the DSL code in '%s'", code_file);
-  yylex();
-  log_info("END", LOG_OTHER, 0, "Finished lexing the DSL code");
-  
-  // Clean up
-  close_logging();
-  fclose(input);
-  
-  return 0;
-}
