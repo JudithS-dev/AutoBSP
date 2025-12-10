@@ -6,11 +6,12 @@
   int yylex();
   extern FILE *yyin;
   extern int yylineno;
-
-  void yyerror(const char *msg){
-  printf("Error in line %d: %s\n", yylineno, msg);
-}
+  
+  int yydebug = 0;
+  void yyerror(const char *msg);
 %}
+
+%define parse.error verbose
 
 %start START
 
@@ -19,6 +20,10 @@
 START: /* empty */
 
 %%
+
+void yyerror(const char *msg){
+  printf("Error in line %d: %s\n", yylineno, msg);
+}
 
 int main(int argc, char *argv[]){
   if(argc < 2 || argc > 3){
