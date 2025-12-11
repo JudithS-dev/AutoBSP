@@ -1,7 +1,7 @@
 %{
  #include <stdio.h>
 
- #include "lexer_helper.h"
+ #include "lexerErrorHelper.h"
  #include "logging.h"
 
  #include "parserInC.h"

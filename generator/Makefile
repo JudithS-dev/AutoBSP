@@ -5,14 +5,14 @@ LEX = flex
 YACC = bison
 
 TARGET = AutoBSP
-OBJS = parserInC.o lexerInC.o lexer_helper.o logging.o
+OBJS = parserInC.o lexerInC.o lexerErrorHelper.o logging.o
 
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-lexerInC.o: lexerInC.c lexer_helper.h logging.h
+lexerInC.o: lexerInC.c lexerErrorHelper.h logging.h
 
-lexer_helper.o: lexer_helper.c lexer_helper.h
+lexerErrorHelper.o: lexerErrorHelper.c lexerErrorHelper.h
 
 logging.o: logging.c logging.h
 
