@@ -26,35 +26,40 @@ LENGTH=${#PROGRAMS[@]}
 
 # Check if program list is empty
 if (( LENGTH == 0 )); then
-    echo "Error: No programs available to execute."
-    exit 1
+  echo "Error: No programs available to execute."
+  exit 1
 fi
 
 # If only one program, execute it directly
 if (( LENGTH == 1 )); then
-    PROGRAM="${PROGRAMS[0]}"
+  PROGRAM="${PROGRAMS[0]}"
 else
-    # Multiple programs: ask user
-    echo "Which program would you like to execute?"
-    for i in "${!PROGRAMS[@]}"; do  # "PROGRAM[@]": access all elements of array; '!' returns indices instead of values of array
-        echo "($((i + 1))) ${PROGRAMS[$i]}"
-    done
-
-    echo -n "Enter the number corresponding to your choice: " #-n no newline
-    read -r CHOICE #-r treats everything as normal character: "\n" => "\n" and not newline
-
-    # Validate user input: only numbers between 1 and length
-    if ! [[ "$CHOICE" =~ ^[0-9]+$ ]] || (( CHOICE < 1 || CHOICE > LENGTH )); then
-        echo "Error: Invalid choice."
-        exit 1
-    fi
-
-    PROGRAM="${PROGRAMS[$((CHOICE - 1))]}"
+  # Multiple programs: ask user
+  echo "Which program would you like to execute?"
+  for i in "${!PROGRAMS[@]}"; do  # "PROGRAM[@]": access all elements of array; '!' returns indices instead of values of array
+    echo "($((i + 1))) ${PROGRAMS[$i]}"
+  done
+  
+  echo -n "Enter the number corresponding to your choice: " #-n no newline
+  read -r CHOICE #-r treats everything as normal character: "\n" => "\n" and not newline
+  
+  # Validate user input: only numbers between 1 and length
+  if ! [[ "$CHOICE" =~ ^[0-9]+$ ]] || (( CHOICE < 1 || CHOICE > LENGTH )); then
+    echo "Error: Invalid choice."
+    exit 1
+  fi
+  
+  PROGRAM="${PROGRAMS[$((CHOICE - 1))]}"
 fi
 
+# Check if the selected program file exists
+if ! [ -f "./demo_files/$PROGRAM" ]; then
+  echo "Error: Program file './demo_files/$PROGRAM' not found."
+  exit 1
+fi
 # Execute the selected program
 PROGRAM="${PROGRAM}"
-COMMAND="./generator/AutoBSP ./demo_files/$PROGRAM.absp"
+COMMAND="./generator/AutoBSP ./demo_files/$PROGRAM"
 echo -e -n "Executing: $COMMAND\n>" #-e allows \n to be interpreted as newline and not as '\' 'n'
 $COMMAND
 EXIT_STATUS=$?  # Capture the exit status

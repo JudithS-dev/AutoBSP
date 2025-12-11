@@ -30,10 +30,10 @@ COM_BLOCK_START     \/\*
 COM_BLOCK_END       \*\/
 
   /* Special chars */
-SINGLE_CHARS        [\{\}:]
+SINGLE_CHARS        [\{\}:;]
 WHITESPACE          [\ \n\t]+
 COMMENT_CHARS       [\/\*]
-INVALID_TOKENS      ([^ \n\t\{\}:\/\*]+|{COMMENT_CHARS})
+INVALID_TOKENS      ([^ \n\t\{\}:\/\*;]+|{COMMENT_CHARS})
 
 %%
   /* Rules */

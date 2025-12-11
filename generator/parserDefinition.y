@@ -127,8 +127,8 @@ MODULE_DEFS:  MODULE_DEFS MODULE_DEF
 MODULE_DEF: kw_input '{' INPUT_PARAMS '}'
           | kw_output '{' OUTPUT_PARAMS '}'
 
-INPUT_PARAMS: INPUT_PARAMS INPUT_PARAM
-            | INPUT_PARAM
+INPUT_PARAMS: INPUT_PARAMS INPUT_PARAM END
+            | INPUT_PARAM END
 
 INPUT_PARAM:  NAME_PARAM
             | PIN_PARAM
@@ -136,8 +136,8 @@ INPUT_PARAM:  NAME_PARAM
             | GPIO_ACTIVE_PARAM
             | GPIO_ENABLE_PARAM
 
-OUTPUT_PARAMS:  OUTPUT_PARAMS OUTPUT_PARAM
-              | OUTPUT_PARAM
+OUTPUT_PARAMS:  OUTPUT_PARAMS OUTPUT_PARAM END
+              | OUTPUT_PARAM END
 
 OUTPUT_PARAM: NAME_PARAM
             | PIN_PARAM
@@ -148,24 +148,24 @@ OUTPUT_PARAM: NAME_PARAM
             | GPIO_ACTIVE_PARAM
             | GPIO_ENABLE_PARAM
 
-NAME_PARAM: kw_name ':' val_name END  //TODO: free val_name after use
+NAME_PARAM: kw_name ':' val_name  //TODO: free val_name after use
 
-PIN_PARAM: kw_pin ':' val_pin END
+PIN_PARAM: kw_pin ':' val_pin
 
-GPIO_TYPE_PARAM: kw_gpio_type ':' val_gpio_type END
+GPIO_TYPE_PARAM: kw_gpio_type ':' val_gpio_type
 
-GPIO_PULL_PARAM:  kw_gpio_pull ':' val_gpio_pull END
-                | kw_gpio_pull ':' val_none END
+GPIO_PULL_PARAM:  kw_gpio_pull ':' val_gpio_pull
+                | kw_gpio_pull ':' val_none
 
-GPIO_SPEED_PARAM: kw_gpio_speed ':' val_gpio_speed END
-                | kw_gpio_speed ':' val_level END
+GPIO_SPEED_PARAM: kw_gpio_speed ':' val_gpio_speed
+                | kw_gpio_speed ':' val_level
 
-GPIO_INIT_PARAM:  kw_gpio_init ':' val_gpio_init END
-                | kw_gpio_init ':' val_none END
+GPIO_INIT_PARAM:  kw_gpio_init ':' val_gpio_init
+                | kw_gpio_init ':' val_none
 
-GPIO_ACTIVE_PARAM: kw_gpio_active ':' val_level END
+GPIO_ACTIVE_PARAM: kw_gpio_active ':' val_level
 
-GPIO_ENABLE_PARAM: kw_gpio_enable ':' val_bool END
+GPIO_ENABLE_PARAM: kw_gpio_enable ':' val_bool
 
 
 END: ';'

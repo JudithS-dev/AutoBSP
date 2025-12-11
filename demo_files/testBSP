@@ -6,15 +6,15 @@ AutoBSP{
   
   OUTPUT{
     name:    "LED_1"
-    pin:     PA12
+    pin:     PA12;  // Parameter assignments can be ended with a optional semicolon
     type:    pushpull
-    pull:    none
+    pull:    none;
     speed:   medium
     
     init:    on
     active:  high
     
-    enable:  true
+    enable:  true;
   }
   
   INPUT{
