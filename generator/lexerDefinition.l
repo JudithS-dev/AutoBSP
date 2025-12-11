@@ -120,7 +120,7 @@ INVALID_TOKENS      ([^ \n\t\{\}:\/\*]+|{COMMENT_CHARS})
 
   /* Supported microcontrollers */
 "STM32F446RE"       { log_info("\"STM32F446RE\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
-                      return val_mcu;
+                      return val_controller;
                     }
 
   /* GPIO specific parameter values */

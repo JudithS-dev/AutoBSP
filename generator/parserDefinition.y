@@ -33,7 +33,7 @@
   /* Multiple used parameter values */
 %token val_gpio_bool val_gpio_level val_gpio_none
   /* Supported microcontrollers */
-%token val_mcu
+%token val_controller
   /* GPIO specific parameter values */
 %token val_gpio_type val_gpio_pull val_gpio_speed val_gpio_init 
 
@@ -45,7 +45,62 @@
 
 %%
 
-START: /* empty */
+START:  kw_autobsp '{' FILE_CONTENTS '}'
+      | /* empty */
+
+FILE_CONTENTS: GLOBAL_PARAM MODULE_DEFS
+
+GLOBAL_PARAM: kw_controller ':' val_controller END
+
+MODULE_DEFS:  MODULE_DEFS MODULE_DEF
+            | MODULE_DEF
+
+MODULE_DEF: kw_input '{' INPUT_PARAMS '}'
+          | kw_output '{' OUTPUT_PARAMS '}'
+
+INPUT_PARAMS: INPUT_PARAMS INPUT_PARAM
+            | INPUT_PARAM
+
+INPUT_PARAM:  NAME_PARAM
+            | PIN_PARAM
+            | GPIO_PULL_PARAM
+            | GPIO_ACTIVE_PARAM
+            | GPIO_ENABLE_PARAM
+
+OUTPUT_PARAMS:  OUTPUT_PARAMS OUTPUT_PARAM
+              | OUTPUT_PARAM
+
+OUTPUT_PARAM: NAME_PARAM
+            | PIN_PARAM
+            | GPIO_TYPE_PARAM
+            | GPIO_PULL_PARAM
+            | GPIO_SPEED_PARAM
+            | GPIO_INIT_PARAM
+            | GPIO_ACTIVE_PARAM
+            | GPIO_ENABLE_PARAM
+
+NAME_PARAM: kw_name ':' val_name END
+
+PIN_PARAM: kw_pin ':' val_pin END
+
+GPIO_TYPE_PARAM: kw_gpio_type ':' val_gpio_type END
+
+GPIO_PULL_PARAM:  kw_gpio_pull ':' val_gpio_pull END
+                | kw_gpio_pull ':' val_gpio_none END
+
+GPIO_SPEED_PARAM: kw_gpio_speed ':' val_gpio_speed END
+                | kw_gpio_speed ':' val_gpio_level END
+
+GPIO_INIT_PARAM:  kw_gpio_init ':' val_gpio_init END
+                | kw_gpio_init ':' val_gpio_none END
+
+GPIO_ACTIVE_PARAM: kw_gpio_active ':' val_gpio_level END
+
+GPIO_ENABLE_PARAM: kw_gpio_enable ':' val_gpio_bool END
+
+
+END: ';'
+    | /* empty */
 
 %%
 
