@@ -1,6 +1,7 @@
 %{
  #include <stdio.h>
 
+ #include "lexerHelper.h"
  #include "lexerErrorHelper.h"
  #include "logging.h"
 
@@ -19,7 +20,9 @@
 
   /*  Multiple used patterns*/
 NAME_PATTERN        \"[A-Za-z_][A-Za-z0-9_]*\"
-PIN_PATTERN         P[A-Z]((0-9)|1[0-5])
+STM_PIN_PATTERN     P[A-Z]((0-9)|1[0-5])
+ESP_PIN_PATTERN     GPIO([0-9]|[1-9][0-9])
+PIN_PATTERN         ({STM_PIN_PATTERN}|{ESP_PIN_PATTERN})
 
   /* Comment patterns */
 COM_LINE            \/\/
@@ -39,14 +42,21 @@ INVALID_TOKENS      ([^ \n\t\{\}:\/\*]+|{COMMENT_CHARS})
   /* -------------------------------------------- */
 
   /* Line comments */
-{COM_LINE}                  { BEGIN(COMMENT_LINE);     }
-<COMMENT_LINE>\n            { BEGIN(INITIAL);          }
+{COM_LINE}                  { log_info("{COM_LINE}", LOG_LEXER_CONDITION, yylineno, "Entering line comment");
+                              BEGIN(COMMENT_LINE);
+                            }
+<COMMENT_LINE>\n            { log_info("\\n", LOG_LEXER_CONDITION, yylineno, "Exiting line comment");
+                              BEGIN(INITIAL);
+                            }
 <COMMENT_LINE>.             { /* ignore everything  */ }
 
   /* Block comments */
-<INITIAL,COMMENT_BLOCK>{COM_BLOCK_START}    { yy_push_state(YYSTATE);
+<INITIAL,COMMENT_BLOCK>{COM_BLOCK_START}    { log_info("{COM_BLOCK_START}", LOG_LEXER_CONDITION, yylineno, "Entering block comment");
+                                              yy_push_state(YYSTATE);
                                               BEGIN(COMMENT_BLOCK);   }
-<COMMENT_BLOCK>{COM_BLOCK_END}              { yy_pop_state();         }
+<COMMENT_BLOCK>{COM_BLOCK_END}              { log_info("{COM_BLOCK_END}", LOG_LEXER_CONDITION, yylineno, "Exiting block comment");
+                                              yy_pop_state();
+                                            }
 <COMMENT_BLOCK>(.|\n)                       { /* ignore everything */ }
 
 
@@ -169,10 +179,19 @@ INVALID_TOKENS      ([^ \n\t\{\}:\/\*]+|{COMMENT_CHARS})
   /* Multiple used patterns */
 {NAME_PATTERN}        { log_info("{NAME_PATTERN}", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
                         yylval.u_str = strdup(yytext);
+                        if(yylval.u_str == NULL)
+                          log_error("{NAME_PATTERN}", yylineno, "Memory allocation failed for name string");
                         return val_name;
                       }
 {PIN_PATTERN}         { log_info("{PIN_PATTERN}",        LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
-                        //TODO: extract port and number from yytext
+                        yylval.u_pin.port = get_port(yytext);
+                        if(yylval.u_pin.port == '\0')
+                          log_info("{PIN_PATTERN}", LOG_LEXER_CONVERSION, yylineno, "Did not find port in pin text '%s'", yytext);
+                        else
+                          log_info("{PIN_PATTERN}", LOG_LEXER_CONVERSION, yylineno, "Found port '%c' in pin text '%s'", yylval.u_pin.port, yytext);
+                        
+                        yylval.u_pin.pin_number = get_pin_number(yytext);
+                        log_info("{PIN_PATTERN}", LOG_LEXER_CONVERSION, yylineno, "Found pin number '%u' in pin text '%s'", yylval.u_pin.pin_number, yytext);
                         return val_pin;
                       }
   

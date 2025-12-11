@@ -4,10 +4,10 @@
 // Logging categories
 #define LOG_LEXER_CONDITION  1  // shows if lexer starts or leaves a comment
 #define LOG_LEXER_TOKEN      2  // shows the token the lexer has found
-#define LOG_OTHER            4  // shows all other information
+#define LOG_LEXER_CONVERSION 4  // shows the conversion of a pin text to a pin or port
+#define LOG_OTHER            8  // shows all other information
 
-// Active logging categories (bitwise OR of the above)
-#define ACTIVE_LOGS (LOG_LEXER_CONDITION | LOG_LEXER_TOKEN | LOG_OTHER)
+// Active logs are specified in the logging.c file
 
 void init_logging(const char *file_path);
 void close_logging();

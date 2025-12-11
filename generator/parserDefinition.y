@@ -20,7 +20,7 @@
   /* General used data types */
   typedef struct{
     char port;
-    unsigned int pin;
+    unsigned int pin_number;
   } pin_t;
   
   typedef enum{

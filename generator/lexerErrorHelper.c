@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <ctype.h>
+
 #include "logging.h"
 
 // TODO: keep this list in sync with the keywords defined in the lexer (lexerDefinition.l)
