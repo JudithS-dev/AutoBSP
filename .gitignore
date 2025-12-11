@@ -15,3 +15,6 @@ generator/AutoBSP
 # --- Old backup files ---
 generator/old_lexerDefinition.l
 generator/old_parserDefinition.y
+
+# --- Some unimportant txt files ---
+some_txt_files/normal_leakreport
