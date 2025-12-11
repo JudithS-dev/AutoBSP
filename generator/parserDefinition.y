@@ -13,37 +13,106 @@
 
 %define parse.error verbose
 
+  /* -------------------------------------------- */
+  /*               Type definitions               */
+  /* -------------------------------------------- */
+%code requires{
+  /* General used data types */
+  typedef struct{
+    char port;
+    unsigned int pin;
+  } pin_t;
+  
+  typedef enum{
+    BOOL_FALSE = 0,
+    BOOL_TRUE  = 1
+  } bool_t;
+  
+  /* Multiple used parameter values */
+  typedef enum{
+    LOW,
+    HIGH
+  } level_t;
+  
+  /* Supported microcontrollers */
+  typedef enum{
+    STM32F446RE
+  } controller_t;
+  
+  /* GPIO specific parameter values */
+  typedef enum{
+    GPIO_TYPE_PUSHPULL,
+    GPIO_TYPE_OPENDRAIN
+  } gpio_type_t;
+  
+  typedef enum{
+    GPIO_PULL_UP,
+    GPIO_PULL_DOWN
+  } gpio_pull_t;
+  
+  typedef enum{
+    GPIO_SPEED_MEDIUM,
+    GPIO_SPEED_VERY_HIGH
+  } gpio_speed_t;
+  
+  typedef enum{
+    GPIO_INIT_ON,
+    GPIO_INIT_OFF
+  } gpio_init_t;
+}
+
+  /* -------------------------------------------- */
+  /*       Definition of Datatypes (yylval)       */
+  /* -------------------------------------------- */
+%union{
+  char*          u_str;         // For val_name
+  pin_t          u_pin;         // For val_pin
+  bool_t         u_bool;        // For val_bool
+  level_t        u_level;       // For val_level
+  controller_t   u_controller;  // For val_controller
+  gpio_type_t    u_gpio_type;   // For val_gpio_type
+  gpio_pull_t    u_gpio_pull;   // For val_gpio_pull
+  gpio_speed_t   u_gpio_speed;  // For val_gpio_speed
+  gpio_init_t    u_gpio_init;   // For val_gpio_init
+}
+
 %start START
 
-  /* Token Definitions  */
   /* -------------------------------------------- */
-  /*           Tokens for fixed patterns          */
+  /*               Token Definitions              */
   /* -------------------------------------------- */
   
   /* -------------- File structure -------------- */
 %token kw_autobsp kw_output kw_input
-
-  /* -------------- Parameter names -------------- */
+  
+  /* -------------- Parameter names ------------- */
   /* Multiple used parameter names */
 %token kw_controller kw_name kw_pin
   /* GPIO specific parameter names */
 %token kw_gpio_type kw_gpio_pull kw_gpio_speed kw_gpio_init kw_gpio_active kw_gpio_enable
-
-  /* -------------- Parameter values ------------- */
+  
+  /* ------------- Parameter values ------------- */
   /* Multiple used parameter values */
-%token val_gpio_bool val_gpio_level val_gpio_none
+%token<u_bool>  val_bool
+%token<u_level> val_level
+%token val_none
   /* Supported microcontrollers */
-%token val_controller
+%token<u_controller> val_controller
   /* GPIO specific parameter values */
-%token val_gpio_type val_gpio_pull val_gpio_speed val_gpio_init 
-
-  /* -------------------------------------------- */
-  /*           Rules for dynamic patterns         */
-  /* -------------------------------------------- */
-  /* Multiple used patterns */
-%token val_name val_pin
+%token<u_gpio_type>  val_gpio_type 
+%token<u_gpio_pull>  val_gpio_pull 
+%token<u_gpio_speed> val_gpio_speed
+%token<u_gpio_init>  val_gpio_init 
+  
+  /* -------- Rules for dynamic patterns -------- */
+%token<u_str> val_name 
+%token<u_pin> val_pin
 
 %%
+
+  /* -------------------------------------------- */
+  /*                Grammar rules                 */
+  /* -------------------------------------------- */
 
 START:  kw_autobsp '{' FILE_CONTENTS '}'
       | /* empty */
@@ -79,30 +148,34 @@ OUTPUT_PARAM: NAME_PARAM
             | GPIO_ACTIVE_PARAM
             | GPIO_ENABLE_PARAM
 
-NAME_PARAM: kw_name ':' val_name END
+NAME_PARAM: kw_name ':' val_name END  //TODO: free val_name after use
 
 PIN_PARAM: kw_pin ':' val_pin END
 
 GPIO_TYPE_PARAM: kw_gpio_type ':' val_gpio_type END
 
 GPIO_PULL_PARAM:  kw_gpio_pull ':' val_gpio_pull END
-                | kw_gpio_pull ':' val_gpio_none END
+                | kw_gpio_pull ':' val_none END
 
 GPIO_SPEED_PARAM: kw_gpio_speed ':' val_gpio_speed END
-                | kw_gpio_speed ':' val_gpio_level END
+                | kw_gpio_speed ':' val_level END
 
 GPIO_INIT_PARAM:  kw_gpio_init ':' val_gpio_init END
-                | kw_gpio_init ':' val_gpio_none END
+                | kw_gpio_init ':' val_none END
 
-GPIO_ACTIVE_PARAM: kw_gpio_active ':' val_gpio_level END
+GPIO_ACTIVE_PARAM: kw_gpio_active ':' val_level END
 
-GPIO_ENABLE_PARAM: kw_gpio_enable ':' val_gpio_bool END
+GPIO_ENABLE_PARAM: kw_gpio_enable ':' val_bool END
 
 
 END: ';'
     | /* empty */
 
 %%
+
+  /* -------------------------------------------- */
+  /*                  C functions                 */
+  /* -------------------------------------------- */
 
 void yyerror(const char *msg){
   printf("Error in line %d: %s\n", yylineno, msg);

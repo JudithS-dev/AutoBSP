@@ -101,51 +101,64 @@ INVALID_TOKENS      ([^ \n\t\{\}:\/\*]+|{COMMENT_CHARS})
   /* Multiple used parameter values */
   /* Used for 'enable' and '?lock?' */
 "true"              { log_info("\"true\"",  LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
-                      return val_gpio_bool;
+                      yylval.u_bool = BOOL_TRUE;
+                      return val_bool;
                     }
 "false"             { log_info("\"false\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
-                      return val_gpio_bool;
+                      yylval.u_bool = BOOL_FALSE;
+                      return val_bool;
                     }
   /* Used for 'active' and 'speed' */
 "low"               { log_info("\"low\"",  LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
-                      return val_gpio_level;
+                      yylval.u_level = LOW;
+                      return val_level;
                     }
 "high"              { log_info("\"high\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
-                      return val_gpio_level;
+                      yylval.u_level = HIGH;
+                      return val_level;
                     }
   /* Used for 'pull' 'init' and '?trigger?' */
 "none"              { log_info("\"none\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
-                      return val_gpio_none;
+                      return val_none;
                     }
 
   /* Supported microcontrollers */
 "STM32F446RE"       { log_info("\"STM32F446RE\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      yylval.u_controller = STM32F446RE;
                       return val_controller;
                     }
 
   /* GPIO specific parameter values */
 "pushpull"          { log_info("\"pushpull\"",  LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      yylval.u_gpio_type = GPIO_TYPE_PUSHPULL;
                       return val_gpio_type;
                     }
 "opendrain"         { log_info("\"opendrain\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      yylval.u_gpio_type = GPIO_TYPE_OPENDRAIN;
                       return val_gpio_type;
                     }
 "up"                { log_info("\"up\"",        LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      yylval.u_gpio_pull = GPIO_PULL_UP;
                       return val_gpio_pull;
                     }
 "down"              { log_info("\"down\"",      LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      yylval.u_gpio_pull = GPIO_PULL_DOWN;
                       return val_gpio_pull;
                     }
 "medium"            { log_info("\"medium\"",    LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      yylval.u_gpio_speed = GPIO_SPEED_MEDIUM;
                       return val_gpio_speed;
                     }
 "very_high"         { log_info("\"very_high\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      yylval.u_gpio_speed = GPIO_SPEED_VERY_HIGH;
                       return val_gpio_speed;
                     }
 "on"                { log_info("\"on\"",        LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      yylval.u_gpio_init = GPIO_INIT_ON;
                       return val_gpio_init;
                     }
 "off"               { log_info("\"off\"",       LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      yylval.u_gpio_init = GPIO_INIT_OFF;
                       return val_gpio_init;
                     }
 
@@ -155,9 +168,11 @@ INVALID_TOKENS      ([^ \n\t\{\}:\/\*]+|{COMMENT_CHARS})
 
   /* Multiple used patterns */
 {NAME_PATTERN}        { log_info("{NAME_PATTERN}", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                        yylval.u_str = strdup(yytext);
                         return val_name;
                       }
 {PIN_PATTERN}         { log_info("{PIN_PATTERN}",        LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                        //TODO: extract port and number from yytext
                         return val_pin;
                       }
   
