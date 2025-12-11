@@ -2,6 +2,7 @@
   #include <stdio.h>
   
   #include "logging.h"
+  #include "moduleEnums.h"
   
   int yylex();
   extern FILE *yyin;
@@ -17,63 +18,35 @@
   /*               Type definitions               */
   /* -------------------------------------------- */
 %code requires{
-  /* General used data types */
-  typedef struct{
-    char port;
-    unsigned int pin_number;
-  } pin_t;
+  typedef enum{
+    GPIO_HELPER_PULL_UP,
+    GPIO_HELPER_PULL_DOWN
+  } gpio_pull_helper_t;
   
   typedef enum{
-    BOOL_FALSE = 0,
-    BOOL_TRUE  = 1
-  } bool_t;
-  
-  /* Multiple used parameter values */
-  typedef enum{
-    LOW,
-    HIGH
-  } level_t;
-  
-  /* Supported microcontrollers */
-  typedef enum{
-    STM32F446RE
-  } controller_t;
-  
-  /* GPIO specific parameter values */
-  typedef enum{
-    GPIO_TYPE_PUSHPULL,
-    GPIO_TYPE_OPENDRAIN
-  } gpio_type_t;
+    GPIO_HELPER_SPEED_MEDIUM,
+    GPIO_HELPER_SPEED_VERY_HIGH
+  } gpio_speed_helper_t;
   
   typedef enum{
-    GPIO_PULL_UP,
-    GPIO_PULL_DOWN
-  } gpio_pull_t;
-  
-  typedef enum{
-    GPIO_SPEED_MEDIUM,
-    GPIO_SPEED_VERY_HIGH
-  } gpio_speed_t;
-  
-  typedef enum{
-    GPIO_INIT_ON,
-    GPIO_INIT_OFF
-  } gpio_init_t;
+    GPIO_HELPER_INIT_ON,
+    GPIO_HELPER_INIT_OFF
+  } gpio_init_helper_t;
 }
 
   /* -------------------------------------------- */
   /*       Definition of Datatypes (yylval)       */
   /* -------------------------------------------- */
 %union{
-  char*          u_str;         // For val_name
-  pin_t          u_pin;         // For val_pin
-  bool_t         u_bool;        // For val_bool
-  level_t        u_level;       // For val_level
-  controller_t   u_controller;  // For val_controller
-  gpio_type_t    u_gpio_type;   // For val_gpio_type
-  gpio_pull_t    u_gpio_pull;   // For val_gpio_pull
-  gpio_speed_t   u_gpio_speed;  // For val_gpio_speed
-  gpio_init_t    u_gpio_init;   // For val_gpio_init
+  controller_t          u_controller;  // For val_controller
+  char*                 u_str;         // For val_name
+  pin_t                 u_pin;         // For val_pin
+  bool_t                u_bool;        // For val_bool
+  level_t               u_level;       // For val_level
+  gpio_type_t           u_gpio_type;   // For val_gpio_type
+  gpio_pull_helper_t    u_gpio_pull;   // For val_gpio_pull
+  gpio_speed_helper_t   u_gpio_speed;  // For val_gpio_speed
+  gpio_init_helper_t    u_gpio_init;   // For val_gpio_init
 }
 
 %start START

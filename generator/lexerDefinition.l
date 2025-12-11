@@ -1,11 +1,12 @@
 %{
  #include <stdio.h>
-
+ 
+ #include "moduleEnums.h"
+ #include "parserInC.h"
+ 
  #include "lexerHelper.h"
  #include "lexerErrorHelper.h"
  #include "logging.h"
-
- #include "parserInC.h"
 %}
 
   /* activate line number tracking, stack usage (for context switches), and disable unused functions */
@@ -148,27 +149,27 @@ INVALID_TOKENS      ([^ \n\t\{\}:\/\*;]+|{COMMENT_CHARS})
                       return val_gpio_type;
                     }
 "up"                { log_info("\"up\"",        LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
-                      yylval.u_gpio_pull = GPIO_PULL_UP;
+                      yylval.u_gpio_pull = GPIO_HELPER_PULL_UP;
                       return val_gpio_pull;
                     }
 "down"              { log_info("\"down\"",      LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
-                      yylval.u_gpio_pull = GPIO_PULL_DOWN;
+                      yylval.u_gpio_pull = GPIO_HELPER_PULL_DOWN;
                       return val_gpio_pull;
                     }
 "medium"            { log_info("\"medium\"",    LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
-                      yylval.u_gpio_speed = GPIO_SPEED_MEDIUM;
+                      yylval.u_gpio_speed = GPIO_HELPER_SPEED_MEDIUM;
                       return val_gpio_speed;
                     }
 "very_high"         { log_info("\"very_high\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
-                      yylval.u_gpio_speed = GPIO_SPEED_VERY_HIGH;
+                      yylval.u_gpio_speed = GPIO_HELPER_SPEED_VERY_HIGH;
                       return val_gpio_speed;
                     }
 "on"                { log_info("\"on\"",        LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
-                      yylval.u_gpio_init = GPIO_INIT_ON;
+                      yylval.u_gpio_init = GPIO_HELPER_INIT_ON;
                       return val_gpio_init;
                     }
 "off"               { log_info("\"off\"",       LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
-                      yylval.u_gpio_init = GPIO_INIT_OFF;
+                      yylval.u_gpio_init = GPIO_HELPER_INIT_OFF;
                       return val_gpio_init;
                     }
 

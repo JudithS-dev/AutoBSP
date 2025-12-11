@@ -10,15 +10,15 @@ OBJS = parserInC.o lexerInC.o lexerHelper.o lexerErrorHelper.o logging.o
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-lexerInC.o: lexerInC.c lexerHelper.h lexerErrorHelper.h logging.h
+logging.o: logging.c logging.h
+
+lexerInC.o: lexerInC.c lexerHelper.h lexerErrorHelper.h moduleEnums.h logging.h
 
 lexerHelper.o: lexerHelper.c lexerHelper.h logging.h
 
 lexerErrorHelper.o: lexerErrorHelper.c lexerErrorHelper.h logging.h
 
-logging.o: logging.c logging.h
-
-parserInC.o: parserInC.c parserInC.h logging.h
+parserInC.o: parserInC.c parserInC.h moduleEnums.h logging.h
 
 lexerInC.c: lexerDefinition.l
 	$(LEX) -o $@ $<	
