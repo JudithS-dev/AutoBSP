@@ -13,6 +13,8 @@ generator/AutoBSP
 *.log
 
 # --- Old backup files ---
+generator/old_ast.h
+generator/old_ast.c
 generator/old_lexerDefinition.l
 generator/old_parserDefinition.y
 

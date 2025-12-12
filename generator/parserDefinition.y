@@ -41,7 +41,7 @@
   controller_t          u_controller;  // For val_controller
   char*                 u_str;         // For val_name
   pin_t                 u_pin;         // For val_pin
-  bool_t                u_bool;        // For val_bool
+  bool                  u_bool;        // For val_bool
   level_t               u_level;       // For val_level
   gpio_type_t           u_gpio_type;   // For val_gpio_type
   gpio_pull_helper_t    u_gpio_pull;   // For val_gpio_pull

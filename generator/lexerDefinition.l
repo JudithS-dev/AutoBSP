@@ -112,11 +112,11 @@ INVALID_TOKENS      ([^ \n\t\{\}:\/\*;]+|{COMMENT_CHARS})
   /* Multiple used parameter values */
   /* Used for 'enable' and '?lock?' */
 "true"              { log_info("\"true\"",  LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
-                      yylval.u_bool = BOOL_TRUE;
+                      yylval.u_bool = true;
                       return val_bool;
                     }
 "false"             { log_info("\"false\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
-                      yylval.u_bool = BOOL_FALSE;
+                      yylval.u_bool = false;
                       return val_bool;
                     }
   /* Used for 'active' and 'speed' */
