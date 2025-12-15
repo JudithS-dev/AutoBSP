@@ -16,7 +16,7 @@ typedef enum{
 /**
  * @brief Structure representing output module parameters.
  * 
- * Consists of GPIO type, pull-up/pull-down configuration, speed, initial state, active level, and enable flag.
+ * Consists of GPIO type, pull-up/pull-down configuration, speed, initial state, and active level.
  */
 typedef struct{
   gpio_type_t  type;
@@ -24,18 +24,16 @@ typedef struct{
   gpio_speed_t speed;
   gpio_init_t  init;
   level_t      active_level;
-  bool         enable;
 } module_output_t;
 
 /**
  * @brief Structure representing input module parameters.
  * 
- * Consists of pull-up/pull-down configuration, active level, and enable flag.
+ * Consists of pull-up/pull-down configuration, and active level.
  */
 typedef struct{
   gpio_pull_t  pull;
   level_t      active_level;
-  bool         enable;
 } module_input_t;
 
 /**
@@ -48,6 +46,7 @@ typedef struct module_node_s{
   int           line_nr;
   char*         name;
   pin_t         pin;
+  bool          enable;
   module_kind_t kind;
   union{
     module_output_t  output;
@@ -78,19 +77,36 @@ typedef struct{
 typedef struct{
   bool name_set;
   bool pin_set;
+  bool enable_set;
+  
+  bool kind_set;
+  
   bool type_set;
   bool pull_set;
   bool speed_set;
   bool init_set;
   bool active_level_set;
-  bool enable_set;
   
   module_node_t *p_current_module;
 } ast_module_builder_t;
 
 ast_module_builder_t* ast_new_module_builder(int line_nr);
 
-//void ast_module_builder_set_name(const char* caller_name, int line_nr, ast_module_builder_t* builder, const char* name);
-//void ast_module_builder_set_pin( const char* caller_name, int line_nr, ast_module_builder_t* builder, pin_t pin);
+// Common module setters
+void ast_module_builder_set_name(const char* caller_name, int line_nr, ast_module_builder_t* builder, const char* name);
+void ast_module_builder_set_pin( const char* caller_name, int line_nr, ast_module_builder_t* builder, pin_t pin);
+void ast_module_builder_set_enable(const char* caller_name, int line_nr, ast_module_builder_t* builder, bool enable);
+void ast_module_builder_set_kind(const char* caller_name, int line_nr, ast_module_builder_t* builder, module_kind_t kind);
+
+// Output module specific setters
+void ast_module_builder_set_output_type(const char* caller_name, int line_nr, ast_module_builder_t* builder, gpio_type_t type);
+void ast_module_builder_set_output_pull(const char* caller_name, int line_nr, ast_module_builder_t* builder, gpio_pull_t pull);
+void ast_module_builder_set_output_speed(const char* caller_name, int line_nr, ast_module_builder_t* builder, gpio_speed_t speed);
+void ast_module_builder_set_output_init(const char* caller_name, int line_nr, ast_module_builder_t* builder, gpio_init_t init);
+void ast_module_builder_set_output_active_level(const char* caller_name, int line_nr, ast_module_builder_t* builder, level_t level);
+
+// Input module specific setters
+void ast_module_builder_set_input_pull(const char* caller_name, int line_nr, ast_module_builder_t* builder, gpio_pull_t pull);
+void ast_module_builder_set_input_active_level(const char* caller_name, int line_nr, ast_module_builder_t* builder, level_t level);
 
 #endif //__AST_H__
