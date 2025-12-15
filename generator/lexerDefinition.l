@@ -21,9 +21,8 @@
 
   /*  Multiple used patterns*/
 NAME_PATTERN        \"[A-Za-z_][A-Za-z0-9_]*\"
-STM_PIN_PATTERN     P[A-Z]((0-9)|1[0-5])
-ESP_PIN_PATTERN     GPIO([0-9]|[1-9][0-9])
-PIN_PATTERN         ({STM_PIN_PATTERN}|{ESP_PIN_PATTERN})
+PIN_PATTERN_PXn     P[A-Z]((0-9)|1[0-5])
+PIN_PATTERN_GPIOn   GPIO([0-9]|[1-9][0-9])
 
   /* Comment patterns */
 COM_LINE            \/\/
@@ -184,15 +183,23 @@ INVALID_TOKENS      ([^ \n\t\{\}:\/\*;]+|{COMMENT_CHARS})
                           log_error("{NAME_PATTERN}", yylineno, "Memory allocation failed for name string");
                         return val_name;
                       }
-{PIN_PATTERN}         { log_info("{PIN_PATTERN}",        LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+{PIN_PATTERN_PXn}     { log_info("{PIN_PATTERN_PXn}", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                        yylval.u_pin.identifier = PXn;
                         yylval.u_pin.port = get_port(yytext);
                         if(yylval.u_pin.port == '\0')
-                          log_info("{PIN_PATTERN}", LOG_LEXER_CONVERSION, yylineno, "Did not find port in pin text '%s'", yytext);
+                          log_info("{PIN_PATTERN_PXn}", LOG_LEXER_CONVERSION, yylineno, "Did not find port in pin text '%s'", yytext);
                         else
-                          log_info("{PIN_PATTERN}", LOG_LEXER_CONVERSION, yylineno, "Found port '%c' in pin text '%s'", yylval.u_pin.port, yytext);
+                          log_info("{PIN_PATTERN_PXn}", LOG_LEXER_CONVERSION, yylineno, "Found port '%c' in pin text '%s'", yylval.u_pin.port, yytext);
                         
-                        yylval.u_pin.pin_number = get_pin_number(yytext);
-                        log_info("{PIN_PATTERN}", LOG_LEXER_CONVERSION, yylineno, "Found pin number '%u' in pin text '%s'", yylval.u_pin.pin_number, yytext);
+                        yylval.u_pin.pin_number = get_pin_number_PXn(yytext);
+                        log_info("{PIN_PATTERN_PXn}", LOG_LEXER_CONVERSION, yylineno, "Found pin number '%u' in pin text '%s'", yylval.u_pin.pin_number, yytext);
+                        return val_pin;
+                      }
+{PIN_PATTERN_GPIOn}   { log_info("{PIN_PATTERN_GPIOn}", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                        yylval.u_pin.identifier = GPIOn;
+                        yylval.u_pin.port = '\0'; /* ESP pins do not have a port letter */
+                        yylval.u_pin.pin_number = get_pin_number_GPIOn(yytext);
+                        log_info("{PIN_PATTERN_GPIOn}", LOG_LEXER_CONVERSION, yylineno, "Found pin number '%u' in pin text '%s'", yylval.u_pin.pin_number, yytext);
                         return val_pin;
                       }
   

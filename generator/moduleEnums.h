@@ -17,11 +17,25 @@ typedef enum{
 /* ---------- General used data types --------- */
 
 /**
+ * @brief Pin identifier types to distinguish between different pin naming conventions
+ * 
+ * Values: GPIOn, PXn
+ * 
+ * X represents the port letter (A, B, C, etc.)
+ * n represents the pin number (0, 1, 2, etc.)
+ */
+typedef enum{
+  GPIOn,
+  PXn
+} pin_identifier_t;
+
+/**
  * @brief Structure representing a microcontroller pin.
  * 
- * Consists of a port (character) and a pin number (unsigned integer).
+ * Consists of a identifier type, port character, and pin number.
  */
 typedef struct{
+  pin_identifier_t identifier;
   char port;
   unsigned int pin_number;
 } pin_t;
