@@ -178,9 +178,8 @@ INVALID_TOKENS      ([^ \n\t\{\}:\/\*;]+|{COMMENT_CHARS})
 
   /* Multiple used patterns */
 {NAME_PATTERN}        { log_info("{NAME_PATTERN}", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
-                        yylval.u_str = strdup(yytext);
-                        if(yylval.u_str == NULL)
-                          log_error("{NAME_PATTERN}", yylineno, "Memory allocation failed for name string");
+                        // Duplicate the string and remove quotes
+                        yylval.u_str = extract_name(yytext);
                         return val_name;
                       }
 {PIN_PATTERN_PXn}     { log_info("{PIN_PATTERN_PXn}", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);

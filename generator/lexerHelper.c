@@ -1,9 +1,38 @@
 #include "lexerHelper.h"
 
 #include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
 
 #include "logging.h"
+
+/** 
+ * @brief Extracts the name from a raw name string by removing surrounding quotes.
+ * 
+ * @param raw_name Raw name string with surrounding quotes.
+ * @return char* Extracted name string without quotes. The caller is responsible for freeing the allocated memory.
+ * 
+ * @note Logs an error and exits if the raw_name is NULL or too short to extract a name.
+*/
+char* extract_name(const char* raw_name){
+  if(raw_name == NULL)
+    log_error("extract_name", 0, "Raw name is NULL.");
+  
+  size_t len = strlen(raw_name);
+  if(len < 2)
+    log_error("extract_name", 0, "Raw name '%s' is too short to extract name.", raw_name);
+  
+  // Allocate memory for the new string (excluding quotes)
+  char* name = (char*)malloc(len - 1); // len - 2 for quotes + 1 for null terminator
+  if(name == NULL)
+    log_error("extract_name", 0, "Memory allocation failed for name extraction.");
+  
+  // Copy characters excluding the first and last quote
+  strncpy(name, raw_name + 1, len - 2);
+  name[len - 2] = '\0'; // Null-terminate the new string
+  
+  return name;
+}
 
 /**
  * @brief Get the port character from a pin text
