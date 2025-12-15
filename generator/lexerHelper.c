@@ -23,7 +23,7 @@ char* extract_name(const char* raw_name){
     log_error("extract_name", 0, "Raw name '%s' is too short to extract name.", raw_name);
   
   // Allocate memory for the new string (excluding quotes)
-  char* name = (char*)malloc(len - 1); // len - 2 for quotes + 1 for null terminator
+  char* name = (char*)calloc(1, len - 1); // len - 2 for quotes + 1 for null terminator
   if(name == NULL)
     log_error("extract_name", 0, "Memory allocation failed for name extraction.");
   

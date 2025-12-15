@@ -17,10 +17,11 @@ unsigned int global_ast_node_counter = 0;
  * @return Pointer to the newly created DSL node.
  */
 dsl_node_t* ast_new_dsl_node(){
-  dsl_node_t* dsl_node = (dsl_node_t*)malloc(sizeof(dsl_node_t));
+  dsl_node_t* dsl_node = (dsl_node_t*)calloc(1, sizeof(dsl_node_t));
   if(dsl_node == NULL)
     log_error("ast_new_dsl_node", 0, "Could not allocate memory for new DSL node.");
   
+  // Explicitly initialize fields
   dsl_node->controller_set = false;
   dsl_node->modules_root   = NULL;
   return dsl_node;
@@ -63,11 +64,11 @@ void ast_free_dsl_node(dsl_node_t* dsl_node){
  * @return Pointer to the newly created AST module builder.
  */
 ast_module_builder_t* ast_new_module_builder(int line_nr){
-  ast_module_builder_t *builder = (ast_module_builder_t*)malloc(sizeof(ast_module_builder_t));
+  ast_module_builder_t *builder = (ast_module_builder_t*)calloc(1, sizeof(ast_module_builder_t));
   if(builder == NULL)
     log_error("ast_new_module_builder", 0, "Could not allocate memory for new AST module builder.");
   
-  // Initialize all fields of builder to default values
+  // Explicitly initialize all fields of builder to default values
   builder->name_set         = false;
   builder->pin_set          = false;
   builder->enable_set       = false;
@@ -79,13 +80,15 @@ ast_module_builder_t* ast_new_module_builder(int line_nr){
   builder->active_level_set = false;
   
   
-  builder->p_current_module = (module_node_t*)malloc(sizeof(module_node_t));
+  builder->p_current_module = (module_node_t*)calloc(1, sizeof(module_node_t));
   if(builder->p_current_module == NULL)
     log_error("ast_new_module_builder", 0, "Could not allocate memory for new AST module node.");
   
+  // Explicitly initialize fields of the current module node
   builder->p_current_module->node_id = global_ast_node_counter++;
   builder->p_current_module->line_nr = line_nr;
   builder->p_current_module->name  = NULL;
+  builder->p_current_module->next  = NULL;
   return builder;
 }
 
@@ -250,6 +253,8 @@ void ast_module_builder_set_kind(int line_nr, ast_module_builder_t* builder, mod
   
   builder->p_current_module->kind = kind;
   builder->kind_set = true;
+  
+  // TODO: Initialize union data based on kind to set default values
 }
 
 
