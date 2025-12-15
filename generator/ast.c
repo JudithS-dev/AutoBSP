@@ -7,6 +7,55 @@
 
 unsigned int global_ast_node_counter = 0;
 
+/* -------------------------------------------- */
+/*         Constructors and destructors         */
+/* -------------------------------------------- */
+
+/**
+ * @brief Creates a new DSL node and initializes its fields.
+ * 
+ * @return Pointer to the newly created DSL node.
+ */
+dsl_node_t* ast_new_dsl_node(){
+  dsl_node_t* dsl_node = (dsl_node_t*)malloc(sizeof(dsl_node_t));
+  if(dsl_node == NULL)
+    log_error("ast_new_dsl_node", 0, "Could not allocate memory for new DSL node.");
+  
+  dsl_node->controller_set = false;
+  dsl_node->modules_root   = NULL;
+  return dsl_node;
+}
+
+/**
+ * @brief Frees the DSL node and all its associated module nodes.
+ * 
+ * @param dsl_node Pointer to the DSL node to free.
+ */
+void ast_free_dsl_node(dsl_node_t* dsl_node){
+  if(dsl_node == NULL)
+    log_error("ast_free_dsl_node", 0, "DSL node is NULL.");
+  
+  // Free all module nodes
+  module_node_t* current_module = dsl_node->modules_root;
+  module_node_t* next_module;
+
+  while(current_module != NULL){
+    next_module = current_module->next;
+    
+    // Free module name
+    if(current_module->name != NULL)
+      free(current_module->name);
+    
+    // Free the module node itself
+    free(current_module);
+    
+    current_module = next_module;
+  }
+  
+  // Free the DSL node itself
+  free(dsl_node);
+}
+
 /**
  * @brief Creates a new AST module builder and initializes its fields.
  * 
@@ -40,6 +89,71 @@ ast_module_builder_t* ast_new_module_builder(int line_nr){
   return builder;
 }
 
+/**
+ * @brief Frees the AST module builder and returns the built module node.
+ * 
+ * @param builder Pointer to the AST module builder to free.
+ * @return Pointer to the built module node.
+ */
+module_node_t* ast_free_module_builder(ast_module_builder_t* builder){
+  if(builder == NULL)
+    log_error("ast_free_module_builder", 0, "AST module builder is NULL.");
+  
+  module_node_t* module_node = (builder->p_current_module);
+  free(builder);
+  return module_node;
+}
+
+
+/* -------------------------------------------- */
+/*              DSL node functions              */
+/* -------------------------------------------- */
+/**
+ * @brief Sets the controller of the DSL node.
+ * 
+ * @param line_nr Line number where the function is called for logging purposes.
+ * @param dsl_node Pointer to the DSL node.
+ * @param controller Controller to set for the DSL node.
+ * 
+ * @note Logs an error and exits if the controller has already been set or if any parameter is NULL.
+ */
+void ast_dsl_node_set_controller(int line_nr, dsl_node_t* dsl_node, controller_t controller){
+  if(dsl_node == NULL)
+    log_error("ast_dsl_node_set_controller", 0, "DSL node is NULL.");
+  
+  if(dsl_node->controller_set)
+    log_error("ast_dsl_node_set_controller", line_nr, "Controller has already been set to '%d'.", dsl_node->controller);
+  
+  dsl_node->controller = controller;
+  dsl_node->controller_set = true;
+}
+
+/**
+ * @brief Appends a module node to the DSL node's module list.
+ * 
+ * @param line_nr Line number where the function is called for logging purposes.
+ * @param dsl_node Pointer to the DSL node.
+ * @param module Pointer to the module node to append.
+ * 
+ * @note Logs an error and exits if any parameter is NULL.
+ */
+void ast_dsl_node_append_module(int line_nr, dsl_node_t* dsl_node, module_node_t* module){
+  if(dsl_node == NULL)
+    log_error("ast_dsl_node_append_module", line_nr, "DSL node is NULL.");
+  if(module == NULL)
+    log_error("ast_dsl_node_append_module", line_nr, "Module node is NULL.");
+  
+  // Append module to the end of the linked list
+  if(dsl_node->modules_root == NULL){
+    dsl_node->modules_root = module;
+  } else{
+    module_node_t* current = dsl_node->modules_root;
+    while(current->next != NULL){
+      current = current->next;
+    }
+    current->next = module;
+  }
+}
 
 /* -------------------------------------------- */
 /*             Common module setters            */

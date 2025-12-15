@@ -90,7 +90,15 @@ typedef struct{
   module_node_t *p_current_module;
 } ast_module_builder_t;
 
+// Constructors and destructors
+dsl_node_t* ast_new_dsl_node();
+void ast_free_dsl_node(dsl_node_t* dsl_node);
 ast_module_builder_t* ast_new_module_builder(int line_nr);
+module_node_t* ast_free_module_builder(ast_module_builder_t* builder);
+
+// DSL node functions
+void ast_dsl_node_set_controller(int line_nr, dsl_node_t* dsl_node, controller_t controller);
+void ast_dsl_node_append_module( int line_nr, dsl_node_t* dsl_node, module_node_t* module);
 
 // Common module setters
 void ast_module_builder_set_name(  int line_nr, ast_module_builder_t* builder, const char* name);

@@ -3,6 +3,7 @@
   
   #include "logging.h"
   #include "moduleEnums.h"
+  #include "ast.h"
   
   int yylex();
   extern FILE *yyin;
@@ -10,6 +11,9 @@
   
   int yydebug = 0;
   void yyerror(const char *msg);
+  
+  dsl_node_t *ast_root = NULL;
+  ast_module_builder_t *current_module_builder = NULL;
 %}
 
 %define parse.error verbose
@@ -124,6 +128,7 @@
   /* -------------------------------------------- */
   /*   Definition of datatypes of non-terminals   */
   /* -------------------------------------------- */
+%type <u_controller> CONTROLLER_PARAM
 %type <u_str>        NAME_PARAM
 %type <u_pin>        PIN_PARAM
 %type <u_bool>       ENABLE_PARAM
@@ -139,39 +144,112 @@
   /*                Grammar rules                 */
   /* -------------------------------------------- */
 
-START:  kw_autobsp '{' FILE_CONTENTS '}'
+START:  kw_autobsp  { if(ast_root != NULL)
+                        log_error("START", 0, "AST root has already been set.");
+                      ast_root = ast_new_dsl_node();
+                    }
+        '{' FILE_CONTENTS '}'
       | /* empty */
 
-FILE_CONTENTS: GLOBAL_PARAM MODULE_DEFS
+FILE_CONTENTS: GLOBAL_PARAM END MODULE_DEFS
 
-GLOBAL_PARAM: kw_controller ':' val_controller END
+GLOBAL_PARAM: CONTROLLER_PARAM  { if(ast_root == NULL)
+                                    log_error("GLOBAL_PARAM", yylineno, "AST root is NULL when setting controller.");
+                                  ast_dsl_node_set_controller(yylineno, ast_root, $1);
+                                }
+
+CONTROLLER_PARAM: kw_controller ':' val_controller  { $$ = $3; }
 
 MODULE_DEFS:  MODULE_DEFS MODULE_DEF
             | MODULE_DEF
 
-MODULE_DEF: kw_input '{' INPUT_PARAMS '}'
-          | kw_output '{' OUTPUT_PARAMS '}'
+MODULE_DEF: kw_input  { /* Start new input module builder */
+                        if(current_module_builder != NULL)
+                          log_error("MODULE_DEF", yylineno, "Previous module builder not finalized before starting new input module.");
+                        current_module_builder = ast_new_module_builder(yylineno);
+                        ast_module_builder_set_kind(yylineno, current_module_builder, MODULE_INPUT);
+                      }
+            '{' INPUT_PARAMS '}'  { /* Extract module_node from builder and add to AST */
+                                    module_node_t* built_module = ast_free_module_builder(current_module_builder);
+                                    ast_dsl_node_append_module(yylineno, ast_root, built_module);
+                                    current_module_builder = NULL;
+                                  }
+          | kw_output { /* Start new output module builder */
+                        if(current_module_builder != NULL)
+                          log_error("MODULE_DEF", yylineno, "Previous module builder not finalized before starting new output module.");
+                        current_module_builder = ast_new_module_builder(yylineno);
+                        ast_module_builder_set_kind(yylineno, current_module_builder, MODULE_OUTPUT);
+                      }
+              '{' OUTPUT_PARAMS '}' { /* Extract module_node from builder and add to AST */
+                                      module_node_t* built_module = ast_free_module_builder(current_module_builder);
+                                      ast_dsl_node_append_module(yylineno, ast_root, built_module);
+                                      current_module_builder = NULL;
+                                    }
 
 INPUT_PARAMS: INPUT_PARAMS INPUT_PARAM END
             | INPUT_PARAM END
 
-INPUT_PARAM:  NAME_PARAM
-            | PIN_PARAM
-            | ENABLE_PARAM
-            | GPIO_PULL_PARAM
-            | GPIO_ACTIVE_PARAM
+INPUT_PARAM:  NAME_PARAM        { if(!current_module_builder)
+                                    log_error("INPUT_PARAM", yylineno, "No current module builder to set name.");
+                                  ast_module_builder_set_name(yylineno, current_module_builder, $1);
+                                  if($1)
+                                    free($1); // Free the in the lexer allocated string
+                                  else
+                                    log_error("INPUT_PARAM", yylineno, "INPUT_PARAM: Name parameter is NULL.");
+                                }
+            | PIN_PARAM         { if(!current_module_builder)
+                                    log_error("INPUT_PARAM", yylineno, "No current module builder to set pin.");
+                                  ast_module_builder_set_pin(yylineno, current_module_builder, $1);
+                                }
+            | ENABLE_PARAM      { if(!current_module_builder)
+                                    log_error("INPUT_PARAM", yylineno, "No current module builder to set enable.");
+                                  ast_module_builder_set_enable(yylineno, current_module_builder, $1);
+                                }
+            | GPIO_PULL_PARAM   { if(!current_module_builder)
+                                    log_error("INPUT_PARAM", yylineno, "No current module builder to set GPIO pull.");
+                                  ast_module_builder_set_input_pull(yylineno, current_module_builder, $1);
+                                }
+            | GPIO_ACTIVE_PARAM { if(!current_module_builder)
+                                    log_error("INPUT_PARAM", yylineno, "No current module builder to set GPIO active level.");
+                                  ast_module_builder_set_input_active_level(yylineno, current_module_builder, $1);
+                                }
 
 OUTPUT_PARAMS:  OUTPUT_PARAMS OUTPUT_PARAM END
               | OUTPUT_PARAM END
 
-OUTPUT_PARAM: NAME_PARAM  //TODO: free val_name after use
-            | PIN_PARAM
+OUTPUT_PARAM: NAME_PARAM          { if(!current_module_builder)
+                                      log_error("OUTPUT_PARAM", yylineno, "No current module builder to set name.");
+                                    ast_module_builder_set_name(yylineno, current_module_builder, $1);
+                                    if($1)
+                                      free($1); // Free the in the lexer allocated string
+                                    else
+                                      log_error("OUTPUT_PARAM", yylineno, "OUTPUT_PARAM: Name parameter is NULL.");
+                                  }
+            | PIN_PARAM           { if(!current_module_builder)
+                                      log_error("OUTPUT_PARAM", yylineno, "No current module builder to set pin.");
+                                    ast_module_builder_set_pin(yylineno, current_module_builder, $1);
+                                  }
             | ENABLE_PARAM
-            | GPIO_TYPE_PARAM
-            | GPIO_PULL_PARAM
-            | GPIO_SPEED_PARAM
-            | GPIO_INIT_PARAM
-            | GPIO_ACTIVE_PARAM
+            | GPIO_TYPE_PARAM     { if(!current_module_builder)
+                                      log_error("OUTPUT_PARAM", yylineno, "No current module builder to set GPIO type.");
+                                    ast_module_builder_set_output_type(yylineno, current_module_builder, $1);
+                                  }
+            | GPIO_PULL_PARAM     { if(!current_module_builder)
+                                      log_error("OUTPUT_PARAM", yylineno, "No current module builder to set GPIO pull.");
+                                    ast_module_builder_set_output_pull(yylineno, current_module_builder, $1);
+                                  }
+            | GPIO_SPEED_PARAM    { if(!current_module_builder)
+                                      log_error("OUTPUT_PARAM", yylineno, "No current module builder to set GPIO speed.");
+                                    ast_module_builder_set_output_speed(yylineno, current_module_builder, $1);
+                                  }
+            | GPIO_INIT_PARAM     { if(!current_module_builder)
+                                      log_error("OUTPUT_PARAM", yylineno, "No current module builder to set GPIO init.");
+                                    ast_module_builder_set_output_init(yylineno, current_module_builder, $1);
+                                  }
+            | GPIO_ACTIVE_PARAM   { if(!current_module_builder)
+                                      log_error("OUTPUT_PARAM", yylineno, "No current module builder to set GPIO active level.");
+                                    ast_module_builder_set_output_active_level(yylineno, current_module_builder, $1);
+                                  }
 
 
 NAME_PARAM: kw_name ':' val_name                    { $$ = $3;                       }
@@ -239,7 +317,13 @@ int main(int argc, char *argv[]){
   if(ret_parse != 0)
     log_error("main", 0, "Parsing failed with error code %d", ret_parse);
   
+  if(ast_root == NULL)
+    log_error("main", 0, "Failed to generate AST from parsed code.");
+  
+  //TODO: Further processing of the AST
+  
   // Clean up
+  ast_free_dsl_node(ast_root);
   close_logging();
   fclose(input);
   

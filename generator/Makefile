@@ -12,15 +12,15 @@ $(TARGET): $(OBJS)
 
 logging.o: logging.c logging.h
 
-ast.o: ast.c ast.h moduleEnums.h logging.h
+ast.o: ast.c ast.h logging.h moduleEnums.h
 
-lexerInC.o: lexerInC.c lexerHelper.h lexerErrorHelper.h moduleEnums.h logging.h
+lexerInC.o: lexerInC.c lexerHelper.h logging.h moduleEnums.h lexerErrorHelper.h  
 
 lexerHelper.o: lexerHelper.c lexerHelper.h logging.h
 
 lexerErrorHelper.o: lexerErrorHelper.c lexerErrorHelper.h logging.h
 
-parserInC.o: parserInC.c parserInC.h moduleEnums.h logging.h
+parserInC.o: parserInC.c parserInC.h logging.h moduleEnums.h ast.h
 
 lexerInC.c: lexerDefinition.l
 	$(LEX) -o $@ $<	
