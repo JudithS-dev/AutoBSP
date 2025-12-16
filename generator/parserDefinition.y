@@ -4,6 +4,7 @@
   #include "logging.h"
   #include "moduleEnums.h"
   #include "ast.h"
+  #include "astPrint.h"
   
   int yylex();
   extern FILE *yyin;
@@ -229,7 +230,10 @@ OUTPUT_PARAM: NAME_PARAM          { if(!current_module_builder)
                                       log_error("OUTPUT_PARAM", yylineno, "No current module builder to set pin.");
                                     ast_module_builder_set_pin(yylineno, current_module_builder, $1);
                                   }
-            | ENABLE_PARAM
+            | ENABLE_PARAM        { if(!current_module_builder)
+                                      log_error("OUTPUT_PARAM", yylineno, "No current module builder to set enable.");
+                                    ast_module_builder_set_enable(yylineno, current_module_builder, $1);
+                                  }
             | GPIO_TYPE_PARAM     { if(!current_module_builder)
                                       log_error("OUTPUT_PARAM", yylineno, "No current module builder to set GPIO type.");
                                     ast_module_builder_set_output_type(yylineno, current_module_builder, $1);
@@ -301,13 +305,13 @@ int main(int argc, char *argv[]){
   yyin = input;
   
   // Determine log file path
-  char *log_file;
+  char *file_log;
   if(argc == 3) // Use provided log path
-    log_file = argv[2];
+    file_log = argv[2];
   else // Default to "AutoBSP.log" in the current directory
-    log_file = "AutoBSP.log";
+    file_log = "AutoBSP.log";
   
-  init_logging(log_file);
+  init_logging(file_log);
   
   // Parse the input code
   log_info("START", LOG_OTHER, 0, "Start parsing the DSL code in '%s'", code_file);
@@ -320,6 +324,9 @@ int main(int argc, char *argv[]){
   if(ast_root == NULL)
     log_error("main", 0, "Failed to generate AST from parsed code.");
   
+  // Print the generated AST
+  ast_print(ast_root);
+
   //TODO: Further processing of the AST
   
   // Clean up
