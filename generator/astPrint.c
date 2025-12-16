@@ -36,9 +36,19 @@ void ast_print(const dsl_node_t* dsl_node){
   if(dsl_node == NULL)
     log_error("ast_print", 0, "DSL node is NULL, cannot print AST.");
   
+  // Create shell script to remove PNG and DOT files (is at beginning to avoid not creating it if error occurs during AST print)
+  FILE *file_remove = fopen("removePNGandDOT.sh", "w");
+  fprintf(file_remove, "rm -f ast_graph.gv ast_graph.png");
+  fclose(file_remove);
+  
   FILE *file_dot = fopen("ast_graph.gv", "w");
   ast_print_helper(file_dot, dsl_node);
   fclose(file_dot);
+  
+  // Create shell script to generate PNG from DOT
+  FILE *file_create = fopen("createPNGfromDOT.sh", "w");
+  fprintf(file_create, "dot ast_graph.gv -Tpng -o ast_graph.png\n");
+  fclose(file_create);
 }
 
 /**

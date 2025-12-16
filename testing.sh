@@ -69,6 +69,25 @@ if [ $EXIT_STATUS -eq 1 ]; then
   exit 1
 fi
 
-echo -e "<"
+echo -e "<\n"
+
+# Check if the file createPNGfromDOT.sh exists and is executable
+echo "Generate PNGs from DOT files..."
+if [ -e "./createPNGfromDOT.sh" ]; then
+  if [ -x "./createPNGfromDOT.sh" ]; then
+    echo "Found createPNGfromDOT.sh. Executing..."
+    echo "./createPNGfromDOT.sh"
+    ./createPNGfromDOT.sh
+  else
+    echo "Info: createPNGfromDOT.sh. is not executable. Making it executable..."
+    echo "chmod +x createPNGfromDOT.sh"
+    chmod +x createPNGfromDOT.sh
+    echo "Executing createPNGfromDOT.sh..."
+    echo "./createPNGfromDOT.sh"
+    ./createPNGfromDOT.sh
+  fi
+else
+  echo "createPNGfromDOT.sh not found. Skipping..."
+fi
 
 echo -e "\nFinished executing!"

@@ -7,23 +7,29 @@ AutoBSP{
   OUTPUT{
     name:    "LED_1"
     pin:     PA12;  // Parameter assignments can be ended with a optional semicolon
-    type:    pushpull
+    type:    opendrain
     pull:    none;
     speed:   medium
     
-    init:    on
+    init:    off
     active:  high
     
     enable:  true;
+  }
+  OUTPUT{
+    name: "LED_2"
   }
   
   INPUT{
     name:    "BUTTON_1"
     pin:     PC13
-    pull:    up
+    pull:    down
     
-    active:  low
+    active:  high
     
     enable:  true
-  }    
+  }
+  INPUT{
+    name: "BUTTON_2"
+  }
 }

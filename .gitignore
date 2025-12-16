@@ -12,6 +12,14 @@ generator/AutoBSP
 # --- Logs ---
 *.log
 
+# --- Temporary or helper scripts ---
+createPNGfromDOT.sh
+removePNGandDOT.sh
+
+# --- AST output (Graphviz) ---
+*.gv
+*.png
+
 # --- Old backup files ---
 generator/old_ast.h
 generator/old_ast.c
