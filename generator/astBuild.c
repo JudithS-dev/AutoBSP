@@ -1,10 +1,11 @@
-#include "ast.h"
+#include "astBuild.h"
 
 #include <stdlib.h>
 #include <string.h>
 
 #include "logging.h"
-#include "astChecking.h"
+#include "astCheck.h"
+#include "astEnums2Str.h"
 
 unsigned int global_ast_node_counter = 0;
 
@@ -133,7 +134,10 @@ void ast_dsl_node_set_controller(int line_nr, dsl_node_t* dsl_node, controller_t
     log_error("ast_dsl_node_set_controller", 0, "DSL node is NULL.");
   
   if(dsl_node->controller_set)
-    log_error("ast_dsl_node_set_controller", line_nr, "Controller has already been set to '%d'.", dsl_node->controller);
+    log_error("ast_dsl_node_set_controller", line_nr, "Trying to set controller to '%s'.\n"
+              "                                              But controller has already been set to '%s'.",
+              controller_to_string(controller),
+              controller_to_string(dsl_node->controller));
   
   dsl_node->controller = controller;
   dsl_node->controller_set = true;
@@ -187,7 +191,9 @@ void ast_module_builder_set_name(int line_nr, ast_module_builder_t* builder, con
     log_error("ast_module_builder_set_name", 0, "Module name is NULL.");
   
   if(builder->name_set)
-    log_error("ast_module_builder_set_name", line_nr, "Module name has already been set to '%s'.",
+    log_error("ast_module_builder_set_name", line_nr, "Trying to set module name to '%s'.\n"
+              "                                              But module name has already been set to '%s'.",
+              name,
               builder->p_current_module->name == NULL ? "<NULL>" : builder->p_current_module->name);
   
   builder->p_current_module->name = strdup(name);
@@ -210,10 +216,11 @@ void ast_module_builder_set_pin(int line_nr, ast_module_builder_t* builder, pin_
     log_error("ast_module_builder_set_pin", 0, "AST module builder is NULL.");
   
   if(builder->pin_set)
-    log_error("ast_module_builder_set_pin", line_nr, "Module pin of module '%s' has already been set to Port: '%c' Pin: '%d'.", 
-              builder->p_current_module->name == NULL ? "<NULL>" : builder->p_current_module->name, 
-              builder->p_current_module->pin.port,  
-              builder->p_current_module->pin.pin_number);
+    log_error("ast_module_builder_set_pin", line_nr, "Trying to set module pin of module '%s' to '%s'.\n"
+              "                                             But module pin has already been set to '%s'.",
+              builder->p_current_module->name == NULL ? "<NULL>" : builder->p_current_module->name,
+              pin_to_string(pin),
+              pin_to_string(builder->p_current_module->pin));
   
   builder->p_current_module->pin = pin;
   builder->pin_set = true;
@@ -233,9 +240,11 @@ void ast_module_builder_set_enable(int line_nr, ast_module_builder_t* builder, b
     log_error("ast_module_builder_set_enable", 0, "AST module builder is NULL.");
   
   if(builder->enable_set)
-    log_error("ast_module_builder_set_enable", line_nr, "Module enable of module '%s' has already been set to '%d'.", 
-              builder->p_current_module->name == NULL ? "<NULL>" : builder->p_current_module->name, 
-              builder->p_current_module->enable);
+    log_error("ast_module_builder_set_enable", line_nr, "Trying to set module enable of module '%s' to '%s'.\n"
+              "                                                But module enable has already been set to '%s'.",
+              builder->p_current_module->name == NULL ? "<NULL>" : builder->p_current_module->name,
+              bool_to_string(enable),
+              bool_to_string(builder->p_current_module->enable));
   
   builder->p_current_module->enable = enable;
   builder->enable_set = true;
@@ -255,9 +264,11 @@ void ast_module_builder_set_kind(int line_nr, ast_module_builder_t* builder, mod
     log_error("ast_module_builder_set_kind", 0, "AST module builder is NULL.");
   
   if(builder->kind_set)
-    log_error("ast_module_builder_set_kind", line_nr, "Module kind of module '%s' has already been set to '%d'.", 
-              builder->p_current_module->name == NULL ? "<NULL>" : builder->p_current_module->name, 
-              builder->p_current_module->kind);
+    log_error("ast_module_builder_set_kind", line_nr, "Trying to set module kind of module '%s' to '%s'.\n"
+              "                                              But module kind has already been set to '%s'.", 
+              builder->p_current_module->name == NULL ? "<NULL>" : builder->p_current_module->name,
+              kind_to_string(kind),
+              kind_to_string(builder->p_current_module->kind));
   
   builder->p_current_module->kind = kind;
   builder->kind_set = true;
@@ -288,9 +299,11 @@ void ast_module_builder_set_output_type(int line_nr, ast_module_builder_t* build
     log_error("ast_module_builder_set_output_type", line_nr, "Cannot set output type for non-output module '%s'.", 
               builder->p_current_module->name == NULL ? "<NULL>" : builder->p_current_module->name);
   if(builder->type_set)
-    log_error("ast_module_builder_set_output_type", line_nr, "Output module type of module '%s' has already been set to '%d'.", 
+    log_error("ast_module_builder_set_output_type", line_nr, "Trying to set output type of module '%s' to '%s'.\n"
+              "                                                     But output type has already been set to '%s'.", 
               builder->p_current_module->name == NULL ? "<NULL>" : builder->p_current_module->name, 
-              builder->p_current_module->data.output.type);
+              gpio_type_to_string(type),
+              gpio_type_to_string(builder->p_current_module->data.output.type));
   
   builder->p_current_module->data.output.type = type;
   builder->type_set = true;
@@ -313,9 +326,11 @@ void ast_module_builder_set_output_pull(int line_nr, ast_module_builder_t* build
     log_error("ast_module_builder_set_output_pull", line_nr, "Cannot set output pull for non-output module '%s'.", 
               builder->p_current_module->name == NULL ? "<NULL>" : builder->p_current_module->name);
   if(builder->pull_set)
-    log_error("ast_module_builder_set_output_pull", line_nr, "Output module pull of module '%s' has already been set to '%d'.", 
+    log_error("ast_module_builder_set_output_pull", line_nr, "Trying to set output pull of module '%s' to '%s'.\n"
+              "                                                     But output pull has already been set to '%s'.", 
               builder->p_current_module->name == NULL ? "<NULL>" : builder->p_current_module->name, 
-              builder->p_current_module->data.output.pull);
+              gpio_pull_to_string(pull),
+              gpio_pull_to_string(builder->p_current_module->data.output.pull));
   
   builder->p_current_module->data.output.pull = pull;
   builder->pull_set = true;
@@ -338,9 +353,11 @@ void ast_module_builder_set_output_speed(int line_nr, ast_module_builder_t* buil
     log_error("ast_module_builder_set_output_speed", line_nr, "Cannot set output speed for non-output module '%s'.", 
               builder->p_current_module->name == NULL ? "<NULL>" : builder->p_current_module->name);
   if(builder->speed_set)
-    log_error("ast_module_builder_set_output_speed", line_nr, "Output module speed of module '%s' has already been set to '%d'.", 
+    log_error("ast_module_builder_set_output_speed", line_nr, "Trying to set output speed of module '%s' to '%s'.\n"
+              "                                                      But output speed has already been set to '%s'.", 
               builder->p_current_module->name == NULL ? "<NULL>" : builder->p_current_module->name, 
-              builder->p_current_module->data.output.speed);
+              gpio_speed_to_string(speed),
+              gpio_speed_to_string(builder->p_current_module->data.output.speed));
   
   builder->p_current_module->data.output.speed = speed;
   builder->speed_set = true;
@@ -363,9 +380,11 @@ void ast_module_builder_set_output_init(int line_nr, ast_module_builder_t* build
     log_error("ast_module_builder_set_output_init", line_nr, "Cannot set output init for non-output module '%s'.", 
               builder->p_current_module->name == NULL ? "<NULL>" : builder->p_current_module->name);
   if(builder->init_set)
-    log_error("ast_module_builder_set_output_init", line_nr, "Output module init of module '%s' has already been set to '%d'.", 
-              builder->p_current_module->name == NULL ? "<NULL>" : builder->p_current_module->name,
-              builder->p_current_module->data.output.init);
+    log_error("ast_module_builder_set_output_init", line_nr, "Trying to set output init of module '%s' to '%s'.\n"
+              "                                                     But output init has already been set to '%s'.", 
+              builder->p_current_module->name == NULL ? "<NULL>" : builder->p_current_module->name, 
+              gpio_init_to_string(init),
+              gpio_init_to_string(builder->p_current_module->data.output.init));
   
   builder->p_current_module->data.output.init = init;
   builder->init_set = true;
@@ -388,9 +407,11 @@ void ast_module_builder_set_output_active_level(int line_nr, ast_module_builder_
     log_error("ast_module_builder_set_output_active_level", line_nr, "Cannot set output active level for non-output module '%s'.", 
               builder->p_current_module->name == NULL ? "<NULL>" : builder->p_current_module->name);
   if(builder->active_level_set)
-    log_error("ast_module_builder_set_output_active_level", line_nr, "Output module active level of module '%s' has already been set to '%d'.", 
+    log_error("ast_module_builder_set_output_active_level", line_nr, "Trying to set output active level of module '%s' to '%s'.\n"
+              "                                                             But output active level has already been set to '%s'.", 
               builder->p_current_module->name == NULL ? "<NULL>" : builder->p_current_module->name,
-              builder->p_current_module->data.output.active_level);
+              level_to_string(active_level),
+              level_to_string(builder->p_current_module->data.output.active_level));
   
   builder->p_current_module->data.output.active_level = active_level;
   builder->active_level_set = true;
@@ -418,9 +439,11 @@ void ast_module_builder_set_input_pull(int line_nr, ast_module_builder_t* builde
     log_error("ast_module_builder_set_input_pull", line_nr, "Cannot set input pull for non-input module '%s'.", 
               builder->p_current_module->name == NULL ? "<NULL>" : builder->p_current_module->name);
   if(builder->pull_set)
-    log_error("ast_module_builder_set_input_pull", line_nr, "Input module pull of module '%s' has already been set to '%d'.", 
+    log_error("ast_module_builder_set_input_pull", line_nr, "Trying to set input pull of module '%s' to '%s'.\n"
+              "                                                    But input pull has already been set to '%s'.", 
               builder->p_current_module->name == NULL ? "<NULL>" : builder->p_current_module->name, 
-              builder->p_current_module->data.input.pull);
+              gpio_pull_to_string(pull),
+              gpio_pull_to_string(builder->p_current_module->data.input.pull));
   
   builder->p_current_module->data.input.pull = pull;
   builder->pull_set = true;
@@ -443,9 +466,11 @@ void ast_module_builder_set_input_active_level(int line_nr, ast_module_builder_t
     log_error("ast_module_builder_set_input_active_level", line_nr, "Cannot set input active level for non-input module '%s'.", 
               builder->p_current_module->name == NULL ? "<NULL>" : builder->p_current_module->name);
   if(builder->active_level_set)
-    log_error("ast_module_builder_set_input_active_level", line_nr, "Input module active level of module '%s' has already been set to '%d'.", 
+    log_error("ast_module_builder_set_input_active_level", line_nr, "Trying to set input active level of module '%s' to '%s'.\n"
+              "                                                            But input active level has already been set to '%s'.", 
               builder->p_current_module->name == NULL ? "<NULL>" : builder->p_current_module->name,
-              builder->p_current_module->data.input.active_level);
+              level_to_string(active_level),
+              level_to_string(builder->p_current_module->data.input.active_level));
   
   builder->p_current_module->data.input.active_level = active_level;
   builder->active_level_set = true;

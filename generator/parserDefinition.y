@@ -3,7 +3,7 @@
   
   #include "logging.h"
   #include "moduleEnums.h"
-  #include "ast.h"
+  #include "astBuild.h"
   #include "astPrint.h"
   
   int yylex();
@@ -152,7 +152,10 @@ START:  kw_autobsp  { if(ast_root != NULL)
         '{' FILE_CONTENTS '}' { /* TODO: Check if all needed parameters of dsl_node are set */ }
       | /* empty */
 
-FILE_CONTENTS: GLOBAL_PARAM END MODULE_DEFS
+FILE_CONTENTS: GLOBAL_PARAMS MODULE_DEFS
+
+GLOBAL_PARAMS: GLOBAL_PARAMS GLOBAL_PARAM END
+              | GLOBAL_PARAM END
 
 GLOBAL_PARAM: CONTROLLER_PARAM  { if(ast_root == NULL)
                                     log_error("GLOBAL_PARAM", yylineno, "AST root is NULL when setting controller.");

@@ -68,7 +68,7 @@ static void log_error_v_internal(const char *function_name, int line_nr, const c
   if(strcmp(function_name, "") != 0)
     fprintf(stderr, " '%s'", function_name);
   if(line_nr > 0)
-    fprintf(stderr, " Line %d", line_nr);
+    fprintf(stderr, " Line %3d", line_nr);
   fprintf(stderr, ": ");
   vfprintf(stderr, message, args_copy);
   fprintf(stderr, "\n");
@@ -80,7 +80,7 @@ static void log_error_v_internal(const char *function_name, int line_nr, const c
   if(strcmp(function_name, "") != 0)
     fprintf(log_file, " '%s'", function_name);
   if(line_nr > 0)
-    fprintf(log_file, " Line %d", line_nr);
+    fprintf(log_file, " Line %3d", line_nr);
   fprintf(log_file, ": ");
   vfprintf(log_file, message, args_copy);
   fprintf(log_file, "\n");

@@ -1,4 +1,4 @@
-#include "astChecking.h"
+#include "astCheck.h"
 
 #include <stdlib.h>
 #include <string.h>

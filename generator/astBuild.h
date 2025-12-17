@@ -1,5 +1,5 @@
-#ifndef __AST_H__
-#define __AST_H__
+#ifndef __AST_BUILD_H__
+#define __AST_BUILD_H__
 
 #include "astEnums.h"
 
@@ -30,4 +30,4 @@ void ast_module_builder_set_output_active_level(int line_nr, ast_module_builder_
 void ast_module_builder_set_input_pull(        int line_nr, ast_module_builder_t* builder, gpio_pull_t pull);
 void ast_module_builder_set_input_active_level(int line_nr, ast_module_builder_t* builder, level_t level);
 
-#endif //__AST_H__
+#endif //__AST_BUILD_H__
