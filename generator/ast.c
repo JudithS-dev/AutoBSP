@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "logging.h"
+#include "astChecking.h"
 
 unsigned int global_ast_node_counter = 0;
 
@@ -55,6 +56,9 @@ void ast_free_dsl_node(dsl_node_t* dsl_node){
   
   // Free the DSL node itself
   free(dsl_node);
+  
+  // Free existing names list
+  ast_check_free();
 }
 
 /**
@@ -102,8 +106,12 @@ module_node_t* ast_free_module_builder(ast_module_builder_t* builder){
   if(builder == NULL)
     log_error("ast_free_module_builder", 0, "AST module builder is NULL.");
   
+  // Check if the node is fully built (has all required fields set)
+  ast_check_module(builder);
+  
   module_node_t* module_node = (builder->p_current_module);
   free(builder);
+  
   return module_node;
 }
 

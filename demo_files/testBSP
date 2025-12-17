@@ -18,6 +18,7 @@ AutoBSP{
   }
   OUTPUT{
     name: "LED_2"
+    pin:   PB5
   }
   
   INPUT{
@@ -31,5 +32,6 @@ AutoBSP{
   }
   INPUT{
     name: "BUTTON_2"
+    pin:   PA0
   }
 }
