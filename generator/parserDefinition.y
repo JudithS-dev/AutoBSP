@@ -328,10 +328,16 @@ int main(int argc, char *argv[]){
   if(ast_root == NULL)
     log_error("main", 0, "Failed to generate AST from parsed code.");
   
+  // Sort modules by pin number for better readability
+  log_info("main", LOG_OTHER, 0, "Sorting modules by pin number for better readability");
+  ast_sort_modules_by_pin(ast_root);
+
   // Print the generated AST
+  log_info("main", LOG_OTHER, 0, "Printing the generated AST to DOT and PNG files");
   ast_print(ast_root);
   
   //TODO: Further processing of the AST
+  
   
   // Clean up
   ast_free_dsl_node(ast_root);

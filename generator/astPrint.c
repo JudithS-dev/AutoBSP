@@ -7,9 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 
-/* --------------- AST Printing --------------- */
-static void ast_print_helper(FILE *pfDot, const dsl_node_t* dsl_node);
-
+static void ast_print_helper(FILE *pfDot, const dsl_node_t* dsl_node, bool print_enabled_only);
 
 /* -------------------------------------------- */
 /*                 AST Printing                 */
@@ -21,23 +19,27 @@ static void ast_print_helper(FILE *pfDot, const dsl_node_t* dsl_node);
  * @param dsl_node Pointer to the DSL AST node to be printed.
  */
 void ast_print(const dsl_node_t* dsl_node){
-  log_info("ast_print", LOG_OTHER, 0, "Start AST printing...");
-  
   if(dsl_node == NULL)
     log_error("ast_print", 0, "DSL node is NULL, cannot print AST.");
   
   // Create shell script to remove PNG and DOT files (is at beginning to avoid not creating it if error occurs during AST print)
   FILE *file_remove = fopen("removePNGandDOT.sh", "w");
-  fprintf(file_remove, "rm -f ast_graph.gv ast_graph.png");
+  fprintf(file_remove, "rm -f ast_graph_complete.gv ast_graph_complete.png\n");
+  fprintf(file_remove, "rm -f ast_graph_enabled_only.gv ast_graph_enabled_only.png\n");
   fclose(file_remove);
   
-  FILE *file_dot = fopen("ast_graph.gv", "w");
-  ast_print_helper(file_dot, dsl_node);
+  FILE *file_dot = fopen("ast_graph_complete.gv", "w");
+  ast_print_helper(file_dot, dsl_node, false);
+  fclose(file_dot);
+  
+  file_dot = fopen("ast_graph_enabled_only.gv", "w");
+  ast_print_helper(file_dot, dsl_node, true);
   fclose(file_dot);
   
   // Create shell script to generate PNG from DOT
   FILE *file_create = fopen("createPNGfromDOT.sh", "w");
-  fprintf(file_create, "dot ast_graph.gv -Tpng -o ast_graph.png\n");
+  fprintf(file_create, "dot ast_graph_complete.gv -Tpng -o ast_graph_complete.png\n");
+  fprintf(file_create, "dot ast_graph_enabled_only.gv -Tpng -o ast_graph_enabled_only.png\n");
   fclose(file_create);
 }
 
@@ -46,8 +48,9 @@ void ast_print(const dsl_node_t* dsl_node){
  * 
  * @param pfDot File pointer to the DOT file.
  * @param dsl_node Pointer to the DSL AST node to be printed.
+ * @param print_enabled_only If true, only enabled modules are printed.
  */
-static void ast_print_helper(FILE *pfDot, const dsl_node_t* dsl_node){
+static void ast_print_helper(FILE *pfDot, const dsl_node_t* dsl_node, bool print_enabled_only){
   fprintf(pfDot, "digraph AST {\n");
   fprintf(pfDot, "  splines=ortho;\n");
   fprintf(pfDot, "  node [shape=plain, fontname=\"Helvetica\"];\n");
@@ -63,6 +66,11 @@ static void ast_print_helper(FILE *pfDot, const dsl_node_t* dsl_node){
   // Print modules
   module_node_t *current_module = dsl_node->modules_root;
   while(current_module != NULL){
+    // Skip disabled modules if print_enabled_only is true
+    if(print_enabled_only && current_module->enable == false){
+      current_module = current_module->next;
+      continue;
+    }
     // Determine background color based on module kind and enable status
     const char *colour = "#FFFFFF";
     if(current_module->kind == MODULE_OUTPUT)
@@ -77,13 +85,12 @@ static void ast_print_helper(FILE *pfDot, const dsl_node_t* dsl_node){
                       current_module->node_id, colour);
     
     // Module name as header
-    fprintf(pfDot, "<TR><TD><B>%s</B></TD></TR>", current_module->name);
+    fprintf(pfDot, "<TR><TD><B>%s</B> (%d)</TD></TR>", current_module->name, current_module->node_id);
     
     // General module attributes as bullet points
-    fprintf(pfDot, "<TR><TD ALIGN=\"LEFT\">&#8226; <B>ID:</B> %d</TD></TR>",     current_module->node_id);
+    fprintf(pfDot, "<TR><TD ALIGN=\"LEFT\">&#8226; <B>Kind:</B> %s</TD></TR>",   kind_to_string(current_module->kind));
     fprintf(pfDot, "<TR><TD ALIGN=\"LEFT\">&#8226; <B>Pin:</B> %s</TD></TR>",    pin_str);
     fprintf(pfDot, "<TR><TD ALIGN=\"LEFT\">&#8226; <B>Enable:</B> %s</TD></TR>", bool_to_string(current_module->enable));
-    fprintf(pfDot, "<TR><TD ALIGN=\"LEFT\">&#8226; <B>Kind:</B> %s</TD></TR>",   kind_to_string(current_module->kind));
     
     free(pin_str);
     
@@ -116,6 +123,11 @@ static void ast_print_helper(FILE *pfDot, const dsl_node_t* dsl_node){
   // Print edges from controller to modules
   current_module = dsl_node->modules_root;
   while(current_module != NULL){
+    // Skip disabled modules if print_enabled_only is true
+    if(print_enabled_only && current_module->enable == false){
+      current_module = current_module->next;
+      continue;
+    }
     fprintf(pfDot, "  Controller -> Module%d;\n", current_module->node_id);
     current_module = current_module->next;
   }

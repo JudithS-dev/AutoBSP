@@ -9,9 +9,9 @@ unsigned int existing_names_count = 0;
 
 extern dsl_node_t *ast_root; // Declared in parserDefiniton.y used for error reporting on module name duplicates
 
-static int get_line_nr_of_module(const char* module_name);
-static void check_module_name(module_node_t* module);
-static bool is_c_keyword(const char* name);
+/* -------------------------------------------- */
+/*                  DSL Checks                  */
+/* -------------------------------------------- */
 
 /**
  * @brief Checks if the DSL node is complete.
@@ -26,6 +26,83 @@ void ast_check_dsl(dsl_node_t* dsl){
   if(dsl->controller_set == false)
     log_error("ast_check_dsl", 0, "Required field 'controller' is not set in DSL.");
 }
+
+/**
+ * @brief Compares two module nodes by their pin (port and pin number).
+ * 
+ * @param a Pointer to the first module node.
+ * @param b Pointer to the second module node.
+ * @return Negative value if a < b, positive value if a > b, zero if equal.
+ */
+static int compare_modules_by_pin(const module_node_t *a, const module_node_t *b){
+  // Compare port (case-insensitive, A < B < C etc.)
+  int port_diff = (int)a->pin.port - (int)b->pin.port;
+  if(port_diff != 0)
+    return port_diff;
+  
+  // Ports are equal, compare pin number
+  if(a->pin.pin_number < b->pin.pin_number)
+    return -1;
+  else if (a->pin.pin_number > b->pin.pin_number)
+    return 1;
+  else
+    return 0;
+}
+
+void ast_sort_modules_by_pin(dsl_node_t *dsl_node){
+  if(dsl_node == NULL)
+    log_error("ast_sort_modules_by_pin", 0, "DSL node is NULL.");
+  
+  if(dsl_node->modules_root == NULL)
+    log_error("ast_sort_modules_by_pin", 0, "DSL node has no modules.");
+  
+  if(dsl_node->modules_root->next == NULL)
+    return; // Single element, already sorted
+  
+  module_node_t *sorted = NULL;
+  module_node_t *current = dsl_node->modules_root;
+  
+  while(current != NULL){
+    module_node_t *next = current->next;
+    
+    // If sorted list is empty put current element as first 
+    if(sorted == NULL){
+      current->next = NULL;
+      sorted = current;
+      current = next;
+      continue;
+    }
+    
+    // If smaller than first element, insert at beginning
+    if(compare_modules_by_pin(current, sorted) < 0){
+      current->next = sorted;
+      sorted = current;
+      current = next;
+      continue;
+    }
+    
+    // Else, find correct position in sorted list
+    module_node_t *search = sorted;
+    while(search->next != NULL && compare_modules_by_pin(search->next, current) < 0)
+      search = search->next;
+    
+    // Insert current after last smaller element found
+    current->next = search->next;
+    search->next = current;
+    
+    current = next;
+  }
+  
+  dsl_node->modules_root = sorted;
+}
+
+/* -------------------------------------------- */
+/*                 Module Checks                */
+/* -------------------------------------------- */
+
+static int get_line_nr_of_module(const char* module_name);
+static void check_module_name(module_node_t* module);
+static bool is_c_keyword(const char* name);
 
 /**
  * @brief Checks if the module being built in the AST module builder is complete.
