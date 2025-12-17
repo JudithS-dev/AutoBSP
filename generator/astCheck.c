@@ -14,6 +14,20 @@ static void check_module_name(module_node_t* module);
 static bool is_c_keyword(const char* name);
 
 /**
+ * @brief Checks if the DSL node is complete.
+ * 
+ * @param dsl Pointer to the DSL node.
+ * @note Logs an error and exits if any required field is not set.
+ */
+void ast_check_dsl(dsl_node_t* dsl){
+  if(dsl == NULL)
+    log_error("ast_check_dsl", 0, "DSL node is NULL.");
+  
+  if(dsl->controller_set == false)
+    log_error("ast_check_dsl", 0, "Required field 'controller' is not set in DSL.");
+}
+
+/**
  * @brief Checks if the module being built in the AST module builder is complete.
  * 
  * @param builder Pointer to the AST module builder.
@@ -30,15 +44,16 @@ void ast_check_module(ast_module_builder_t* builder){
   
   // Check common fields
   if(module->line_nr == 0)
-    log_error("ast_check_module", 0, "Module line number is not set for module '%s'.", 
+    log_error("ast_check_module", 0, "Required field 'line_nr' is not set for module '%s'. This is an internal error.",
               module->name == NULL ? "<NULL>" : module->name);
   
   if(builder->name_set == false || module->name == NULL)
-    log_error("ast_check_module", 0, "Module name is not set for module ID '%d'.", module->node_id);
+    log_error("ast_check_module", 0, "Required field 'name' is not set for module defined in line number %d.",
+              module->line_nr);
   check_module_name(module); // Check if name is valid and unique
   
   if(builder->pin_set == false)
-    log_error("ast_check_module", 0, "Module pin is not set for module '%s'.", 
+    log_error("ast_check_module", module->line_nr, "Required field 'pin' is not set for module '%s'.", 
               module->name == NULL ? "<NULL>" : module->name);
   
   // Check kind-specific fields if needed

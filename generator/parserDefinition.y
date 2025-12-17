@@ -4,6 +4,7 @@
   #include "logging.h"
   #include "moduleEnums.h"
   #include "astBuild.h"
+  #include "astCheck.h"
   #include "astPrint.h"
   
   int yylex();
@@ -149,7 +150,7 @@ START:  kw_autobsp  { if(ast_root != NULL)
                         log_error("START", 0, "AST root has already been set.");
                       ast_root = ast_new_dsl_node();
                     }
-        '{' FILE_CONTENTS '}' { /* TODO: Check if all needed parameters of dsl_node are set */ }
+        '{' FILE_CONTENTS '}' { ast_check_dsl(ast_root); }
       | /* empty */
 
 FILE_CONTENTS: GLOBAL_PARAMS MODULE_DEFS
