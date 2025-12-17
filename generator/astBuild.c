@@ -9,6 +9,8 @@
 
 unsigned int global_ast_node_counter = 0;
 
+static void ast_initialize_module(module_node_t* module);
+
 /* -------------------------------------------- */
 /*         Constructors and destructors         */
 /* -------------------------------------------- */
@@ -273,7 +275,30 @@ void ast_module_builder_set_kind(int line_nr, ast_module_builder_t* builder, mod
   builder->p_current_module->kind = kind;
   builder->kind_set = true;
   
-  // TODO: Initialize union data based on kind to set default values
+  // Initialize the union data based on the kind
+  ast_initialize_module(builder->p_current_module);
+}
+
+static void ast_initialize_module(module_node_t* module){
+  if(module == NULL)
+    log_error("ast_initialize_module", 0, "Module node is NULL.");
+  
+  switch(module->kind){
+    case MODULE_OUTPUT:  // Initialize output-specific fields to default values
+                        module->data.output.type         = GPIO_TYPE_PUSHPULL;
+                        module->data.output.pull         = GPIO_PULL_NONE;
+                        module->data.output.speed        = GPIO_SPEED_MEDIUM;
+                        module->data.output.init         = GPIO_INIT_NONE;
+                        module->data.output.active_level = HIGH;
+                        break;
+    case MODULE_INPUT:  // Initialize input-specific fields to default values
+                        module->data.input.pull         = GPIO_PULL_NONE;
+                        module->data.input.active_level = HIGH;
+                        break;
+    default:
+      log_error("ast_initialize_module", 0, "Unknown module kind for module '%s'.", 
+                module->name == NULL ? "<NULL>" : module->name);
+  }
 }
 
 
