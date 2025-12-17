@@ -149,7 +149,7 @@ START:  kw_autobsp  { if(ast_root != NULL)
                         log_error("START", 0, "AST root has already been set.");
                       ast_root = ast_new_dsl_node();
                     }
-        '{' FILE_CONTENTS '}'
+        '{' FILE_CONTENTS '}' { /* TODO: Check if all needed parameters of dsl_node are set */ }
       | /* empty */
 
 FILE_CONTENTS: GLOBAL_PARAM END MODULE_DEFS
@@ -326,7 +326,7 @@ int main(int argc, char *argv[]){
   
   // Print the generated AST
   ast_print(ast_root);
-
+  
   //TODO: Further processing of the AST
   
   // Clean up

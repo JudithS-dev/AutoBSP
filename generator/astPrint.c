@@ -80,7 +80,6 @@ static void ast_print_helper(FILE *pfDot, const dsl_node_t* dsl_node){
     else // MODULE_INPUT
       colour = current_module->enable ? "#C6EFC6" : "#F2FBF2";
     
-    
     // Print general module info
     char *pin_str = pin_to_string(current_module->pin);
     

@@ -21,7 +21,7 @@
 
   /*  Multiple used patterns*/
 NAME_PATTERN        \"[A-Za-z_][A-Za-z0-9_]*\"
-PIN_PATTERN_PXn     P[A-Z]((0-9)|1[0-5])
+PIN_PATTERN_PXn     P[A-Z]([0-9]|1[0-5])
 PIN_PATTERN_GPIOn   GPIO([0-9]|[1-9][0-9])
 
   /* Comment patterns */
