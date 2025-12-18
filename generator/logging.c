@@ -6,7 +6,7 @@
 #include <stdarg.h> // allows variable number of arguments in function call
 
 // Active logging categories (bitwise OR of the above)
-//#define ACTIVE_LOGS (LOG_LEXER_CONDITION | LOG_LEXER_TOKEN | LOG_LEXER_CONVERSION | LOG_OTHER)
+//#define ACTIVE_LOGS (LOG_LEXER_CONDITION | LOG_LEXER_TOKEN | LOG_LEXER_CONVERSION | LOG_PARSER_FOUND | LOG_OTHER)
 #define ACTIVE_LOGS (LOG_LEXER_CONVERSION | LOG_OTHER)
 
 // Logging file pointer: static = only accessible from logging.c
@@ -156,6 +156,7 @@ void log_info(const char *function_name, int log_category, int line_nr, const ch
     const char *category_str =  (log_category == LOG_LEXER_CONDITION)  ? "LEX_CONDI" :
                                 (log_category == LOG_LEXER_TOKEN)      ? "LEX_TOKEN" :
                                 (log_category == LOG_LEXER_CONVERSION) ? "LEX_CONVE" :
+                                (log_category == LOG_PARSER_FOUND)     ? "PAR_FOUND" :
                                 (log_category == LOG_OTHER)            ? "__OTHER__" :
                                 "UNKNOWN";
     

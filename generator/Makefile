@@ -26,7 +26,7 @@ lexerHelper.o: lexerHelper.c lexerHelper.h logging.h
 
 lexerErrorHelper.o: lexerErrorHelper.c lexerErrorHelper.h logging.h
 
-parserInC.o: parserInC.c parserInC.h logging.h moduleEnums.h astBuild.h astEnums.h astPrint.h astCheck.h
+parserInC.o: parserInC.c parserInC.h logging.h moduleEnums.h astBuild.h astEnums.h astPrint.h astCheck.h astEnums2Str.h
 
 lexerInC.c: lexerDefinition.l
 	$(LEX) -o $@ $<	

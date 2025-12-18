@@ -6,6 +6,7 @@
   #include "astBuild.h"
   #include "astCheck.h"
   #include "astPrint.h"
+  #include "astEnums2Str.h"
   
   int yylex();
   extern FILE *yyin;
@@ -163,12 +164,15 @@ GLOBAL_PARAM: CONTROLLER_PARAM  { if(ast_root == NULL)
                                   ast_dsl_node_set_controller(yylineno, ast_root, $1);
                                 }
 
-CONTROLLER_PARAM: kw_controller ':' val_controller  { $$ = $3; }
+CONTROLLER_PARAM: kw_controller ':' val_controller  { $$ = $3;
+                                                      log_info("CONTROLLER_PARAM", LOG_PARSER_FOUND, yylineno, "Found controller parameter with value '%s'", controller_to_string($3));
+                                                    }
 
 MODULE_DEFS:  MODULE_DEFS MODULE_DEF
             | MODULE_DEF
 
 MODULE_DEF: kw_input  { /* Start new input module builder */
+                        log_info("MODULE_DEF", LOG_PARSER_FOUND, yylineno, "Found input module definition.");
                         if(current_module_builder != NULL)
                           log_error("MODULE_DEF", yylineno, "Previous module builder not finalized before starting new input module.");
                         current_module_builder = ast_new_module_builder(yylineno);
@@ -180,6 +184,7 @@ MODULE_DEF: kw_input  { /* Start new input module builder */
                                     current_module_builder = NULL;
                                   }
           | kw_output { /* Start new output module builder */
+                        log_info("MODULE_DEF", LOG_PARSER_FOUND, yylineno, "Found output module definition.");
                         if(current_module_builder != NULL)
                           log_error("MODULE_DEF", yylineno, "Previous module builder not finalized before starting new output module.");
                         current_module_builder = ast_new_module_builder(yylineno);
@@ -260,24 +265,46 @@ OUTPUT_PARAM: NAME_PARAM          { if(!current_module_builder)
                                   }
 
 
-NAME_PARAM: kw_name ':' val_name                    { $$ = $3;                       }
+NAME_PARAM: kw_name ':' val_name                    { $$ = $3;
+                                                      log_info("NAME_PARAM", LOG_PARSER_FOUND, yylineno, "Found name parameter with value '%s'", $3);
+                                                    }
 
-PIN_PARAM: kw_pin ':' val_pin                       { $$ = $3;                       }
+PIN_PARAM: kw_pin ':' val_pin                       { $$ = $3;
+                                                      log_info("PIN_PARAM", LOG_PARSER_FOUND, yylineno, "Found pin parameter with value '%s'", pin_to_string($3));
+                                                    }
 
-ENABLE_PARAM: kw_enable ':' val_bool                { $$ = $3;                       }
+ENABLE_PARAM: kw_enable ':' val_bool                { $$ = $3;
+                                                      log_info("ENABLE_PARAM", LOG_PARSER_FOUND, yylineno, "Found enable parameter with value '%s'", bool_to_string($3));
+                                                    }
 
-GPIO_TYPE_PARAM: kw_gpio_type ':' val_gpio_type     { $$ = $3;                       }
+GPIO_TYPE_PARAM: kw_gpio_type ':' val_gpio_type     { $$ = $3;
+                                                      log_info("GPIO_TYPE_PARAM", LOG_PARSER_FOUND, yylineno, "Found GPIO type parameter with value '%s'", gpio_type_to_string($3));
+                                                    }
 
-GPIO_PULL_PARAM:  kw_gpio_pull ':' val_gpio_pull    { $$ = helper_to_gpio_pull($3);  }
-                | kw_gpio_pull ':' val_none         { $$ = GPIO_PULL_NONE;           }
+GPIO_PULL_PARAM:  kw_gpio_pull ':' val_gpio_pull    { $$ = helper_to_gpio_pull($3);
+                                                      log_info("GPIO_PULL_PARAM", LOG_PARSER_FOUND, yylineno, "Found GPIO pull parameter with value '%s'", gpio_pull_to_string($$));
+                                                    }
+                | kw_gpio_pull ':' val_none         { $$ = GPIO_PULL_NONE;
+                                                      log_info("GPIO_PULL_PARAM", LOG_PARSER_FOUND, yylineno, "Found GPIO pull parameter with value '%s'", gpio_pull_to_string($$));
+                                                    }
 
-GPIO_SPEED_PARAM: kw_gpio_speed ':' val_gpio_speed  { $$ = helper_to_gpio_speed($3); }
-                | kw_gpio_speed ':' val_level       { $$ = level_to_gpio_speed($3);  }
+GPIO_SPEED_PARAM: kw_gpio_speed ':' val_gpio_speed  { $$ = helper_to_gpio_speed($3);
+                                                      log_info("GPIO_SPEED_PARAM", LOG_PARSER_FOUND, yylineno, "Found GPIO speed parameter with value '%s'", gpio_speed_to_string($$));
+                                                    }
+                | kw_gpio_speed ':' val_level       { $$ = level_to_gpio_speed($3);
+                                                      log_info("GPIO_SPEED_PARAM", LOG_PARSER_FOUND, yylineno, "Found GPIO speed parameter with value '%s'", gpio_speed_to_string($$));
+                                                    }
 
-GPIO_INIT_PARAM:  kw_gpio_init ':' val_gpio_init    { $$ = helper_to_gpio_init($3);  }
-                | kw_gpio_init ':' val_none         { $$ = GPIO_INIT_NONE;           }
+GPIO_INIT_PARAM:  kw_gpio_init ':' val_gpio_init    { $$ = helper_to_gpio_init($3);
+                                                      log_info("GPIO_INIT_PARAM", LOG_PARSER_FOUND, yylineno, "Found GPIO init parameter with value '%s'", gpio_init_to_string($$));
+                                                    }
+                | kw_gpio_init ':' val_none         { $$ = GPIO_INIT_NONE;
+                                                      log_info("GPIO_INIT_PARAM", LOG_PARSER_FOUND, yylineno, "Found GPIO init parameter with value '%s'", gpio_init_to_string($$));
+                                                    }
 
-GPIO_ACTIVE_PARAM: kw_gpio_active ':' val_level     { $$ = $3;                       }
+GPIO_ACTIVE_PARAM: kw_gpio_active ':' val_level     { $$ = $3;
+                                                      log_info("GPIO_ACTIVE_PARAM", LOG_PARSER_FOUND, yylineno, "Found GPIO active level parameter with value '%s'", level_to_string($$));
+                                                    }
 
 
 END: ';'
