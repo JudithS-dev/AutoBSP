@@ -11,7 +11,7 @@
 typedef enum{
   MODULE_OUTPUT,
   MODULE_INPUT
-} module_kind_t;
+} ast_module_kind_t;
 
 /**
  * @brief Structure representing output module parameters.
@@ -24,7 +24,7 @@ typedef struct{
   gpio_speed_t speed;
   gpio_init_t  init;
   level_t      active_level;
-} module_output_t;
+} ast_module_output_t;
 
 /**
  * @brief Structure representing input module parameters.
@@ -34,47 +34,34 @@ typedef struct{
 typedef struct{
   gpio_pull_t  pull;
   level_t      active_level;
-} module_input_t;
+} ast_module_input_t;
 
 /**
  * @brief Structure representing a module node in the AST.
  * 
  * Consists of node ID, line number, name, pin, module kind, module-specific data, and pointer to the next module node.
  */
-typedef struct module_node_s{
+typedef struct ast_module_node_s{
   unsigned int  node_id;
   int           line_nr;
   char*         name;
   pin_t         pin;
   bool          enable;
-  module_kind_t kind;
+  ast_module_kind_t kind;
   union{
-    module_output_t  output;
-    module_input_t   input;
+    ast_module_output_t  output;
+    ast_module_input_t   input;
   } data;
   
-  struct module_node_s* next;
-} module_node_t;
-
-/**
- * @brief Structure representing the root DSL node.
- * 
- * Consists of global parameters like controller type and pointer to a linked list of module nodes.
- * 
- */
-typedef struct{
-  bool           controller_set;
-  controller_t   controller;
-  module_node_t* modules_root;
-} dsl_node_t;
-
+  struct ast_module_node_s* next;
+} ast_module_node_t;
 
 /**
  * @brief Structure for building module nodes in the AST.
  * 
  * Consists of flags indicating which parameters have been set and a pointer to the current module node being built.
  */
-typedef struct{
+typedef struct ast_module_builder_s{
   bool name_set;
   bool pin_set;
   bool enable_set;
@@ -87,7 +74,33 @@ typedef struct{
   bool init_set;
   bool active_level_set;
   
-  module_node_t *p_current_module;
+  ast_module_node_t *module;
+  struct ast_module_builder_s *next;
 } ast_module_builder_t;
+
+/**
+ * @brief Structure for building the DSL node in the AST.
+ * 
+ * Consists of flag indicating if controller has been set, controller type, and pointer to the module builder list.
+ */
+typedef struct{
+  bool controller_set;
+  controller_t controller;
+  ast_module_builder_t *module_builders_root;
+} ast_dsl_builder_t;
+
+
+/* ---------- Finished AST Structure ---------- */
+
+/**
+ * @brief Structure representing finished build DSL node in the AST.
+ * 
+ * Consists of global parameters like controller type and pointer to a linked list of module nodes.
+ * 
+ */
+typedef struct{
+  controller_t   controller;
+  ast_module_node_t* modules_root;
+} ast_dsl_node_t;
 
 #endif //__AST_ENUMS_H__

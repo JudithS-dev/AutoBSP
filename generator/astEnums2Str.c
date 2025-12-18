@@ -145,7 +145,7 @@ const char* gpio_init_to_string(gpio_init_t init){
  * @param kind Module kind enum value.
  * @return Corresponding string representation.
  */
-const char* kind_to_string(module_kind_t kind){
+const char* kind_to_string(ast_module_kind_t kind){
   switch(kind){
     case MODULE_OUTPUT: return "OUTPUT";
     case MODULE_INPUT:  return "INPUT";

@@ -2,11 +2,12 @@
   #include <stdio.h>
   
   #include "logging.h"
-  #include "moduleEnums.h"
+  #include "astEnums.h"
+  #include "astEnums2Str.h"
   #include "astBuild.h"
   #include "astCheck.h"
   #include "astPrint.h"
-  #include "astEnums2Str.h"
+
   
   int yylex();
   extern FILE *yyin;
@@ -15,7 +16,7 @@
   int yydebug = 0;
   void yyerror(const char *msg);
   
-  dsl_node_t *ast_root = NULL;
+  ast_dsl_builder_t *dsl_builder = NULL;
   ast_module_builder_t *current_module_builder = NULL;
 %}
 
@@ -147,11 +148,11 @@
   /*                Grammar rules                 */
   /* -------------------------------------------- */
 
-START:  kw_autobsp  { if(ast_root != NULL)
-                        log_error("START", 0, "AST root has already been set.");
-                      ast_root = ast_new_dsl_node();
+START:  kw_autobsp  { if(dsl_builder != NULL)
+                        log_error("START", 0, "DSL builder has already been set.");
+                      dsl_builder = ast_new_dsl_builder();
                     }
-        '{' FILE_CONTENTS '}' { ast_check_dsl(ast_root); }
+        '{' FILE_CONTENTS '}'
       | /* empty */
 
 FILE_CONTENTS: GLOBAL_PARAMS MODULE_DEFS
@@ -159,9 +160,9 @@ FILE_CONTENTS: GLOBAL_PARAMS MODULE_DEFS
 GLOBAL_PARAMS: GLOBAL_PARAMS GLOBAL_PARAM END
               | GLOBAL_PARAM END
 
-GLOBAL_PARAM: CONTROLLER_PARAM  { if(ast_root == NULL)
-                                    log_error("GLOBAL_PARAM", yylineno, "AST root is NULL when setting controller.");
-                                  ast_dsl_node_set_controller(yylineno, ast_root, $1);
+GLOBAL_PARAM: CONTROLLER_PARAM  { if(dsl_builder == NULL)
+                                    log_error("GLOBAL_PARAM", yylineno, "DSL builder is NULL when setting controller.");
+                                  ast_dsl_builder_set_controller(yylineno, dsl_builder, $1);
                                 }
 
 CONTROLLER_PARAM: kw_controller ':' val_controller  { $$ = $3;
@@ -178,9 +179,8 @@ MODULE_DEF: kw_input  { /* Start new input module builder */
                         current_module_builder = ast_new_module_builder(yylineno);
                         ast_module_builder_set_kind(yylineno, current_module_builder, MODULE_INPUT);
                       }
-            '{' INPUT_PARAMS '}'  { /* Extract module_node from builder and add to AST */
-                                    module_node_t* built_module = ast_free_module_builder(current_module_builder);
-                                    ast_dsl_node_append_module(yylineno, ast_root, built_module);
+            '{' INPUT_PARAMS '}'  { /* Append the current module builder to the DSL builder */
+                                    ast_dsl_builder_append_module_builder(yylineno, dsl_builder, current_module_builder);
                                     current_module_builder = NULL;
                                   }
           | kw_output { /* Start new output module builder */
@@ -190,9 +190,8 @@ MODULE_DEF: kw_input  { /* Start new input module builder */
                         current_module_builder = ast_new_module_builder(yylineno);
                         ast_module_builder_set_kind(yylineno, current_module_builder, MODULE_OUTPUT);
                       }
-              '{' OUTPUT_PARAMS '}' { /* Extract module_node from builder and add to AST */
-                                      module_node_t* built_module = ast_free_module_builder(current_module_builder);
-                                      ast_dsl_node_append_module(yylineno, ast_root, built_module);
+              '{' OUTPUT_PARAMS '}' { /* Append the current module builder to the DSL builder */
+                                      ast_dsl_builder_append_module_builder(yylineno, dsl_builder, current_module_builder);
                                       current_module_builder = NULL;
                                     }
 
@@ -352,13 +351,29 @@ int main(int argc, char *argv[]){
   if(ret_parse != 0)
     log_error("main", 0, "Parsing failed with error code %d", ret_parse);
   
-  if(ast_root == NULL)
-    log_error("main", 0, "Failed to generate AST from parsed code.");
+  if(dsl_builder == NULL)
+    log_error("main", 0, "Failed to generate DSL builder from parsed code.");
+  
+  // Check for required parameters in the DSL builder
+  log_info("main", LOG_OTHER, 0, "Performing DSL builder checks for required parameters");
+  ast_check_required_params(dsl_builder);
+  
+  // Build the AST from the DSL builder (and also frees the builders)
+  log_info("main", LOG_OTHER, 0, "Building the AST from the DSL builder");
+  ast_dsl_node_t* ast_root = ast_convert_dsl_builder_to_dsl_node(dsl_builder);
+  
+  // Check if enabled names are unique
+  log_info("main", LOG_OTHER, 0, "Checking enabled modules for unique names in the AST");
+  ast_check_unique_enabled_names(ast_root);
+  
+  // Check if enabled pins are unique
+  //log_info("main", LOG_OTHER, 0, "Checking enabled modules for unique pins in the AST");
+  //ast_check_unique_enabled_pins(ast_root);
   
   // Sort modules by pin number for better readability
   log_info("main", LOG_OTHER, 0, "Sorting modules by pin number for better readability");
   ast_sort_modules_by_pin(ast_root);
-
+  
   // Print the generated AST
   log_info("main", LOG_OTHER, 0, "Printing the generated AST to DOT and PNG files");
   ast_print(ast_root);

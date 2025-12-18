@@ -3,10 +3,14 @@
 
 #include "astEnums.h"
 
-void ast_check_dsl(dsl_node_t* dsl);
-void ast_check_module(ast_module_builder_t* builder);
-void ast_check_free();
+// Required parameter checks
+void ast_check_required_params(ast_dsl_builder_t* dsl_builder);
 
-void ast_sort_modules_by_pin(dsl_node_t *dsl_node);
+// Uniqueness checks
+void ast_check_unique_enabled_names(ast_dsl_node_t* dsl_node);
+//void ast_check_unique_enabled_pins(ast_dsl_node_t* dsl_node);
+
+// Sorting of modules
+void ast_sort_modules_by_pin(ast_dsl_node_t *dsl_node);
 
 #endif //__AST_CHECK_H__

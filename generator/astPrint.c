@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 
-static void ast_print_helper(FILE *pfDot, const dsl_node_t* dsl_node, bool print_enabled_only);
+static void ast_print_helper(FILE *pfDot, const ast_dsl_node_t* dsl_node, bool print_enabled_only);
 
 /* -------------------------------------------- */
 /*                 AST Printing                 */
@@ -18,7 +18,7 @@ static void ast_print_helper(FILE *pfDot, const dsl_node_t* dsl_node, bool print
  * 
  * @param dsl_node Pointer to the DSL AST node to be printed.
  */
-void ast_print(const dsl_node_t* dsl_node){
+void ast_print(const ast_dsl_node_t* dsl_node){
   if(dsl_node == NULL)
     log_error("ast_print", 0, "DSL node is NULL, cannot print AST.");
   
@@ -50,7 +50,7 @@ void ast_print(const dsl_node_t* dsl_node){
  * @param dsl_node Pointer to the DSL AST node to be printed.
  * @param print_enabled_only If true, only enabled modules are printed.
  */
-static void ast_print_helper(FILE *pfDot, const dsl_node_t* dsl_node, bool print_enabled_only){
+static void ast_print_helper(FILE *pfDot, const ast_dsl_node_t* dsl_node, bool print_enabled_only){
   fprintf(pfDot, "digraph AST {\n");
   fprintf(pfDot, "  splines=ortho;\n");
   fprintf(pfDot, "  node [shape=plain, fontname=\"Helvetica\"];\n");
@@ -64,7 +64,7 @@ static void ast_print_helper(FILE *pfDot, const dsl_node_t* dsl_node, bool print
   );
   
   // Print modules
-  module_node_t *current_module = dsl_node->modules_root;
+  ast_module_node_t *current_module = dsl_node->modules_root;
   while(current_module != NULL){
     // Skip disabled modules if print_enabled_only is true
     if(print_enabled_only && current_module->enable == false){

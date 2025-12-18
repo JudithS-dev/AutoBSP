@@ -4,173 +4,144 @@
 #include <string.h>
 #include "logging.h"
 
-char** existing_names = NULL;
-unsigned int existing_names_count = 0;
+static void ast_check_required_dsl_params(ast_dsl_builder_t* dsl_builder);
+static void ast_check_required_module_params(ast_module_builder_t* module_builder);
 
-extern dsl_node_t *ast_root; // Declared in parserDefiniton.y used for error reporting on module name duplicates
+static bool is_c_keyword(const char* name);
+static int get_line_nr_of_module(ast_dsl_node_t* dsl_node, const char* module_name);
+
+static int compare_modules_by_pin(const ast_module_node_t *a, const ast_module_node_t *b);
 
 /* -------------------------------------------- */
-/*                  DSL Checks                  */
+/*           Required parameter checks          */
 /* -------------------------------------------- */
 
 /**
- * @brief Checks if the DSL node is complete.
+ * @brief Checks if all required parameters in the DSL builder and its module builders are set.
  * 
- * @param dsl Pointer to the DSL node.
+ * @param dsl_builder Pointer to the DSL builder.
  * @note Logs an error and exits if any required field is not set.
  */
-void ast_check_dsl(dsl_node_t* dsl){
-  if(dsl == NULL)
-    log_error("ast_check_dsl", 0, "DSL node is NULL.");
+void ast_check_required_params(ast_dsl_builder_t* dsl_builder){
+  if(dsl_builder == NULL)
+    log_error("ast_check_required_params", 0, "DSL builder is NULL.");
   
-  if(dsl->controller_set == false)
-    log_error("ast_check_dsl", 0, "Required field 'controller' is not set in DSL.");
-}
-
-/**
- * @brief Compares two module nodes by their pin (port and pin number).
- * 
- * @param a Pointer to the first module node.
- * @param b Pointer to the second module node.
- * @return Negative value if a < b, positive value if a > b, zero if equal.
- */
-static int compare_modules_by_pin(const module_node_t *a, const module_node_t *b){
-  // Compare port (case-insensitive, A < B < C etc.)
-  int port_diff = (int)a->pin.port - (int)b->pin.port;
-  if(port_diff != 0)
-    return port_diff;
+  ast_check_required_dsl_params(dsl_builder);
   
-  // Ports are equal, compare pin number
-  if(a->pin.pin_number < b->pin.pin_number)
-    return -1;
-  else if (a->pin.pin_number > b->pin.pin_number)
-    return 1;
-  else
-    return 0;
-}
-
-void ast_sort_modules_by_pin(dsl_node_t *dsl_node){
-  if(dsl_node == NULL)
-    log_error("ast_sort_modules_by_pin", 0, "DSL node is NULL.");
-  
-  if(dsl_node->modules_root == NULL)
-    log_error("ast_sort_modules_by_pin", 0, "DSL node has no modules.");
-  
-  if(dsl_node->modules_root->next == NULL)
-    return; // Single element, already sorted
-  
-  module_node_t *sorted = NULL;
-  module_node_t *current = dsl_node->modules_root;
-  
-  while(current != NULL){
-    module_node_t *next = current->next;
-    
-    // If sorted list is empty put current element as first 
-    if(sorted == NULL){
-      current->next = NULL;
-      sorted = current;
-      current = next;
-      continue;
-    }
-    
-    // If smaller than first element, insert at beginning
-    if(compare_modules_by_pin(current, sorted) < 0){
-      current->next = sorted;
-      sorted = current;
-      current = next;
-      continue;
-    }
-    
-    // Else, find correct position in sorted list
-    module_node_t *search = sorted;
-    while(search->next != NULL && compare_modules_by_pin(search->next, current) < 0)
-      search = search->next;
-    
-    // Insert current after last smaller element found
-    current->next = search->next;
-    search->next = current;
-    
-    current = next;
+  ast_module_builder_t* current_builder = dsl_builder->module_builders_root;
+  while(current_builder != NULL){
+    ast_check_required_module_params(current_builder);
+    current_builder = current_builder->next;
   }
-  
-  dsl_node->modules_root = sorted;
 }
 
-/* -------------------------------------------- */
-/*                 Module Checks                */
-/* -------------------------------------------- */
-
-static int get_line_nr_of_module(const char* module_name);
-static void check_module_name(module_node_t* module);
-static bool is_c_keyword(const char* name);
+/**
+ * @brief Checks if all required parameters of the DSL builder are set.
+ * 
+ * @param dsl_builder Pointer to the DSL builder.
+ * 
+ * @note Logs an error and exits if any required field is not set.
+ */
+void ast_check_required_dsl_params(ast_dsl_builder_t* dsl_builder){
+  if(dsl_builder == NULL)
+    log_error("ast_check_required_dsl_params", 0, "DSL builder is NULL.");
+  
+  if(dsl_builder->controller_set == false)
+    log_error("ast_check_required_dsl_params", 0, "Required field 'controller' is not set in DSL.");
+}
 
 /**
- * @brief Checks if the module being built in the AST module builder is complete.
+ * @brief Checks if all required parameters of the AST module builder are set.
  * 
- * @param builder Pointer to the AST module builder.
+ * @param module_builder Pointer to the AST module builder.
+ * 
  * @note Logs an error and exits if any required field is not set.
  * @note Currently, only name and pin are required fields.
  */
-void ast_check_module(ast_module_builder_t* builder){
-  if(builder == NULL)
-    log_error("ast_check_module", 0, "AST module builder is NULL.");
-  if(builder->p_current_module == NULL)
-    log_error("ast_check_module", 0, "Current module in AST module builder is NULL.");
+void ast_check_required_module_params(ast_module_builder_t* module_builder){
+  if(module_builder == NULL)
+    log_error("ast_check_required_module_params", 0, "AST module builder is NULL.");
+  if(module_builder->module == NULL)
+    log_error("ast_check_required_module_params", 0, "Module in AST module builder is NULL.");
   
-  module_node_t* module = builder->p_current_module;
+  ast_module_node_t* module = module_builder->module;
   
   // Check common fields
   if(module->line_nr == 0)
-    log_error("ast_check_module", 0, "Required field 'line_nr' is not set for module '%s'. This is an internal error.",
+    log_error("ast_check_required_module_params", 0, "Required field 'line_nr' is not set for module '%s'. This is an internal error.",
               module->name == NULL ? "<NULL>" : module->name);
   
-  if(builder->name_set == false || module->name == NULL)
-    log_error("ast_check_module", 0, "Required field 'name' is not set for module defined in line number %d.",
+  if(module_builder->name_set == false || module->name == NULL)
+    log_error("ast_check_required_module_params", 0, "Required field 'name' is not set for module defined in line number %d.",
               module->line_nr);
-  check_module_name(module); // Check if name is valid and unique
   
-  if(builder->pin_set == false)
-    log_error("ast_check_module", module->line_nr, "Required field 'pin' is not set for module '%s'.", 
+  if(module_builder->pin_set == false)
+    log_error("ast_check_required_module_params", module->line_nr, "Required field 'pin' is not set for module '%s'.", 
               module->name == NULL ? "<NULL>" : module->name);
   
   // Check kind-specific fields if needed
   // nothing for now as all fields are optional
 }
 
+
+/* -------------------------------------------- */
+/*                 Module Checks                */
+/* -------------------------------------------- */
+
 /**
- * @brief Checks if the module name is valid and unique.
+ * @brief Checks if enabled module names are unique and not C keywords.
  * 
- * @param module Pointer to the module node to check.
- * @note Logs an error and exits if the name is a C keyword or if it is a duplicate.
+ * @param dsl_node Pointer to the DSL node.
+ * 
+ * @note Logs an error and exits if duplicate names or C keywords are found.
  */
-static void check_module_name(module_node_t* module){
-  if(module == NULL)
-    log_error("check_module_name", 0, "Module is NULL.");
-  if(module->name == NULL)
-    log_error("check_module_name", 0, "Module name is NULL.");
+void ast_check_unique_enabled_names(ast_dsl_node_t* dsl_node){
+  if(dsl_node == NULL)
+    log_error("ast_check_unique_enabled_names", 0, "DSL node is NULL.");
+  if(dsl_node->modules_root == NULL)
+    log_error("ast_check_unique_enabled_names", 0, "DSL node has no modules.");
   
-  // Check if name is a C keyword
-  if(is_c_keyword(module->name))
-    log_error("check_module_name", 0, "Module name '%s' is a C keyword.", module->name);
-  
-  // Check for duplicate names
-  for(size_t i = 0; i < existing_names_count; i++){
-    if(strcmp(existing_names[i], module->name) == 0)
-      log_error("check_module_name", 0, "Duplicate module name '%s' found at module defined at line %d.\n"
-                "                           Module with that name was already defined at line %d.",
-                module->name,
-                module->line_nr,
-                get_line_nr_of_module(module->name));
+  char** existing_names = NULL;
+  unsigned int existing_names_count = 0;
+  ast_module_node_t* current = dsl_node->modules_root;
+  while(current != NULL){
+    if(current->enable){
+      // Check if name is a C keyword
+      if(is_c_keyword(current->name))
+        log_error("ast_check_unique_enabled_names", current->line_nr, "Module name '%s' is a C keyword.", current->name);
+      
+      // Check for duplicate names
+      for(unsigned int i = 0; i < existing_names_count; i++){
+        if(existing_names == NULL)
+          log_error("ast_check_unique_enabled_names", 0, "Internal error: existing names list is NULL.");
+        if(strcmp(existing_names[i], current->name) == 0)
+          log_error("ast_check_unique_enabled_names", current->line_nr,
+                    "Duplicate enabled module name '%s' found.\n"
+                    "                           Module with that name was already defined at line %d.",
+                    current->name,
+                    get_line_nr_of_module(dsl_node, current->name));
+      }
+      
+      // Add name to existing names list
+      existing_names = (char**)realloc(existing_names, (existing_names_count + 1) * sizeof(char*));
+      if(existing_names == NULL)
+        log_error("ast_check_unique_enabled_names", 0, "Could not allocate memory for existing module names.");
+      existing_names[existing_names_count] = strdup(current->name);
+      if(existing_names[existing_names_count] == NULL)
+        log_error("ast_check_unique_enabled_names", 0, "Could not allocate memory for existing module name.");
+      existing_names_count++;
+    }
+    current = current->next;
   }
   
-  // Add name to existing names list
-  existing_names = (char**)realloc(existing_names, (existing_names_count + 1) * sizeof(char*));
-  if(existing_names == NULL)
-    log_error("ast_check_module", 0, "Could not allocate memory for existing module names.");
-  existing_names[existing_names_count] = strdup(module->name);
-  if(existing_names[existing_names_count] == NULL)
-    log_error("ast_check_module", 0, "Could not allocate memory for existing module name.");
-  existing_names_count++;
+  // Free existing names list
+  for(unsigned int i = 0; i < existing_names_count; i++){
+    if(existing_names[i] == NULL)
+      log_error("ast_check_unique_enabled_names", 0, "Internal error: existing name at index %u is NULL.", i);
+    free(existing_names[i]);
+    existing_names[i] = NULL;
+  }
+  free(existing_names);
 }
 
 /**
@@ -178,6 +149,7 @@ static void check_module_name(module_node_t* module){
  * 
  * @param name Name to check.
  * @return true if the name is a C keyword, false otherwise.
+ * 
  * @note Does not log errors, just returns false if name is c-keyword.
  */
 static bool is_c_keyword(const char* name){
@@ -202,21 +174,23 @@ static bool is_c_keyword(const char* name){
 }
 
 /**
- * @brief Retrieves the line number of the module with the given name from the AST root.
+ * @brief Retrieves the line number of the module with the given name from the DSL node.
  * 
+ * @param dsl_node Pointer to the DSL node.
  * @param module_name Name of the module to search for.
  * @return Line number of the module if found.
+ * 
  * @note Logs an error and exits if the module name is not found.
  */
-static int get_line_nr_of_module(const char* module_name){
+static int get_line_nr_of_module(ast_dsl_node_t* dsl_node, const char* module_name){
   if(module_name == NULL)
     log_error("get_line_nr_of_module", 0, "Module name is NULL.");
-  if(ast_root == NULL)
+  if(dsl_node == NULL)
     log_error("get_line_nr_of_module", 0, "AST root is NULL.");
-  if(ast_root->modules_root == NULL)
+  if(dsl_node->modules_root == NULL)
     log_error("get_line_nr_of_module", 0, "AST root has no modules.");
   
-  module_node_t* current = ast_root->modules_root;
+  ast_module_node_t* current = dsl_node->modules_root;
   while(current != NULL){
     if(strcmp(current->name, module_name) == 0)
       return current->line_nr;
@@ -227,23 +201,82 @@ static int get_line_nr_of_module(const char* module_name){
   return -1; // This line will never be reached due to log_error exiting the program
 }
 
+
+/* -------------------------------------------- */
+/*              Sorting of modules              */
+/* -------------------------------------------- */
+
 /**
- * @brief Deletes the list of existing module names.
+ * @brief Sorts the modules in the DSL node by their pin (port and pin number).
  * 
- * @note Frees all allocated memory for existing names.
+ * @param dsl_node Pointer to the DSL node.
+ * @note Uses insertion sort algorithm for simplicity.
  */
-void ast_check_free(){
-  if(existing_names == NULL)
-    log_error("ast_check_free", 0, "Existing names list is NULL.");
+void ast_sort_modules_by_pin(ast_dsl_node_t *dsl_node){
+  if(dsl_node == NULL)
+    log_error("ast_sort_modules_by_pin", 0, "DSL node is NULL.");
   
-  for(size_t i = 0; i < existing_names_count; i++){
-    if(existing_names[i] == NULL)
-      log_error("ast_check_free", 0, "Existing name at index %u is NULL.", i);
-    free(existing_names[i]);
-    existing_names[i] = NULL;
+  if(dsl_node->modules_root == NULL)
+    log_error("ast_sort_modules_by_pin", 0, "DSL node has no modules.");
+  
+  if(dsl_node->modules_root->next == NULL)
+    return; // Single element, already sorted
+  
+  ast_module_node_t *sorted = NULL;
+  ast_module_node_t *current = dsl_node->modules_root;
+  
+  while(current != NULL){
+    ast_module_node_t *next = current->next;
+    
+    // If sorted list is empty put current element as first 
+    if(sorted == NULL){
+      current->next = NULL;
+      sorted = current;
+      current = next;
+      continue;
+    }
+    
+    // If smaller than first element, insert at beginning
+    if(compare_modules_by_pin(current, sorted) < 0){
+      current->next = sorted;
+      sorted = current;
+      current = next;
+      continue;
+    }
+    
+    // Else, find correct position in sorted list
+    ast_module_node_t *search = sorted;
+    while(search->next != NULL && compare_modules_by_pin(search->next, current) < 0)
+      search = search->next;
+    
+    // Insert current after last smaller element found
+    current->next = search->next;
+    search->next = current;
+    
+    current = next;
   }
   
-  free(existing_names);
-  existing_names = NULL;
-  existing_names_count = 0;
+  dsl_node->modules_root = sorted;
+}
+
+/**
+ * @brief Compares two module nodes by their pin (port and pin number).
+ * 
+ * @param a Pointer to the first module node.
+ * @param b Pointer to the second module node.
+ * @return Negative value if a < b, positive value if a > b, zero if equal.
+ */
+static int compare_modules_by_pin(const ast_module_node_t *a, const ast_module_node_t *b){
+  // Compare port (case-insensitive, A < B < C etc.)
+  int port_diff = (int)a->pin.port - (int)b->pin.port;
+  if(port_diff != 0)
+    return port_diff;
+  
+  // Ports are equal, compare pin number
+  if(a->pin.pin_number < b->pin.pin_number)
+    return -1;
+  else if (a->pin.pin_number > b->pin.pin_number)
+    return 1;
+  else
+    return 0;
 }
