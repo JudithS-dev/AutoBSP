@@ -59,7 +59,20 @@ if ! [ -f "./demo_files/$PROGRAM" ]; then
 fi
 # Execute the selected program
 PROGRAM="${PROGRAM}"
-COMMAND="./generator/AutoBSP ./demo_files/$PROGRAM"
+OUTPUT="output"
+
+if ! [ -d "$OUTPUT" ]; then
+  echo "Output directory '$OUTPUT' does not exist. Creating it..."
+  mkdir -p "$OUTPUT"
+fi
+
+# If OUTPUT == "output", call command without output argument
+if [ "$OUTPUT" == "output" ]; then
+  COMMAND="./generator/AutoBSP ./demo_files/$PROGRAM"
+else
+  COMMAND="./generator/AutoBSP ./demo_files/$PROGRAM $OUTPUT"
+fi
+
 echo -e -n "Executing: $COMMAND\n>" #-e allows \n to be interpreted as newline and not as '\' 'n'
 $COMMAND
 EXIT_STATUS=$?  # Capture the exit status
@@ -73,18 +86,18 @@ echo -e "<\n"
 
 # Check if the file createPNGfromDOT.sh exists and is executable
 echo "Generate PNGs from DOT files..."
-if [ -e "./createPNGfromDOT.sh" ]; then
-  if [ -x "./createPNGfromDOT.sh" ]; then
+if [ -e "./$OUTPUT/createPNGfromDOT.sh" ]; then
+  if [ -x "./$OUTPUT/createPNGfromDOT.sh" ]; then
     echo "Found createPNGfromDOT.sh. Executing..."
-    echo "./createPNGfromDOT.sh"
-    ./createPNGfromDOT.sh
+    echo "./$OUTPUT/createPNGfromDOT.sh"
+    ./$OUTPUT/createPNGfromDOT.sh
   else
     echo "Info: createPNGfromDOT.sh. is not executable. Making it executable..."
-    echo "chmod +x createPNGfromDOT.sh"
-    chmod +x createPNGfromDOT.sh
+    echo "chmod +x ./$OUTPUT/createPNGfromDOT.sh"
+    chmod +x ./$OUTPUT/createPNGfromDOT.sh
     echo "Executing createPNGfromDOT.sh..."
-    echo "./createPNGfromDOT.sh"
-    ./createPNGfromDOT.sh
+    echo "./$OUTPUT/createPNGfromDOT.sh"
+    ./$OUTPUT/createPNGfromDOT.sh
   fi
 else
   echo "createPNGfromDOT.sh not found. Skipping..."

@@ -7,7 +7,7 @@
   #include "astBuild.h"
   #include "astCheck.h"
   #include "astPrint.h"
-
+  
   
   int yylex();
   extern FILE *yyin;
@@ -320,8 +320,9 @@ void yyerror(const char *msg){
 }
 
 int main(int argc, char *argv[]){
+  // Check for correct number of arguments (./AutoBSP <codefile> [<output_path>])
   if(argc < 2 || argc > 3){
-    fprintf(stderr, "\nERROR 'main': Incorrect number of arguments.\n              Usage: %s <codefile_name> [<logfile_name>]\n", argv[0]);
+    fprintf(stderr, "\nERROR 'main': Incorrect number of arguments.\n              Usage: %s <codefile_name> [<output_path>]\n", argv[0]);
     return 1;
   }
   
@@ -334,14 +335,15 @@ int main(int argc, char *argv[]){
   }
   yyin = input;
   
-  // Determine log file path
-  char *file_log;
-  if(argc == 3) // Use provided log path
-    file_log = argv[2];
-  else // Default to "AutoBSP.log" in the current directory
-    file_log = "AutoBSP.log";
+  // Determine path for all output files
+  char *output_path;
+  if(argc == 3) // Use provided output path
+    output_path = argv[2];
+  else // Default to "output" directory
+    output_path = "output";
   
-  init_logging(file_log);
+  // Initialize logging
+  init_logging(output_path);
   
   // Parse the input code
   log_info("START", LOG_OTHER, 0, "Start parsing the DSL code in '%s'", code_file);
@@ -376,10 +378,10 @@ int main(int argc, char *argv[]){
   
   // Print the generated AST
   log_info("main", LOG_OTHER, 0, "Printing the generated AST to DOT and PNG files");
-  ast_print(ast_root);
+  ast_print(output_path, ast_root);
   
   //TODO: Further processing of the AST
-  
+
   
   // Clean up
   ast_free_dsl_node(ast_root);

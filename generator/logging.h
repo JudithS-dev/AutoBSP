@@ -10,7 +10,7 @@
 
 // Active logs are specified in the logging.c file
 
-void init_logging(const char *file_path);
+void init_logging(const char *output_path);
 void close_logging();
 
 void log_error(const char *function_name, int line_nr, const char *message, ...);

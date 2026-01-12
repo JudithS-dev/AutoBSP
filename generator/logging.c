@@ -15,17 +15,20 @@ static FILE *log_file = NULL;
 /**
  * @brief Initializes the logging system by opening the specified log file.
  * 
- * @param file_path Path to the log file.
+ * @param output_path Path to the directory where the log file "AutoBSP.log" will be created.
  * 
  * @note If the log file cannot be opened, an error message is printed to stderr and the program exits. 
  */
-void init_logging(const char *file_path){
+void init_logging(const char *output_path){
   if(log_file != NULL)
     fclose(log_file); // Close any previously opened log file
   
-  log_file = fopen(file_path, "w");
+  char file_log[256];
+  snprintf(file_log, sizeof(file_log), "%s/AutoBSP.log", output_path);
+  
+  log_file = fopen(file_log, "w");
   if(log_file == NULL){
-    fprintf(stderr, "\nERROR 'init_logging': Could not open log file '%s'\n", file_path);
+    fprintf(stderr, "\nERROR 'init_logging': Could not open log file '%s'\n", file_log);
     exit(1);
   }
 }
