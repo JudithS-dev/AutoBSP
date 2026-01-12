@@ -269,7 +269,9 @@ NAME_PARAM: kw_name ':' val_name                    { $$ = $3;
                                                     }
 
 PIN_PARAM: kw_pin ':' val_pin                       { $$ = $3;
-                                                      log_info("PIN_PARAM", LOG_PARSER_FOUND, yylineno, "Found pin parameter with value '%s'", pin_to_string($3));
+                                                      char *pin_str = pin_to_string($3);
+                                                      log_info("PIN_PARAM", LOG_PARSER_FOUND, yylineno, "Found pin parameter with value '%s'", pin_str);
+                                                      free(pin_str);
                                                     }
 
 ENABLE_PARAM: kw_enable ':' val_bool                { $$ = $3;
