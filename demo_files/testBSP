@@ -34,6 +34,7 @@ AutoBSP{
   
   INPUT{
     name: "BUTTON_2"
-    pin:   PA0
+    pin:   PA12
+    enable: false
   }
 }

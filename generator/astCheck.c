@@ -85,7 +85,7 @@ void ast_check_required_module_params(ast_module_builder_t* module_builder){
 
 
 /* -------------------------------------------- */
-/*                 Module Checks                */
+/*               Uniqueness checks              */
 /* -------------------------------------------- */
 
 /**
@@ -115,7 +115,7 @@ void ast_check_unique_enabled_names(ast_dsl_node_t* dsl_node){
         if(existing_names == NULL)
           log_error("ast_check_unique_enabled_names", 0, "Internal error: existing names list is NULL.");
         if(strcmp(existing_names[i], current->name) == 0)
-          log_error("ast_check_unique_enabled_names", current->line_nr,
+          log_error("ast_check_unique_enabled_names", 0,
                     "Duplicate enabled module name '%s' found.\n"
                     "                           Module with that name was already defined at line %d.",
                     current->name,
@@ -142,6 +142,43 @@ void ast_check_unique_enabled_names(ast_dsl_node_t* dsl_node){
     existing_names[i] = NULL;
   }
   free(existing_names);
+}
+
+/**
+ * @brief Checks if enabled module pins are unique.
+ * 
+ * @param dsl_node Pointer to the DSL node.
+ * 
+ * @note Logs an error and exits if duplicate pins are found.
+ */
+void ast_check_unique_enabled_pins(ast_dsl_node_t* dsl_node){
+  if(dsl_node == NULL)
+    log_error("ast_check_unique_enabled_pins", 0, "DSL node is NULL.");
+  if(dsl_node->modules_root == NULL)
+    log_error("ast_check_unique_enabled_pins", 0, "DSL node has no modules.");
+  
+  ast_module_node_t* current = dsl_node->modules_root;
+  while(current != NULL){
+    if(current->enable){
+      ast_module_node_t* checker = current->next;
+      while(checker != NULL){
+        if(checker->enable){
+          if(current->pin.port == checker->pin.port && current->pin.pin_number == checker->pin.pin_number){
+            log_error("ast_check_unique_enabled_pins", 0,
+                      "Duplicate enabled module pin found: Port %c Pin %d is used by both module '%s' (line %d) and module '%s' (line %d).",
+                      current->pin.port,
+                      current->pin.pin_number,
+                      current->name,
+                      current->line_nr,
+                      checker->name,
+                      checker->line_nr);
+          }
+        }
+        checker = checker->next;
+      }
+    }
+    current = current->next;
+  }
 }
 
 /**

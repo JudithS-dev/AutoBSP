@@ -367,8 +367,8 @@ int main(int argc, char *argv[]){
   ast_check_unique_enabled_names(ast_root);
   
   // Check if enabled pins are unique
-  //log_info("main", LOG_OTHER, 0, "Checking enabled modules for unique pins in the AST");
-  //ast_check_unique_enabled_pins(ast_root);
+  log_info("main", LOG_OTHER, 0, "Checking enabled modules for unique pins in the AST");
+  ast_check_unique_enabled_pins(ast_root);
   
   // Sort modules by pin number for better readability
   log_info("main", LOG_OTHER, 0, "Sorting modules by pin number for better readability");

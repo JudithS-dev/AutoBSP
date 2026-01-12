@@ -334,6 +334,7 @@ static void ast_initialize_module(ast_module_node_t* module){
   if(module == NULL)
     log_error("ast_initialize_module", 0, "Module node is NULL.");
   
+  module->enable = true; // Default to enabled
   switch(module->kind){
     case MODULE_OUTPUT:  // Initialize output-specific fields to default values
                         module->data.output.type         = GPIO_TYPE_PUSHPULL;
