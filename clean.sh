@@ -39,5 +39,15 @@ echo ""
 echo "Removing createPNGfromDOT.sh and removePNGandDOT.sh..."
 echo "rm -f $OUTPUT/createPNGfromDOT.sh $OUTPUT/removePNGandDOT.sh"
 rm -f $OUTPUT/createPNGfromDOT.sh $OUTPUT/removePNGandDOT.sh
+echo ""
+
+# Delete generated bsp files if they exist
+if [ -f "$OUTPUT/generated_bsp.c" ] || [ -f "$OUTPUT/generated_bsp.h" ]; then
+  echo "Deleting generated bsp files..."
+  echo "rm -f $OUTPUT/generated_bsp.c $OUTPUT/generated_bsp.h"
+  rm -f $OUTPUT/generated_bsp.c $OUTPUT/generated_bsp.h
+else
+  echo "No generated bsp files found. Skipping..."
+fi
 
 echo -e "\nCleanup completed."

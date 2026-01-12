@@ -7,7 +7,7 @@
   #include "astBuild.h"
   #include "astCheck.h"
   #include "astPrint.h"
-  
+  #include "astGenerate.h"
   
   int yylex();
   extern FILE *yyin;
@@ -380,8 +380,9 @@ int main(int argc, char *argv[]){
   log_info("main", LOG_OTHER, 0, "Printing the generated AST to DOT and PNG files");
   ast_print(output_path, ast_root);
   
-  //TODO: Further processing of the AST
-
+  // Generate code from the AST
+  log_info("main", LOG_OTHER, 0, "Generating code from the AST");
+  ast_generate_code(output_path, ast_root);
   
   // Clean up
   ast_free_dsl_node(ast_root);

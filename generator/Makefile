@@ -5,7 +5,7 @@ LEX = flex
 YACC = bison
 
 TARGET = AutoBSP
-OBJS = parserInC.o lexerInC.o lexerHelper.o lexerErrorHelper.o astBuild.o astPrint.o astCheck.o astEnums2Str.o logging.o
+OBJS = parserInC.o lexerInC.o lexerHelper.o lexerErrorHelper.o astBuild.o astPrint.o astCheck.o astGenerate.o astEnums2Str.o logging.o
 
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
@@ -18,6 +18,8 @@ astPrint.o: astPrint.c astPrint.h logging.h astEnums.h moduleEnums.h astEnums2St
 
 astCheck.o: astCheck.c astCheck.h logging.h astEnums.h moduleEnums.h
 
+astGenerate.o: astGenerate.c astGenerate.h logging.h astEnums.h moduleEnums.h
+
 astEnums2Str.o: astEnums2Str.c astEnums2Str.h astEnums.h moduleEnums.h logging.h
 
 lexerInC.o: lexerInC.c logging.h parserInC.h moduleEnums.h  lexerHelper.h lexerErrorHelper.h
@@ -26,7 +28,7 @@ lexerHelper.o: lexerHelper.c lexerHelper.h logging.h
 
 lexerErrorHelper.o: lexerErrorHelper.c lexerErrorHelper.h logging.h
 
-parserInC.o: parserInC.c parserInC.h logging.h astEnums.h moduleEnums.h astEnums2Str.h astBuild.h astCheck.h astPrint.h
+parserInC.o: parserInC.c parserInC.h logging.h astEnums.h moduleEnums.h astEnums2Str.h astBuild.h astCheck.h astPrint.h astGenerate.h
 
 lexerInC.c: lexerDefinition.l
 	$(LEX) -o $@ $<	

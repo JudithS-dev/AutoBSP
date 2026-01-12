@@ -20,11 +20,9 @@ removePNGandDOT.sh
 *.gv
 *.png
 
-# --- Old backup files ---
-generator/old_ast.h
-generator/old_ast.c
-generator/old_lexerDefinition.l
-generator/old_parserDefinition.y
+# --- Generated BSP files ---
+generated_bsp.c
+generated_bsp.h
 
 # --- Some unimportant txt files ---
 some_txt_files/normal_leakreport
