@@ -340,7 +340,7 @@ static void ast_initialize_module(ast_module_node_t* module){
                         module->data.output.type         = GPIO_TYPE_PUSHPULL;
                         module->data.output.pull         = GPIO_PULL_NONE;
                         module->data.output.speed        = GPIO_SPEED_MEDIUM;
-                        module->data.output.init         = GPIO_INIT_NONE;
+                        module->data.output.init         = GPIO_INIT_OFF;
                         module->data.output.active_level = HIGH;
                         break;
     case MODULE_INPUT:  // Initialize input-specific fields to default values

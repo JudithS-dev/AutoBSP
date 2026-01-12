@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 #include "logging.h"
+#include "astGenerateSTM32F446RE.h"
 
 /**
  * @brief Generates board support package (BSP) code files based on the provided DSL AST node.
@@ -33,8 +34,13 @@ void ast_generate_code(const char* output_path, ast_dsl_node_t* dsl_node){
   if(output_source == NULL)
     log_error("ast_generate_code", 0, "Failed to open source file for writing: '%s'", source_path);
   
-  // Generate code based on the AST
-  //TODO: Implement code generation logic here using dsl_node
+  // Check controller type and generate code accordingly
+  switch(dsl_node->controller){
+    case STM32F446RE: ast_generate_header_stm32f446re(output_header, dsl_node);
+                      ast_generate_source_stm32f446re(output_source, dsl_node);
+                      break;
+    default:          log_error("ast_generate_code", 0, "Unsupported controller type enum value '%d'", dsl_node->controller);
+  }
   
   // Close files
   fclose(output_header);

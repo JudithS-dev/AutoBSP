@@ -5,7 +5,7 @@ LEX = flex
 YACC = bison
 
 TARGET = AutoBSP
-OBJS = parserInC.o lexerInC.o lexerHelper.o lexerErrorHelper.o astBuild.o astPrint.o astCheck.o astGenerate.o astEnums2Str.o logging.o
+OBJS = parserInC.o lexerInC.o lexerHelper.o lexerErrorHelper.o astBuild.o astPrint.o astCheck.o astGenerate.o astGenerateSTM32F446RE.o astEnums2Str.o logging.o
 
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
@@ -18,7 +18,9 @@ astPrint.o: astPrint.c astPrint.h logging.h astEnums.h moduleEnums.h astEnums2St
 
 astCheck.o: astCheck.c astCheck.h logging.h astEnums.h moduleEnums.h
 
-astGenerate.o: astGenerate.c astGenerate.h logging.h astEnums.h moduleEnums.h
+astGenerate.o: astGenerate.c astGenerate.h astGenerateSTM32F446RE.h logging.h astEnums.h moduleEnums.h
+
+astGenerateSTM32F446RE.o: astGenerateSTM32F446RE.c astGenerateSTM32F446RE.h logging.h astEnums.h moduleEnums.h
 
 astEnums2Str.o: astEnums2Str.c astEnums2Str.h astEnums.h moduleEnums.h logging.h
 
