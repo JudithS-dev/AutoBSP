@@ -1,5 +1,6 @@
 %{
   #include <stdio.h>
+  #include <stdint.h>
   
   #include "logging.h"
   #include "astEnums.h"
@@ -95,6 +96,7 @@
   gpio_speed_t          u_gpio_speed;         // For parser use
   gpio_init_helper_t    u_helper_gpio_init;   // For val_gpio_init
   gpio_init_t           u_gpio_init;          // For parser use
+  uint32_t              u_nr;                 // For val_nr
 }
 
 %start START
@@ -104,13 +106,15 @@
   /* -------------------------------------------- */
   
   /* -------------- File structure -------------- */
-%token kw_autobsp kw_output kw_input
+%token kw_autobsp kw_output kw_input kw_pwm_output
   
   /* -------------- Parameter names ------------- */
   /* Multiple used parameter names */
 %token kw_controller kw_name kw_pin
   /* GPIO specific parameter names */
 %token kw_gpio_type kw_gpio_pull kw_gpio_speed kw_gpio_init kw_gpio_active kw_enable
+  /* PWM specific parameter names */
+%token kw_pwm_frequency kw_pwm_duty
   
   /* ------------- Parameter values ------------- */
   /* Multiple used parameter values */
@@ -128,6 +132,7 @@
   /* -------- Rules for dynamic patterns -------- */
 %token <u_str> val_name 
 %token <u_pin> val_pin
+%token <u_nr>  val_nr
 
   /* -------------------------------------------- */
   /*   Definition of datatypes of non-terminals   */
@@ -141,6 +146,8 @@
 %type <u_gpio_speed> GPIO_SPEED_PARAM
 %type <u_gpio_init>  GPIO_INIT_PARAM
 %type <u_level>      GPIO_ACTIVE_PARAM
+%type <u_nr>         PWM_FREQUENCY_PARAM
+%type <u_nr>         PWM_DUTY_PARAM
 
 %%
 
@@ -194,6 +201,18 @@ MODULE_DEF: kw_input  { /* Start new input module builder */
                                       ast_dsl_builder_append_module_builder(yylineno, dsl_builder, current_module_builder);
                                       current_module_builder = NULL;
                                     }
+          | kw_pwm_output { /* Start new PWM output module builder */
+                            log_info("MODULE_DEF", LOG_PARSER_FOUND, yylineno, "Found PWM output module definition.");
+                            if(current_module_builder != NULL)
+                              log_error("MODULE_DEF", yylineno, "Previous module builder not finalized before starting new PWM output module.");
+                            current_module_builder = ast_new_module_builder(yylineno);
+                            ast_module_builder_set_kind(yylineno, current_module_builder, MODULE_PWM_OUTPUT);
+                          }
+              '{' PWM_PARAMS '}' { /* Append the current module builder to the DSL builder */
+                                      ast_dsl_builder_append_module_builder(yylineno, dsl_builder, current_module_builder);
+                                      current_module_builder = NULL;
+                                    }
+
 
 INPUT_PARAMS: INPUT_PARAMS INPUT_PARAM END
             | INPUT_PARAM END
@@ -263,6 +282,45 @@ OUTPUT_PARAM: NAME_PARAM          { if(!current_module_builder)
                                     ast_module_builder_set_output_active_level(yylineno, current_module_builder, $1);
                                   }
 
+PWM_PARAMS: PWM_PARAMS PWM_PARAM END
+          | PWM_PARAM END
+
+PWM_PARAM:  NAME_PARAM          { if(!current_module_builder)
+                                    log_error("PWM_PARAM", yylineno, "No current module builder to set name.");
+                                  ast_module_builder_set_name(yylineno, current_module_builder, $1);
+                                  if($1)
+                                    free($1); // Free the in the lexer allocated string
+                                  else
+                                    log_error("PWM_PARAM", yylineno, "PWM_PARAM: Name parameter is NULL.");
+                                }
+          | PIN_PARAM           { if(!current_module_builder)
+                                    log_error("PWM_PARAM", yylineno, "No current module builder to set pin.");
+                                  ast_module_builder_set_pin(yylineno, current_module_builder, $1);
+                                }
+          | ENABLE_PARAM        { if(!current_module_builder)
+                                    log_error("PWM_PARAM", yylineno, "No current module builder to set enable.");
+                                  ast_module_builder_set_enable(yylineno, current_module_builder, $1);
+                                }
+          | GPIO_PULL_PARAM     { if(!current_module_builder)
+                                    log_error("PWM_PARAM", yylineno, "No current module builder to set GPIO pull.");
+                                  ast_module_builder_set_pwm_pull(yylineno, current_module_builder, $1);
+                                }
+          | GPIO_SPEED_PARAM    { if(!current_module_builder)
+                                    log_error("PWM_PARAM", yylineno, "No current module builder to set GPIO speed.");
+                                  ast_module_builder_set_pwm_speed(yylineno, current_module_builder, $1);
+                                }
+          | GPIO_ACTIVE_PARAM   { if(!current_module_builder)
+                                    log_error("PWM_PARAM", yylineno, "No current module builder to set GPIO active level.");
+                                  ast_module_builder_set_pwm_active_level(yylineno, current_module_builder, $1);
+                                }
+          | PWM_FREQUENCY_PARAM { if(!current_module_builder)
+                                    log_error("PWM_PARAM", yylineno, "No current module builder to set PWM frequency.");
+                                  ast_module_builder_set_pwm_frequency(yylineno, current_module_builder, $1);
+                                }
+          | PWM_DUTY_PARAM      { if(!current_module_builder)
+                                    log_error("PWM_PARAM", yylineno, "No current module builder to set PWM duty cycle.");
+                                  ast_module_builder_set_pwm_duty(yylineno, current_module_builder, $1);
+                                }
 
 NAME_PARAM: kw_name ':' val_name                    { $$ = $3;
                                                       log_info("NAME_PARAM", LOG_PARSER_FOUND, yylineno, "Found name parameter with value '%s'", $3);
@@ -307,6 +365,13 @@ GPIO_ACTIVE_PARAM: kw_gpio_active ':' val_level     { $$ = $3;
                                                       log_info("GPIO_ACTIVE_PARAM", LOG_PARSER_FOUND, yylineno, "Found GPIO active level parameter with value '%s'", level_to_string($$));
                                                     }
 
+PWM_FREQUENCY_PARAM: kw_pwm_frequency ':' val_nr    { $$ = $3;
+                                                      log_info("PWM_FREQUENCY_PARAM", LOG_PARSER_FOUND, yylineno, "Found PWM frequency parameter with value '%d'", $3);
+                                                    }
+
+PWM_DUTY_PARAM: kw_pwm_duty ':' val_nr              { $$ = $3;
+                                                      log_info("PWM_DUTY_PARAM", LOG_PARSER_FOUND, yylineno, "Found PWM duty cycle parameter with value '%d'", $3);
+                                                    }
 
 END: ';'
     | /* empty */

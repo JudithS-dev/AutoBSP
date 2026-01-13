@@ -92,8 +92,12 @@ static void ast_print_helper(FILE *pfDot, const ast_dsl_node_t* dsl_node, bool p
     const char *colour = "#FFFFFF";
     if(current_module->kind == MODULE_OUTPUT)
       colour = current_module->enable ? "#B7D9F7" : "#EEF6FD";
-    else // MODULE_INPUT
+    else if(current_module->kind == MODULE_INPUT)
       colour = current_module->enable ? "#C6EFC6" : "#F2FBF2";
+    else if(current_module->kind == MODULE_PWM_OUTPUT)
+      colour = current_module->enable ? "#F7D8B7" : "#FEF3E8";
+    else
+      log_error("ast_print_helper", 0, "Unknown module kind enum value '%d'", current_module->kind);
     
     // Print general module info
     char *pin_str = pin_to_string(current_module->pin);
@@ -113,22 +117,33 @@ static void ast_print_helper(FILE *pfDot, const ast_dsl_node_t* dsl_node, bool p
     
     // Print module-specific data
     switch(current_module->kind){
-      case MODULE_OUTPUT: fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Type:</B> %s</TD></TR>",
-                                          gpio_type_to_string(current_module->data.output.type));
-                          fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Pull:</B> %s</TD></TR>",
-                                          gpio_pull_to_string(current_module->data.output.pull));
-                          fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Speed:</B> %s</TD></TR>",
-                                          gpio_speed_to_string(current_module->data.output.speed));
-                          fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Init:</B> %s</TD></TR>",
-                                          gpio_init_to_string(current_module->data.output.init));
-                          fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Active Level:</B> %s</TD></TR>",
-                                          level_to_string(current_module->data.output.active_level));
-                          break;
-      case MODULE_INPUT:  fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Pull:</B> %s</TD></TR>",
-                                          gpio_pull_to_string(current_module->data.input.pull));
-                          fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Active Level:</B> %s</TD></TR>",
-                                          level_to_string(current_module->data.input.active_level));
-                          break;
+      case MODULE_OUTPUT:       fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Type:</B> %s</TD></TR>",
+                                                gpio_type_to_string(current_module->data.output.type));
+                                fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Pull:</B> %s</TD></TR>",
+                                                gpio_pull_to_string(current_module->data.output.pull));
+                                fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Speed:</B> %s</TD></TR>",
+                                                gpio_speed_to_string(current_module->data.output.speed));
+                                fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Init:</B> %s</TD></TR>",
+                                                gpio_init_to_string(current_module->data.output.init));
+                                fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Active Level:</B> %s</TD></TR>",
+                                                level_to_string(current_module->data.output.active_level));
+                                break;
+      case MODULE_INPUT:        fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Pull:</B> %s</TD></TR>",
+                                                gpio_pull_to_string(current_module->data.input.pull));
+                                fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Active Level:</B> %s</TD></TR>",
+                                                level_to_string(current_module->data.input.active_level));
+                                break;
+      case MODULE_PWM_OUTPUT:   fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Pull:</B> %s</TD></TR>",
+                                          gpio_pull_to_string(current_module->data.pwm.pull));
+                                fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Speed:</B> %s</TD></TR>",
+                                          gpio_speed_to_string(current_module->data.pwm.speed));
+                                fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Active Level:</B> %s</TD></TR>",
+                                          level_to_string(current_module->data.pwm.active_level));
+                                fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Frequency:</B> %u Hz</TD></TR>",
+                                          current_module->data.pwm.frequency);
+                                fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Duty Cycle:</B> %u %%</TD></TR>",
+                                          current_module->data.pwm.duty_cycle);
+                                break;
       default:  log_error("ast_print_helper", 0, "Unknown module kind enum value '%d'", current_module->kind);
                 break; // This won't be reached due to log_error exiting
     }

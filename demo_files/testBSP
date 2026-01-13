@@ -37,4 +37,15 @@ AutoBSP{
     pin:   PB12
     enable: false
   }
+  
+  PWM_OUTPUT{
+    name:     "PWM_1"
+    pin:       PB4
+    pull:      none
+    speed:     medium
+    frequency: 1000  // in Hz
+    duty:      0     // initial duty cycle in permille (0..1000)
+    active:    high
+    enable:    true
+  }
 }

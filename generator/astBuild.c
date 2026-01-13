@@ -55,6 +55,8 @@ ast_module_builder_t* ast_new_module_builder(int line_nr){
   module_builder->speed_set        = false;
   module_builder->init_set         = false;
   module_builder->active_level_set = false;
+  module_builder->frequency_set    = false;
+  module_builder->duty_cycle_set   = false;
   module_builder->next             = NULL;
   
   
@@ -347,6 +349,13 @@ static void ast_initialize_module(ast_module_node_t* module){
                         module->data.input.pull         = GPIO_PULL_NONE;
                         module->data.input.active_level = HIGH;
                         break;
+    case MODULE_PWM_OUTPUT: // Initialize PWM-specific fields to default values
+                        module->data.pwm.pull          = GPIO_PULL_NONE;
+                        module->data.pwm.speed         = GPIO_SPEED_MEDIUM;
+                        module->data.pwm.active_level  = HIGH;
+                        module->data.pwm.frequency     = 1000; // Default frequency 1kHz
+                        module->data.pwm.duty_cycle    = 50;   // Default duty cycle 50%
+                        break;
     default:
       log_error("ast_initialize_module", 0, "Unknown module kind for module '%s'.", 
                 module->name == NULL ? "<NULL>" : module->name);
@@ -550,4 +559,140 @@ void ast_module_builder_set_input_active_level(int line_nr, ast_module_builder_t
   
   module_builder->module->data.input.active_level = active_level;
   module_builder->active_level_set = true;
+}
+
+
+/* -------------------------------------------- */
+/*      Module builder pwm specific setters     */
+/* -------------------------------------------- */
+
+/**
+ * @brief Sets the PWM pull of the PWM module in the AST module builder.
+ * 
+ * @param line_nr Line number where the function is called for logging purposes.
+ * @param module_builder Pointer to the AST module builder.
+ * @param pull PWM pull to set for the PWM module.
+ * 
+ * @note Logs an error and exits if any parameter is NULL.
+ */
+void ast_module_builder_set_pwm_pull(int line_nr, ast_module_builder_t* module_builder, gpio_pull_t pull){
+  if(module_builder == NULL)
+    log_error("ast_module_builder_set_pwm_pull", 0, "AST module builder is NULL.");
+  
+  if(module_builder->module->kind != MODULE_PWM_OUTPUT)
+    log_error("ast_module_builder_set_pwm_pull", line_nr, "Cannot set pwm pull for non-pwm module '%s'.", 
+              module_builder->module->name == NULL ? "<NULL>" : module_builder->module->name);
+  if(module_builder->pull_set)
+    log_error("ast_module_builder_set_pwm_pull", line_nr, "Trying to set pwm pull of module '%s' to '%s'.\n"
+              "                                                    But pwm pull has already been set to '%s'.", 
+              module_builder->module->name == NULL ? "<NULL>" : module_builder->module->name, 
+              gpio_pull_to_string(pull),
+              gpio_pull_to_string(module_builder->module->data.pwm.pull));
+  
+  module_builder->module->data.pwm.pull = pull;
+  module_builder->pull_set = true;
+}
+
+/**
+ * @brief Sets the PWM speed of the PWM module in the AST module builder.
+ * 
+ * @param line_nr Line number where the function is called for logging purposes.
+ * @param module_builder Pointer to the AST module builder.
+ * @param speed PWM speed to set for the PWM module.
+ * 
+ * @note Logs an error and exits if any parameter is NULL.
+ */
+void ast_module_builder_set_pwm_speed(int line_nr, ast_module_builder_t* module_builder, gpio_speed_t speed){
+  if(module_builder == NULL)
+    log_error("ast_module_builder_set_pwm_speed", 0, "AST module builder is NULL.");
+  
+  if(module_builder->module->kind != MODULE_PWM_OUTPUT)
+    log_error("ast_module_builder_set_pwm_speed", line_nr, "Cannot set pwm speed for non-pwm module '%s'.", 
+              module_builder->module->name == NULL ? "<NULL>" : module_builder->module->name);
+  if(module_builder->speed_set)
+    log_error("ast_module_builder_set_pwm_speed", line_nr, "Trying to set pwm speed of module '%s' to '%s'.\n"
+              "                                                    But pwm speed has already been set to '%s'.", 
+              module_builder->module->name == NULL ? "<NULL>" : module_builder->module->name, 
+              gpio_speed_to_string(speed),
+              gpio_speed_to_string(module_builder->module->data.pwm.speed));
+  
+  module_builder->module->data.pwm.speed = speed;
+  module_builder->speed_set = true;
+}
+
+/**
+ * @brief Sets the PWM active level of the PWM module in the AST module builder.
+ * 
+ * @param line_nr Line number where the function is called for logging purposes.
+ * @param module_builder Pointer to the AST module builder.
+ * @param level PWM active level to set for the PWM module.
+ * 
+ * @note Logs an error and exits if any parameter is NULL.
+ */
+void ast_module_builder_set_pwm_active_level(int line_nr, ast_module_builder_t* module_builder, level_t level){
+  if(module_builder == NULL)
+    log_error("ast_module_builder_set_pwm_active_level", 0, "AST module builder is NULL.");
+  
+  if(module_builder->module->kind != MODULE_PWM_OUTPUT)
+    log_error("ast_module_builder_set_pwm_active_level", line_nr, "Cannot set pwm active level for non-pwm module '%s'.", 
+              module_builder->module->name == NULL ? "<NULL>" : module_builder->module->name);
+  if(module_builder->active_level_set)
+    log_error("ast_module_builder_set_pwm_active_level", line_nr, "Trying to set pwm active level of module '%s' to '%s'.\n"
+              "                                                         But pwm active level has already been set to '%s'.", 
+              module_builder->module->name == NULL ? "<NULL>" : module_builder->module->name,
+              level_to_string(level),
+              level_to_string(module_builder->module->data.pwm.active_level));
+  
+  module_builder->module->data.pwm.active_level = level;
+  module_builder->active_level_set = true;
+}
+
+/**
+ * @brief Sets the PWM frequency of the PWM module in the AST module builder.
+ * 
+ * @param line_nr Line number where the function is called for logging purposes.
+ * @param module_builder Pointer to the AST module builder.
+ * @param frequency PWM frequency to set for the PWM module.
+ */
+void ast_module_builder_set_pwm_frequency(int line_nr, ast_module_builder_t* module_builder, uint32_t frequency){
+  if(module_builder == NULL)
+    log_error("ast_module_builder_set_pwm_frequency", 0, "AST module builder is NULL.");
+  
+  if(module_builder->module->kind != MODULE_PWM_OUTPUT)
+    log_error("ast_module_builder_set_pwm_frequency", line_nr, "Cannot set pwm frequency for non-pwm module '%s'.", 
+              module_builder->module->name == NULL ? "<NULL>" : module_builder->module->name);
+  if(module_builder->frequency_set)
+    log_error("ast_module_builder_set_pwm_frequency", line_nr, "Trying to set pwm frequency of module '%s' to '%u'.\n"
+              "                                                     But pwm frequency has already been set to '%u'.", 
+              module_builder->module->name == NULL ? "<NULL>" : module_builder->module->name, 
+              frequency,
+              module_builder->module->data.pwm.frequency);
+  
+  module_builder->module->data.pwm.frequency = frequency;
+  module_builder->frequency_set = true;
+}
+
+/**
+ * @brief Sets the PWM duty cycle of the PWM module in the AST module builder.
+ * 
+ * @param line_nr Line number where the function is called for logging purposes.
+ * @param module_builder Pointer to the AST module builder.
+ * @param duty_cycle PWM duty cycle to set for the PWM module.
+ */
+void ast_module_builder_set_pwm_duty(int line_nr, ast_module_builder_t* module_builder, uint32_t duty_cycle){
+  if(module_builder == NULL)
+    log_error("ast_module_builder_set_pwm_duty", 0, "AST module builder is NULL.");
+  
+  if(module_builder->module->kind != MODULE_PWM_OUTPUT)
+    log_error("ast_module_builder_set_pwm_duty", line_nr, "Cannot set pwm duty cycle for non-pwm module '%s'.", 
+              module_builder->module->name == NULL ? "<NULL>" : module_builder->module->name);
+  if(module_builder->duty_cycle_set)
+    log_error("ast_module_builder_set_pwm_duty", line_nr, "Trying to set pwm duty cycle of module '%s' to '%u'.\n"
+              "                                                    But pwm duty cycle has already been set to '%u'.", 
+              module_builder->module->name == NULL ? "<NULL>" : module_builder->module->name, 
+              duty_cycle,
+              module_builder->module->data.pwm.duty_cycle);
+  
+  module_builder->module->data.pwm.duty_cycle = duty_cycle;
+  module_builder->duty_cycle_set = true;
 }

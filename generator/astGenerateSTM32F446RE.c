@@ -198,7 +198,7 @@ static void generate_source_gpio_func(FILE* output_source, ast_dsl_node_t* dsl_n
     log_error("generate_source_gpio_func", 0, "Output source file pointer is NULL.");
   if(dsl_node == NULL)
     log_error("generate_source_gpio_func", 0, "DSL node is NULL.");
-
+  
   ast_module_node_t *current_module = dsl_node->modules_root;
   while(current_module != NULL){
     if(current_module->enable){
@@ -278,6 +278,8 @@ static void generate_source_gpio_func(FILE* output_source, ast_dsl_node_t* dsl_n
           fprintf(output_source, "  return (HAL_GPIO_ReadPin(GPIO%c, GPIO_PIN_%u) == GPIO_PIN_RESET);\n", current_module->pin.port, current_module->pin.pin_number);
         }
         fprintf(output_source, "}\n");
+      } else if(current_module->kind == MODULE_PWM_OUTPUT){
+        // TODO PWM output functions can be added here in the future
       } else{
         log_error("generate_source_gpio_func", 0, "Unsupported module kind enum value '%d' for module '%s'", current_module->kind, current_module->name);
       }

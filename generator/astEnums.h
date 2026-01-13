@@ -1,6 +1,8 @@
 #ifndef __AST_ENUMS_H__
 #define __AST_ENUMS_H__
 
+#include <stdint.h>
+
 #include "moduleEnums.h"
 
 /**
@@ -10,7 +12,8 @@
  */
 typedef enum{
   MODULE_OUTPUT,
-  MODULE_INPUT
+  MODULE_INPUT,
+  MODULE_PWM_OUTPUT
 } ast_module_kind_t;
 
 /**
@@ -37,6 +40,19 @@ typedef struct{
 } ast_module_input_t;
 
 /**
+ * @brief Structure representing PWM module parameters.
+ * 
+ * Consists of pull-up/pull-down configuration, speed, active level, frequency, and duty cycle.
+ */
+typedef struct{
+  gpio_pull_t  pull;
+  gpio_speed_t speed;
+  level_t      active_level;
+  uint32_t     frequency;
+  uint32_t     duty_cycle;
+} ast_module_pwm_t;
+
+/**
  * @brief Structure representing a module node in the AST.
  * 
  * Consists of node ID, line number, name, pin, module kind, module-specific data, and pointer to the next module node.
@@ -51,6 +67,7 @@ typedef struct ast_module_node_s{
   union{
     ast_module_output_t  output;
     ast_module_input_t   input;
+    ast_module_pwm_t     pwm;
   } data;
   
   struct ast_module_node_s* next;
@@ -73,6 +90,9 @@ typedef struct ast_module_builder_s{
   bool speed_set;
   bool init_set;
   bool active_level_set;
+  
+  bool frequency_set;
+  bool duty_cycle_set;
   
   ast_module_node_t *module;
   struct ast_module_builder_s *next;

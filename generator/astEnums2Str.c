@@ -149,6 +149,7 @@ const char* kind_to_string(ast_module_kind_t kind){
   switch(kind){
     case MODULE_OUTPUT: return "OUTPUT";
     case MODULE_INPUT:  return "INPUT";
+    case MODULE_PWM_OUTPUT: return "PWM_OUTPUT";
     default:  log_error("kind_to_string", 0, "Unknown module kind enum value '%d'", kind); 
               return "UNKNOWN"; // This won't be reached due to log_error exiting
   }

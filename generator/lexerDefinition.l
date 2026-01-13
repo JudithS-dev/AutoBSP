@@ -23,6 +23,7 @@
 NAME_PATTERN        \"[A-Za-z_][A-Za-z0-9_]*\"
 PIN_PATTERN_PXn     P[A-Z]([0-9]|1[0-5])
 PIN_PATTERN_GPIOn   GPIO([0-9]|[1-9][0-9])
+U_NUMBER_PATTERN    [0-9]|[1-9][0-9]+
 
   /* Comment patterns */
 COM_LINE            \/\/
@@ -75,6 +76,9 @@ INVALID_TOKENS      ([^ \n\t\{\}:\/\*;]+|{COMMENT_CHARS})
 "INPUT"             { log_info("\"INPUT\"",   LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
                       return kw_input;
                     }
+"PWM_OUTPUT"        { log_info("\"PWM_OUTPUT\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return kw_pwm_output;
+                    }
 
   /* -------------- Parameter names -------------- */
   /* Multiple used parameter names */
@@ -107,6 +111,15 @@ INVALID_TOKENS      ([^ \n\t\{\}:\/\*;]+|{COMMENT_CHARS})
 "enable"            { log_info("\"enable\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
                       return kw_enable;
                     }
+
+  /* PWM specific parameter names */
+"frequency"         { log_info("\"frequency\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return kw_pwm_frequency;
+                    }
+"duty"              { log_info("\"duty\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return kw_pwm_duty;
+                    }
+
   /* -------------- Parameter values ------------- */
   /* Multiple used parameter values */
   /* Used for 'enable' and '?lock?' */
@@ -201,7 +214,13 @@ INVALID_TOKENS      ([^ \n\t\{\}:\/\*;]+|{COMMENT_CHARS})
                         log_info("{PIN_PATTERN_GPIOn}", LOG_LEXER_CONVERSION, yylineno, "Found pin number '%u' in pin text '%s'", yylval.u_pin.pin_number, yytext);
                         return val_pin;
                       }
-  
+
+{U_NUMBER_PATTERN}    { log_info("{U_NUMBER_PATTERN}", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                        yylval.u_nr = (unsigned int)atoi(yytext);
+                        log_info("{U_NUMBER_PATTERN}", LOG_LEXER_CONVERSION, yylineno, "Converted '%s' to number '%u'", yytext, yylval.u_nr);
+                        return val_nr;
+                      }
+
   /* Special chars */
 {SINGLE_CHARS}        { log_info("{SINGLE_CHARS}", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext); 
                         return yytext[0];

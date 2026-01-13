@@ -32,4 +32,11 @@ void ast_module_builder_set_output_active_level(int line_nr, ast_module_builder_
 void ast_module_builder_set_input_pull(        int line_nr, ast_module_builder_t* module_builder, gpio_pull_t pull);
 void ast_module_builder_set_input_active_level(int line_nr, ast_module_builder_t* module_builder, level_t level);
 
+// Module builder PWM specific setters
+void ast_module_builder_set_pwm_pull(        int line_nr, ast_module_builder_t* module_builder, gpio_pull_t pull);
+void ast_module_builder_set_pwm_speed(       int line_nr, ast_module_builder_t* module_builder, gpio_speed_t speed);
+void ast_module_builder_set_pwm_active_level(int line_nr, ast_module_builder_t* module_builder, level_t level);
+void ast_module_builder_set_pwm_frequency(   int line_nr, ast_module_builder_t* module_builder, uint32_t frequency);
+void ast_module_builder_set_pwm_duty(        int line_nr, ast_module_builder_t* module_builder, uint32_t duty_cycle);
+
 #endif //__AST_BUILD_H__
