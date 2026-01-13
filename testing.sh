@@ -103,4 +103,27 @@ else
   echo "createPNGfromDOT.sh not found. Skipping..."
 fi
 
+# Ask user to choose if the generated code should be copied into a specific directory
+echo "Would you like to copy the generated code into the demo directory?"
+echo " (0) No"
+echo " (1) Yes, into STM32CubeIDE project directory"
+echo -n ": "
+read -r COPY_CHOICE
+
+if [ "$COPY_CHOICE" == "1" ]; then
+  # Check if project directory exists (BSP_test_STM32/Core/Src/ and BSP_test_STM32/Core/Inc/)
+  SRC_DIR="BSP_test_STM32/Core/Src/"
+  INC_DIR="BSP_test_STM32/Core/Inc/"
+  
+  if [ -d "$SRC_DIR" ] && [ -d "$INC_DIR" ]; then
+    echo "Copying generated source file to '$SRC_DIR'..."
+    cp "$OUTPUT/generated_bsp.c" "$SRC_DIR"
+    echo "Copying generated header file to '$INC_DIR'..."
+    cp "$OUTPUT/generated_bsp.h" "$INC_DIR"
+    echo "Files copied successfully."
+  else
+    echo "Error: Project directories '$SRC_DIR' or '$INC_DIR' do not exist. Cannot copy files."
+  fi
+fi
+
 echo -e "\nFinished executing!"
