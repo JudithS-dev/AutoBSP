@@ -5,8 +5,15 @@
 #define STM32F446RE_MAX_PORT 'C' // Maximum port letter for STM32F446RE
 
 static void generate_header_gpio_func(FILE* output_source, ast_dsl_node_t* dsl_node);
-static void generate_source_init_func(FILE* output_source, ast_dsl_node_t* dsl_node);
+static void generate_source_gpio_init_func(FILE* output_source, ast_dsl_node_t* dsl_node);
 static void generate_source_gpio_func(FILE* output_source, ast_dsl_node_t* dsl_node);
+
+static bool has_enabled_gpio_module(ast_dsl_node_t* dsl_node);
+
+
+/* -------------------------------------------- */
+/*               Header functions               */
+/* -------------------------------------------- */
 
 /**
  * @brief Generates the header file content for the STM32F446RE board support package (BSP).
@@ -60,6 +67,11 @@ static void generate_header_gpio_func(FILE* output_source, ast_dsl_node_t* dsl_n
   }
 }
 
+
+/* -------------------------------------------- */
+/*               Source functions               */
+/* -------------------------------------------- */
+
 /**
  * @brief Generates the source file content for the STM32F446RE board support package (BSP).
  * 
@@ -73,31 +85,47 @@ void ast_generate_source_stm32f446re(FILE* output_source, ast_dsl_node_t* dsl_no
     log_error("ast_generate_source_stm32f446re", 0, "DSL node is NULL.");
   
   fprintf(output_source,"#include \"generated_bsp.h\"\n\n");
+  fprintf(output_source,"#include \"stm32f4xx_hal.h\"\n");
   
-  fprintf(output_source,"#include \"stm32f4xx_hal.h\"\n\n");
+  if(has_enabled_gpio_module(dsl_node))
+    fprintf(output_source,"\nstatic void BSP_Init_GPIO(void);\n");
   
-  generate_source_init_func(output_source, dsl_node);
-  generate_source_gpio_func(output_source, dsl_node);
+  fprintf(output_source,"\n");
+  
+  // Generate BSP_Init function
+  fprintf(output_source,"/**\n");
+  fprintf(output_source," * @brief Initializes the board support package (BSP) peripherals and GPIOs.\n");
+  fprintf(output_source," */\n");
+  fprintf(output_source,"void BSP_Init(void){\n");
+  if(has_enabled_gpio_module(dsl_node))
+    fprintf(output_source,"  BSP_Init_GPIO();\n");
+  fprintf(output_source,"}\n");
+  
+  // Generate GPIO initialization function if needed
+  if(has_enabled_gpio_module(dsl_node))
+    generate_source_gpio_init_func(output_source, dsl_node);
+  
+  // Generate GPIO functions if needed
+  if(has_enabled_gpio_module(dsl_node))
+    generate_source_gpio_func(output_source, dsl_node);
 }
 
 /**
- * @brief Generates the source code for the BSP initialization function.
+ * @brief Generates the GPIO initialization function for the STM32F446RE board support package (BSP).
  * 
  * @param output_source File pointer to the output source file.
  * @param dsl_node Pointer to the DSL AST node containing configuration data.
  */
-static void generate_source_init_func(FILE* output_source, ast_dsl_node_t* dsl_node){
+static void generate_source_gpio_init_func(FILE* output_source, ast_dsl_node_t* dsl_node){
   if(output_source == NULL)
-    log_error("generate_source_init_func", 0, "Output source file pointer is NULL.");
+    log_error("generate_source_gpio_init_func", 0, "Output source file pointer is NULL.");
   if(dsl_node == NULL)
-    log_error("generate_source_init_func", 0, "DSL node is NULL.");
+    log_error("generate_source_gpio_init_func", 0, "DSL node is NULL.");
   
-  fprintf(output_source,"/**\n");
-  fprintf(output_source," * @brief Initializes the board support package (BSP) peripherals and GPIOs.\n");
-  fprintf(output_source," * \n");
-  fprintf(output_source," * This function enables the necessary GPIO clocks and configures the GPIO pins\n");
+  fprintf(output_source,"\n/**\n");
+  fprintf(output_source," * @brief Initializes the GPIO pins (inputs and outputs).\n");
   fprintf(output_source," */\n");
-  fprintf(output_source,"void BSP_Init(void){\n");
+  fprintf(output_source,"void BSP_Init_GPIO(void){\n");
   
   // Enable all needed GPIO port clocks
   fprintf(output_source,"  /* Enable GPIO Ports Clock */\n");
@@ -174,7 +202,7 @@ static void generate_source_init_func(FILE* output_source, ast_dsl_node_t* dsl_n
         }
       }
       else if(current_module->kind == MODULE_INPUT){
-        fprintf(output_source, "  \n  /*Configure INPUT GPIO pin: '%s' */\n", current_module->name);
+        fprintf(output_source, "  \n  /* Configure INPUT GPIO pin: '%s' */\n", current_module->name);
         fprintf(output_source, "  GPIO_InitStruct.Pin = GPIO_PIN_%u;\n", current_module->pin.pin_number);
         fprintf(output_source, "  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;\n");
         fprintf(output_source, "  GPIO_InitStruct.Pull = ");
@@ -286,4 +314,29 @@ static void generate_source_gpio_func(FILE* output_source, ast_dsl_node_t* dsl_n
     }
     current_module = current_module->next;
   }
+}
+
+
+/* -------------------------------------------- */
+/*               Helper functions               */
+/* -------------------------------------------- */
+
+/**
+ * @brief Checks if there is at least one enabled GPIO module (input or output) in the DSL node.
+ * 
+ * @param dsl_node Pointer to the DSL AST node.
+ * @return true if there is at least one enabled GPIO module; false otherwise.
+ */
+static bool has_enabled_gpio_module(ast_dsl_node_t* dsl_node){
+  if(dsl_node == NULL)
+    log_error("has_enabled_gpio_module", 0, "DSL node is NULL.");
+  
+  ast_module_node_t *current_module = dsl_node->modules_root;
+  while(current_module != NULL){
+    if(current_module->enable && (current_module->kind == MODULE_OUTPUT || current_module->kind == MODULE_INPUT)){
+      return true;
+    }
+    current_module = current_module->next;
+  }
+  return false;
 }
