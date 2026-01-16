@@ -143,6 +143,18 @@ static void ast_print_helper(FILE *pfDot, const ast_dsl_node_t* dsl_node, bool p
                                           current_module->data.pwm.frequency);
                                 fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Duty Cycle:</B> %u %%</TD></TR>",
                                           current_module->data.pwm.duty_cycle);
+                                if(dsl_node->controller == STM32F446RE){
+                                  fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>TIM Number:</B> %u</TD></TR>",
+                                            current_module->data.pwm.tim_number);
+                                  fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>TIM Channel:</B> %u</TD></TR>",
+                                            current_module->data.pwm.tim_channel);
+                                  fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>GPIO AF:</B> %u</TD></TR>",
+                                            current_module->data.pwm.gpio_af);
+                                  fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Prescaler:</B> %u</TD></TR>",
+                                            current_module->data.pwm.prescaler);
+                                  fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Period:</B> %u</TD></TR>",
+                                            current_module->data.pwm.period);
+                                }
                                 break;
       default:  log_error("ast_print_helper", 0, "Unknown module kind enum value '%d'", current_module->kind);
                 break; // This won't be reached due to log_error exiting

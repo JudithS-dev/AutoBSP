@@ -355,6 +355,11 @@ static void ast_initialize_module(ast_module_node_t* module){
                         module->data.pwm.active_level  = HIGH;
                         module->data.pwm.frequency     = 1000; // Default frequency 1kHz
                         module->data.pwm.duty_cycle    = 50;   // Default duty cycle 50%
+                        module->data.pwm.tim_number    = 0;
+                        module->data.pwm.tim_channel   = 0;
+                        module->data.pwm.gpio_af       = 0;
+                        module->data.pwm.prescaler     = 0;
+                        module->data.pwm.period        = 0;
                         break;
     default:
       log_error("ast_initialize_module", 0, "Unknown module kind for module '%s'.", 

@@ -50,6 +50,13 @@ typedef struct{
   level_t      active_level;
   uint32_t     frequency;
   uint32_t     duty_cycle;
+  
+  /* generator selected parameters */
+  uint8_t      tim_number;    // Timer number selected by generator
+  uint8_t      tim_channel;   // Timer channel selected by generator
+  uint8_t      gpio_af;       // GPIO Alternate Function number selected by generator
+  uint16_t     prescaler;     // Timer prescaler selected by generator
+  uint32_t     period;        // Timer period selected by generator
 } ast_module_pwm_t;
 
 /**
