@@ -7,7 +7,10 @@
 static void generate_header_gpio_func(FILE* output_source, ast_dsl_node_t* dsl_node);
 static void generate_header_pwm_func(FILE* output_source, ast_dsl_node_t* dsl_node);
 
+static void generate_source_timer_handle_declaration(FILE* output_source, ast_dsl_node_t* dsl_node);
+static void generate_source_pwm_init_call(FILE* output_source, ast_dsl_node_t* dsl_node);
 static void generate_source_gpio_init_func(FILE* output_source, ast_dsl_node_t* dsl_node);
+static void generate_source_pwm_init_func(FILE* output_source, ast_dsl_node_t* dsl_node);
 static void generate_source_gpio_func(FILE* output_source, ast_dsl_node_t* dsl_node);
 
 static bool has_enabled_gpio_module(ast_dsl_node_t* dsl_node);
@@ -137,11 +140,9 @@ void ast_generate_source_stm32f446re(FILE* output_source, ast_dsl_node_t* dsl_no
   if(has_enabled_gpio_module(dsl_node))
     fprintf(output_source,"\nstatic void BSP_Init_GPIO(void);\n");
   
-  if(has_enabled_pwm_module(dsl_node)){
-    fprintf(output_source,"\nstatic void BSP_Init_PWM_TIM3(void);\n");
-  }
+  generate_source_timer_handle_declaration(output_source, dsl_node);
   
-  fprintf(output_source,"\n");
+  fprintf(output_source,"\n\n// ---------- INITIALIZATION FUNCTIONS ----------\n\n");
   
   // Generate BSP_Init function
   fprintf(output_source,"/**\n");
@@ -150,15 +151,70 @@ void ast_generate_source_stm32f446re(FILE* output_source, ast_dsl_node_t* dsl_no
   fprintf(output_source,"void BSP_Init(void){\n");
   if(has_enabled_gpio_module(dsl_node))
     fprintf(output_source,"  BSP_Init_GPIO();\n");
+  generate_source_pwm_init_call(output_source, dsl_node);
   fprintf(output_source,"}\n");
   
   // Generate GPIO initialization function if needed
   if(has_enabled_gpio_module(dsl_node))
     generate_source_gpio_init_func(output_source, dsl_node);
   
+  if(has_enabled_pwm_module(dsl_node))
+    generate_source_pwm_init_func(output_source, dsl_node);
+  
   // Generate GPIO functions if needed
   if(has_enabled_gpio_module(dsl_node))
     generate_source_gpio_func(output_source, dsl_node);
+}
+
+/**
+ * @brief Generates the timer handle declarations for PWM modules.
+ * 
+ * @param output_source File pointer to the output source file.
+ * @param dsl_node Pointer to the DSL AST node containing configuration data.
+ */
+static void generate_source_timer_handle_declaration(FILE* output_source, ast_dsl_node_t* dsl_node){
+  if(output_source == NULL)
+    log_error("generate_source_timer_handle_declaration", 0, "Output source file pointer is NULL.");
+  if(dsl_node == NULL)
+    log_error("generate_source_timer_handle_declaration", 0, "DSL node is NULL.");
+  
+  bool first_declaration = true;
+  ast_module_node_t *current_module = dsl_node->modules_root;
+  while(current_module != NULL){
+    if(current_module->enable){
+      if(current_module->kind == MODULE_PWM_OUTPUT){
+        if(first_declaration){
+          fprintf(output_source, "\n/* Timer handle declarations for PWM modules */\n");
+          first_declaration = false;
+        }
+        fprintf(output_source, "static TIM_HandleTypeDef htim%u;\n", current_module->data.pwm.tim_number);
+      }
+    }
+    current_module = current_module->next;
+  }
+}
+
+/**
+ * @brief Generates the PWM initialization calls for enabled PWM modules.
+ * 
+ * @param output_source File pointer to the output source file.
+ * @param dsl_node Pointer to the DSL AST node containing configuration data.
+ */
+static void generate_source_pwm_init_call(FILE* output_source, ast_dsl_node_t* dsl_node){
+  if(output_source == NULL)
+    log_error("generate_source_pwm_init_call", 0, "Output source file pointer is NULL.");
+  if(dsl_node == NULL)
+    log_error("generate_source_pwm_init_call", 0, "DSL node is NULL.");
+  
+  ast_module_node_t *current_module = dsl_node->modules_root;
+  while(current_module != NULL){
+    if(current_module->enable){
+      if(current_module->kind == MODULE_PWM_OUTPUT){
+        fprintf(output_source, "  BSP_Init_PWM_TIM%u();\n", current_module->data.pwm.tim_number);
+      }
+    }
+    current_module = current_module->next;
+  }
 }
 
 /**
@@ -212,14 +268,14 @@ static void generate_source_gpio_init_func(FILE* output_source, ast_dsl_node_t* 
       }
       if(current_module->kind == MODULE_OUTPUT){
         fprintf(output_source, "  \n  /* Configure OUTPUT GPIO pin: '%s' */\n", current_module->name);
-        fprintf(output_source, "  GPIO_InitStruct.Pin = GPIO_PIN_%u;\n", current_module->pin.pin_number);
-        fprintf(output_source, "  GPIO_InitStruct.Mode = ");
+        fprintf(output_source, "  GPIO_InitStruct.Pin   = GPIO_PIN_%u;\n", current_module->pin.pin_number);
+        fprintf(output_source, "  GPIO_InitStruct.Mode  = ");
         switch(current_module->data.output.type){
           case GPIO_TYPE_PUSHPULL:  fprintf(output_source, "GPIO_MODE_OUTPUT_PP;\n"); break;
           case GPIO_TYPE_OPENDRAIN: fprintf(output_source, "GPIO_MODE_OUTPUT_OD;\n"); break;
           default:                  log_error("ast_generate_source_stm32f446re", 0, "Unsupported GPIO type enum value '%d' for module '%s'", current_module->data.output.type, current_module->name);
         }
-        fprintf(output_source, "  GPIO_InitStruct.Pull = ");
+        fprintf(output_source, "  GPIO_InitStruct.Pull  = ");
         switch(current_module->data.output.pull){
           case GPIO_PULL_UP:   fprintf(output_source, "GPIO_PULLUP;\n");   break;
           case GPIO_PULL_DOWN: fprintf(output_source, "GPIO_PULLDOWN;\n"); break;
@@ -254,7 +310,7 @@ static void generate_source_gpio_init_func(FILE* output_source, ast_dsl_node_t* 
       }
       else if(current_module->kind == MODULE_INPUT){
         fprintf(output_source, "  \n  /* Configure INPUT GPIO pin: '%s' */\n", current_module->name);
-        fprintf(output_source, "  GPIO_InitStruct.Pin = GPIO_PIN_%u;\n", current_module->pin.pin_number);
+        fprintf(output_source, "  GPIO_InitStruct.Pin  = GPIO_PIN_%u;\n", current_module->pin.pin_number);
         fprintf(output_source, "  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;\n");
         fprintf(output_source, "  GPIO_InitStruct.Pull = ");
         switch(current_module->data.input.pull){
@@ -272,6 +328,97 @@ static void generate_source_gpio_init_func(FILE* output_source, ast_dsl_node_t* 
   fprintf(output_source,"}\n");
 }
 
+/**
+ * @brief Generates the PWM initialization function for the STM32F446RE board support package (BSP).
+ * 
+ * @param output_source File pointer to the output source file.
+ * @param dsl_node Pointer to the DSL AST node containing configuration data.
+ */
+static void generate_source_pwm_init_func(FILE* output_source, ast_dsl_node_t* dsl_node){
+  if(output_source == NULL)
+    log_error("generate_source_pwm_init_func", 0, "Output source file pointer is NULL.");
+  if(dsl_node == NULL)
+    log_error("generate_source_pwm_init_func", 0, "DSL node is NULL.");
+  
+  ast_module_node_t *current_module = dsl_node->modules_root;
+  while(current_module != NULL){
+    if(current_module->enable){
+      if(current_module->kind == MODULE_PWM_OUTPUT){
+        // Generate PWM initialization function
+        fprintf(output_source, "\n/**\n");
+        fprintf(output_source, " * @brief Initializes the PWM on TIM%u for module '%s'.\n", current_module->data.pwm.tim_number, current_module->name);
+        fprintf(output_source, " */\n");
+        fprintf(output_source, "void BSP_Init_PWM_TIM%u(void){\n", current_module->data.pwm.tim_number);
+        
+        fprintf(output_source, "  /* Enable clocks */\n");
+        fprintf(output_source, "  __HAL_RCC_GPIO%c_CLK_ENABLE();\n", current_module->pin.port);
+        fprintf(output_source, "  __HAL_RCC_TIM%u_CLK_ENABLE();\n", current_module->data.pwm.tim_number);
+        fprintf(output_source, "  \n");
+        
+        fprintf(output_source, "  /* Configure GPIO pin for PWM output */\n");
+        fprintf(output_source, "  GPIO_InitTypeDef GPIO_InitStruct = {0};\n");
+        fprintf(output_source, "  GPIO_InitStruct.Pin       = GPIO_PIN_%u;\n", current_module->pin.pin_number);
+        fprintf(output_source, "  GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;\n");
+        fprintf(output_source, "  GPIO_InitStruct.Pull      = ");
+        switch(current_module->data.pwm.pull){
+          case GPIO_PULL_UP:   fprintf(output_source, "GPIO_PULLUP;\n");   break;
+          case GPIO_PULL_DOWN: fprintf(output_source, "GPIO_PULLDOWN;\n"); break;
+          case GPIO_PULL_NONE: fprintf(output_source, "GPIO_NOPULL;\n");   break;
+          default:             log_error("ast_generate_source_stm32f446re", 0, "Unsupported GPIO pull enum value '%d' for module '%s'", current_module->data.pwm.pull, current_module->name);
+        }
+        fprintf(output_source, "  GPIO_InitStruct.Speed     = ");
+        switch(current_module->data.pwm.speed){
+          case GPIO_SPEED_LOW:        fprintf(output_source, "GPIO_SPEED_FREQ_LOW;\n");        break;
+          case GPIO_SPEED_MEDIUM:     fprintf(output_source, "GPIO_SPEED_FREQ_MEDIUM;\n");     break;
+          case GPIO_SPEED_HIGH:       fprintf(output_source, "GPIO_SPEED_FREQ_HIGH;\n");       break;
+          case GPIO_SPEED_VERY_HIGH:  fprintf(output_source, "GPIO_SPEED_FREQ_VERY_HIGH;\n");  break;
+          default:                    log_error("ast_generate_source_stm32f446re", 0, "Unsupported GPIO speed enum value '%d' for module '%s'", current_module->data.pwm.speed, current_module->name);
+        }
+        fprintf(output_source, "  GPIO_InitStruct.Alternate = GPIO_AF%u_TIM%u;\n", current_module->data.pwm.gpio_af, current_module->data.pwm.tim_number);
+        fprintf(output_source, "  HAL_GPIO_Init(GPIO%c, &GPIO_InitStruct);\n", current_module->pin.port);
+        fprintf(output_source, "  \n");
+        
+        fprintf(output_source, "  /* Configure TIM%u for PWM */\n", current_module->data.pwm.tim_number);
+        fprintf(output_source, "  htim%u.Instance               = TIM%u;\n", current_module->data.pwm.tim_number, current_module->data.pwm.tim_number);
+        fprintf(output_source, "  htim%u.Init.Prescaler         = %u;\n", current_module->data.pwm.tim_number, current_module->data.pwm.prescaler);
+        fprintf(output_source, "  htim%u.Init.CounterMode       = TIM_COUNTERMODE_UP;\n", current_module->data.pwm.tim_number);
+        fprintf(output_source, "  htim%u.Init.Period            = %u;\n", current_module->data.pwm.tim_number, current_module->data.pwm.period);
+        fprintf(output_source, "  htim%u.Init.ClockDivision     = TIM_CLOCKDIVISION_DIV1;\n", current_module->data.pwm.tim_number);
+        fprintf(output_source, "  htim%u.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;\n", current_module->data.pwm.tim_number);
+        fprintf(output_source, "  if(HAL_TIM_PWM_Init(&htim%u) != HAL_OK)\n", current_module->data.pwm.tim_number);
+        fprintf(output_source, "    Error_Handler();\n");
+        fprintf(output_source, "  \n");
+        
+        fprintf(output_source, "  /* Configure PWM channel */\n");
+        fprintf(output_source, "  TIM_OC_InitTypeDef sConfigOC = {0};\n");
+        fprintf(output_source, "  sConfigOC.OCMode        = TIM_OCMODE_PWM1;\n"); // Is always PWM1 (PWM2 would be inverted)
+        fprintf(output_source, "  sConfigOC.Pulse         = 0; // Initial duty cycle is 0\n");
+        fprintf(output_source, "  sConfigOC.OCPolarity    = ");
+        if(current_module->data.pwm.active_level == HIGH)
+          fprintf(output_source, "TIM_OCPOLARITY_HIGH;\n");
+        else
+          fprintf(output_source, "TIM_OCPOLARITY_LOW;\n");
+        fprintf(output_source, "  sConfigOC.OCFastMode    = TIM_OCFAST_DISABLE;\n");
+        fprintf(output_source, "  if(HAL_TIM_PWM_ConfigChannel(&htim%u, &sConfigOC, TIM_CHANNEL_%u) != HAL_OK)\n", current_module->data.pwm.tim_number, current_module->data.pwm.tim_channel);
+        fprintf(output_source, "    Error_Handler();\n");
+        fprintf(output_source, "  \n");
+        
+        fprintf(output_source, "  /* Ensure PWM is stopped initially */\n");
+        fprintf(output_source, "  __HAL_TIM_SET_COMPARE(&htim%u, TIM_CHANNEL_%u, 0);\n", current_module->data.pwm.tim_number, current_module->data.pwm.tim_channel);
+        
+        fprintf(output_source, "}\n");
+      }
+    }
+    current_module = current_module->next;
+  }
+}
+
+/**
+ * @brief Generates the GPIO functions for the STM32F446RE board support package (BSP).
+ * 
+ * @param output_source File pointer to the output source file.
+ * @param dsl_node Pointer to the DSL AST node containing configuration data.
+ */
 static void generate_source_gpio_func(FILE* output_source, ast_dsl_node_t* dsl_node){
   if(output_source == NULL)
     log_error("generate_source_gpio_func", 0, "Output source file pointer is NULL.");
