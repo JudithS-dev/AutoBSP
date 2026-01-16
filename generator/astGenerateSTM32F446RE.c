@@ -5,10 +5,13 @@
 #define STM32F446RE_MAX_PORT 'C' // Maximum port letter for STM32F446RE
 
 static void generate_header_gpio_func(FILE* output_source, ast_dsl_node_t* dsl_node);
+static void generate_header_pwm_func(FILE* output_source, ast_dsl_node_t* dsl_node);
+
 static void generate_source_gpio_init_func(FILE* output_source, ast_dsl_node_t* dsl_node);
 static void generate_source_gpio_func(FILE* output_source, ast_dsl_node_t* dsl_node);
 
 static bool has_enabled_gpio_module(ast_dsl_node_t* dsl_node);
+static bool has_enabled_pwm_module(ast_dsl_node_t* dsl_node);
 
 
 /* -------------------------------------------- */
@@ -28,17 +31,29 @@ void ast_generate_header_stm32f446re(FILE* output_header, ast_dsl_node_t* dsl_no
     log_error("ast_generate_header_stm32f446re", 0, "DSL node is NULL.");
   
   fprintf(output_header,"#ifndef __GENERATED_BSP_H__\n");
-  fprintf(output_header,"#define __GENERATED_BSP_H__\n\n");
+  fprintf(output_header,"#define __GENERATED_BSP_H__\n");
   
-  fprintf(output_header,"#include <stdbool.h>\n\n");
+  if(has_enabled_gpio_module(dsl_node))
+    fprintf(output_header,"\n#include <stdbool.h>");
   
-  fprintf(output_header,"void BSP_Init(void);\n");
+  if(has_enabled_pwm_module(dsl_node))
+    fprintf(output_header,"\n#include <stdint.h>");
+  
+  fprintf(output_header,"\n\nvoid BSP_Init(void);\n");
   
   generate_header_gpio_func(output_header, dsl_node);
   
-  fprintf(output_header,"#endif // __GENERATED_BSP_H__");
+  generate_header_pwm_func(output_header, dsl_node);
+  
+  fprintf(output_header,"\n#endif // __GENERATED_BSP_H__");
 }
 
+/**
+ * @brief Generates the header file content for GPIO functions for the STM32F446RE board support package (BSP).
+ * 
+ * @param output_source File pointer to the output source file.
+ * @param dsl_node Pointer to the DSL AST node containing configuration data.
+ */
 static void generate_header_gpio_func(FILE* output_source, ast_dsl_node_t* dsl_node){
   if(output_source == NULL)
     log_error("generate_header_gpio_func", 0, "Output source file pointer is NULL.");
@@ -67,6 +82,34 @@ static void generate_header_gpio_func(FILE* output_source, ast_dsl_node_t* dsl_n
   }
 }
 
+/**
+ * @brief Generates the header file content for PWM functions for the STM32F446RE board support package (BSP).
+ * 
+ * @param output_source File pointer to the output source file.
+ * @param dsl_node Pointer to the DSL AST node containing configuration data.
+ */
+static void generate_header_pwm_func(FILE* output_source, ast_dsl_node_t* dsl_node){
+  if(output_source == NULL)
+    log_error("generate_header_pwm_func", 0, "Output source file pointer is NULL.");
+  if(dsl_node == NULL)
+    log_error("generate_header_pwm_func", 0, "DSL node is NULL.");
+  
+  ast_module_node_t *current_module = dsl_node->modules_root;
+  while(current_module != NULL){
+    if(current_module->enable){
+      if(current_module->kind == MODULE_PWM_OUTPUT){
+        // Generate function prototypes for PWM output modules
+        fprintf(output_source, "\n/* PWM OUTPUT: '%s' */\n", current_module->name);
+        fprintf(output_source, "void BSP_%s_Start(void);\n", current_module->name);
+        fprintf(output_source, "void BSP_%s_Stop(void);\n", current_module->name);
+        fprintf(output_source, "void BSP_%s_SetDuty(uint16_t permille); // 0..1000\n", current_module->name);
+        fprintf(output_source, "uint16_t BSP_%s_GetDuty(void);\n", current_module->name);
+      }
+    }
+    current_module = current_module->next;
+  }
+}
+
 
 /* -------------------------------------------- */
 /*               Source functions               */
@@ -87,8 +130,16 @@ void ast_generate_source_stm32f446re(FILE* output_source, ast_dsl_node_t* dsl_no
   fprintf(output_source,"#include \"generated_bsp.h\"\n\n");
   fprintf(output_source,"#include \"stm32f4xx_hal.h\"\n");
   
+  if(has_enabled_pwm_module(dsl_node)){
+    fprintf(output_source,"\nextern void Error_Handler(void);\n");
+  }
+  
   if(has_enabled_gpio_module(dsl_node))
     fprintf(output_source,"\nstatic void BSP_Init_GPIO(void);\n");
+  
+  if(has_enabled_pwm_module(dsl_node)){
+    fprintf(output_source,"\nstatic void BSP_Init_PWM_TIM3(void);\n");
+  }
   
   fprintf(output_source,"\n");
   
@@ -334,6 +385,26 @@ static bool has_enabled_gpio_module(ast_dsl_node_t* dsl_node){
   ast_module_node_t *current_module = dsl_node->modules_root;
   while(current_module != NULL){
     if(current_module->enable && (current_module->kind == MODULE_OUTPUT || current_module->kind == MODULE_INPUT)){
+      return true;
+    }
+    current_module = current_module->next;
+  }
+  return false;
+}
+
+/**
+ * @brief Checks if there is at least one enabled PWM output module in the DSL node.
+ * 
+ * @param dsl_node Pointer to the DSL AST node.
+ * @return true if there is at least one enabled PWM output module; false otherwise.
+ */
+static bool has_enabled_pwm_module(ast_dsl_node_t* dsl_node){
+  if(dsl_node == NULL)
+    log_error("has_enabled_pwm_module", 0, "DSL node is NULL.");
+  
+  ast_module_node_t *current_module = dsl_node->modules_root;
+  while(current_module != NULL){
+    if(current_module->enable && current_module->kind == MODULE_PWM_OUTPUT){
       return true;
     }
     current_module = current_module->next;
