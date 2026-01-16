@@ -9,6 +9,7 @@
 static const pin_cap_t* pincap_find_stm32f446re(char port, uint8_t num);
 static void is_valid_stm32f446re_pin(pin_t pin);
 static void bind_pwm_pins_stm32f446re(ast_dsl_node_t* dsl_node);
+static void bind_pwm_prescaler_period_stm32f446re(ast_dsl_node_t* dsl_node);
 
 
 /* -------------------------------------------- */
@@ -89,6 +90,7 @@ static void is_valid_stm32f446re_pin(pin_t pin){
  */
 void ast_check_stm32f446re_bind_pins(ast_dsl_node_t* dsl_node){
   bind_pwm_pins_stm32f446re(dsl_node);
+  bind_pwm_prescaler_period_stm32f446re(dsl_node);
 }
 
 /**
@@ -130,6 +132,48 @@ static void bind_pwm_pins_stm32f446re(ast_dsl_node_t* dsl_node){
           break;
         }
       }
+    }
+    current_module = current_module->next;
+  }
+}
+
+#define STM32F446RE_TIMER_CLOCK_HZ 84000000u
+#define PWM_FIXED_ARR 999u
+#define PWM_MAX_PRESCALER 0xFFFFu
+
+/**
+ * @brief Binds PWM prescaler and period for STM32F446RE.
+ * 
+ * @param dsl_node Pointer to the DSL node.
+ * 
+ * Calculates and assigns prescaler and period values for PWM output modules based on target frequency.
+ */
+static void bind_pwm_prescaler_period_stm32f446re(ast_dsl_node_t* dsl_node){
+  ast_module_node_t* current_module = dsl_node->modules_root;
+  while(current_module != NULL){
+    if(current_module->enable && (current_module->kind == MODULE_PWM_OUTPUT)){
+      uint32_t target_freq = current_module->data.pwm.frequency;
+      if(target_freq == 0){
+        log_error("bind_pwm_prescaler_period_stm32f446re", current_module->line_nr, "PWM frequency cannot be zero for module '%s'.",
+                  current_module->name);
+      }
+      
+      // Set period to 999 for 0.1% resolution
+      current_module->data.pwm.period = PWM_FIXED_ARR;
+      
+      // Calculate prescaler
+      const uint32_t denom = (target_freq * (PWM_FIXED_ARR + 1u));
+      if(denom == 0)
+        log_error("bind_pwm_prescaler_period_stm32f446re", current_module->line_nr, "Invalid calculation for prescaler for module '%s'.",
+                  current_module->name);
+      if(denom > STM32F446RE_TIMER_CLOCK_HZ)
+        log_error("bind_pwm_prescaler_period_stm32f446re", current_module->line_nr, "Target frequency too low for PWM module '%s'.",
+                  current_module->name);
+      uint32_t prescaler = (STM32F446RE_TIMER_CLOCK_HZ / denom) - 1u;
+      if(prescaler > PWM_MAX_PRESCALER)
+        log_error("bind_pwm_prescaler_period_stm32f446re", current_module->line_nr, "Calculated prescaler too high for PWM module '%s'.",
+                  current_module->name);
+      current_module->data.pwm.prescaler = (uint16_t)prescaler;
     }
     current_module = current_module->next;
   }
