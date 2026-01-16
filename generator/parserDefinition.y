@@ -431,17 +431,17 @@ int main(int argc, char *argv[]){
   log_info("main", LOG_OTHER, 0, "Building the AST from the DSL builder");
   ast_dsl_node_t* ast_root = ast_convert_dsl_builder_to_dsl_node(dsl_builder);
   
-  // Check if enabled names are unique
-  log_info("main", LOG_OTHER, 0, "Checking enabled modules for unique names in the AST");
-  ast_check_unique_enabled_names(ast_root);
-  
-  // Check if enabled pins are unique
-  log_info("main", LOG_OTHER, 0, "Checking enabled modules for unique pins in the AST");
-  ast_check_unique_enabled_pins(ast_root);
+  // Check the AST datastructure
+  log_info("main", LOG_OTHER, 0, "Performing AST checks for the datastructure");
+  ast_check_all_enabled_modules(ast_root);
   
   // Sort modules by pin number for better readability
   log_info("main", LOG_OTHER, 0, "Sorting modules by pin number for better readability");
   ast_sort_modules_by_pin(ast_root);
+  
+  // Bind backend specific parameters
+  log_info("main", LOG_OTHER, 0, "Binding backend specific parameters to the AST");
+  ast_bind_backend_specific_params(ast_root);
   
   // Print the generated AST
   log_info("main", LOG_OTHER, 0, "Printing the generated AST to DOT and PNG files");

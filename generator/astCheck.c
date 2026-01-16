@@ -2,11 +2,16 @@
 
 #include <stdlib.h>
 #include <string.h>
+
 #include "logging.h"
+#include "astCheckSTM32F446RE.h"
+#include "astEnums2Str.h"
 
 static void ast_check_required_dsl_params(ast_dsl_builder_t* dsl_builder);
 static void ast_check_required_module_params(ast_module_builder_t* module_builder);
 
+void ast_check_unique_enabled_names(ast_dsl_node_t* dsl_node);
+void ast_check_unique_enabled_pins(ast_dsl_node_t* dsl_node);
 static bool is_c_keyword(const char* name);
 static int get_line_nr_of_module(ast_dsl_node_t* dsl_node, const char* module_name);
 
@@ -87,6 +92,22 @@ void ast_check_required_module_params(ast_module_builder_t* module_builder){
 /* -------------------------------------------- */
 /*               Uniqueness checks              */
 /* -------------------------------------------- */
+/**
+ * @brief Checks all enabled modules for uniqueness and validity.
+ * 
+ * @param dsl_node Pointer to the DSL node.
+ */
+void ast_check_all_enabled_modules(ast_dsl_node_t* dsl_node){
+  ast_check_unique_enabled_names(dsl_node);
+  ast_check_unique_enabled_pins(dsl_node);
+  
+  // Perform microcontroller specific checks
+  switch(dsl_node->controller){
+    case STM32F446RE: ast_check_stm32f446re_valid_pins(dsl_node);
+                      break;
+    default:          log_error("ast_check_all_enabled_modules", 0, "Unsupported controller '%s' for uniqueness checks.", controller_to_string(dsl_node->controller));
+  }
+}
 
 /**
  * @brief Checks if enabled module names are unique and not C keywords.
@@ -162,7 +183,7 @@ void ast_check_unique_enabled_pins(ast_dsl_node_t* dsl_node){
     if(current->enable){
       ast_module_node_t* checker = current->next;
       while(checker != NULL){
-        if(checker->enable){
+        if(checker->enable){ // TODO fix in the future that it works with UART pins as well
           if(current->pin.port == checker->pin.port && current->pin.pin_number == checker->pin.pin_number){
             log_error("ast_check_unique_enabled_pins", 0,
                       "Duplicate enabled module pin found: Port %c Pin %d is used by both module '%s' (line %d) and module '%s' (line %d).",
@@ -316,4 +337,24 @@ static int compare_modules_by_pin(const ast_module_node_t *a, const ast_module_n
     return 1;
   else
     return 0;
+}
+
+/* -------------------------------------------- */
+/*     Backend specific parameter bindings      */
+/* -------------------------------------------- */
+/**
+ * @brief Binds backend specific parameters based on the microcontroller.
+ * 
+ * @param dsl_node Pointer to the DSL node.
+ */
+void ast_bind_backend_specific_params(ast_dsl_node_t* dsl_node){
+  if(dsl_node == NULL)
+    log_error("ast_bind_backend_specific_params", 0, "DSL node is NULL.");
+  
+  // Perform microcontroller specific bindings
+  switch(dsl_node->controller){
+    case STM32F446RE: ast_check_stm32f446re_bind_pins(dsl_node);
+                      break;
+    default:          log_error("ast_bind_backend_specific_params", 0, "Unsupported controller '%s' for backend specific parameter bindings.", controller_to_string(dsl_node->controller));
+  }
 }

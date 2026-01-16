@@ -4,7 +4,7 @@ AutoBSP{
   /*pin This is a /* multi-layered // test comment
       block*/ pushpull*/
   
-  OUTPUT{
+  /*OUTPUT{
     name:    "LED_1"
     pin:     PA5;  // Parameter assignments can be ended with a optional semicolon
     type:    pushpull
@@ -36,11 +36,11 @@ AutoBSP{
     name: "BUTTON_2"
     pin:   PB12
     enable: false
-  }
+  }*/
   
   PWM_OUTPUT{
     name:     "PWM_1"
-    pin:       PB4
+    pin:       PA6
     pull:      none
     speed:     medium
     frequency: 1000  // in Hz
