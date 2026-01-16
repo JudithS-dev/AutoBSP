@@ -11,7 +11,9 @@ static void generate_source_timer_handle_declaration(FILE* output_source, ast_ds
 static void generate_source_pwm_init_call(FILE* output_source, ast_dsl_node_t* dsl_node);
 static void generate_source_gpio_init_func(FILE* output_source, ast_dsl_node_t* dsl_node);
 static void generate_source_pwm_init_func(FILE* output_source, ast_dsl_node_t* dsl_node);
-static void generate_source_gpio_func(FILE* output_source, ast_dsl_node_t* dsl_node);
+static void generate_source_func(FILE* output_source, ast_dsl_node_t* dsl_node);
+static void generate_source_gpio_output_func(FILE* output_source, ast_module_node_t *output_module);
+static void generate_source_gpio_input_func(FILE* output_source, ast_module_node_t *input_module);
 
 static bool has_enabled_gpio_module(ast_dsl_node_t* dsl_node);
 static bool has_enabled_pwm_module(ast_dsl_node_t* dsl_node);
@@ -161,9 +163,8 @@ void ast_generate_source_stm32f446re(FILE* output_source, ast_dsl_node_t* dsl_no
   if(has_enabled_pwm_module(dsl_node))
     generate_source_pwm_init_func(output_source, dsl_node);
   
-  // Generate GPIO functions if needed
-  if(has_enabled_gpio_module(dsl_node))
-    generate_source_gpio_func(output_source, dsl_node);
+  // Generate usage functions for modules
+  generate_source_func(output_source, dsl_node);
 }
 
 /**
@@ -414,103 +415,141 @@ static void generate_source_pwm_init_func(FILE* output_source, ast_dsl_node_t* d
 }
 
 /**
- * @brief Generates the GPIO functions for the STM32F446RE board support package (BSP).
+ * @brief Generates the usage functions for the modules for the STM32F446RE board support package (BSP).
  * 
  * @param output_source File pointer to the output source file.
  * @param dsl_node Pointer to the DSL AST node containing configuration data.
  */
-static void generate_source_gpio_func(FILE* output_source, ast_dsl_node_t* dsl_node){
+static void generate_source_func(FILE* output_source, ast_dsl_node_t* dsl_node){
   if(output_source == NULL)
-    log_error("generate_source_gpio_func", 0, "Output source file pointer is NULL.");
+    log_error("generate_source_func", 0, "Output source file pointer is NULL.");
   if(dsl_node == NULL)
-    log_error("generate_source_gpio_func", 0, "DSL node is NULL.");
+    log_error("generate_source_func", 0, "DSL node is NULL.");
   
   ast_module_node_t *current_module = dsl_node->modules_root;
   while(current_module != NULL){
     if(current_module->enable){
       if(current_module->kind == MODULE_OUTPUT){
-        // Generate functions for output GPIOs
-        fprintf(output_source, "\n\n// ---------- GPIO OUTPUT: '%s' ----------\n", current_module->name);
-        // Generate ON function
-        fprintf(output_source, "/**\n");
-        fprintf(output_source, " * @brief Turns ON the '%s' GPIO output.\n", current_module->name);
-        fprintf(output_source, " * @note Considers the active level configuration.\n");
-        fprintf(output_source, " */\n");
-        fprintf(output_source, "void BSP_%s_ON(void){\n", current_module->name);
-        fprintf(output_source, "  HAL_GPIO_WritePin(GPIO%c, GPIO_PIN_%u, GPIO_PIN_%s);\n", current_module->pin.port, current_module->pin.pin_number,
-                (current_module->data.output.active_level == HIGH) ? "SET" : "RESET");
-        fprintf(output_source, "}\n\n");
-        
-        // Generate OFF function
-        fprintf(output_source, "/**\n");
-        fprintf(output_source, " * @brief Turns OFF the '%s' GPIO output.\n", current_module->name);
-        fprintf(output_source, " * @note Considers the active level configuration.\n");
-        fprintf(output_source, " */\n");
-        fprintf(output_source, "void BSP_%s_OFF(void){\n", current_module->name);
-        fprintf(output_source, "  HAL_GPIO_WritePin(GPIO%c, GPIO_PIN_%u, GPIO_PIN_%s);\n", current_module->pin.port, current_module->pin.pin_number,
-                (current_module->data.output.active_level == HIGH) ? "RESET" : "SET");
-        fprintf(output_source, "}\n\n");
-        
-        // Generate TOGGLE function
-        fprintf(output_source, "/**\n");
-        fprintf(output_source, " * @brief Toggles the '%s' GPIO output.\n", current_module->name);
-        fprintf(output_source, " */\n");
-        fprintf(output_source, "void BSP_%s_TOGGLE(void){\n", current_module->name);
-        fprintf(output_source, "  HAL_GPIO_TogglePin(GPIO%c, GPIO_PIN_%u);\n", current_module->pin.port, current_module->pin.pin_number);
-        fprintf(output_source, "}\n\n");
-        
-        // Generate SET function
-        fprintf(output_source, "/**\n");
-        fprintf(output_source, " * @brief Sets the '%s' GPIO output to the specified state.\n", current_module->name);
-        fprintf(output_source, " * @param on If true, turns the output on; otherwise, turns it off.\n");
-        fprintf(output_source, " * @note Considers the active level configuration.\n");
-        fprintf(output_source, " */\n");
-        fprintf(output_source, "void BSP_%s_SET(bool on){\n", current_module->name);
-        fprintf(output_source, "  if(on){\n");
-        fprintf(output_source, "    HAL_GPIO_WritePin(GPIO%c, GPIO_PIN_%u, GPIO_PIN_%s);\n", current_module->pin.port, current_module->pin.pin_number,
-                (current_module->data.output.active_level == HIGH) ? "SET" : "RESET");
-        fprintf(output_source, "  }\n");
-        fprintf(output_source, "  else{\n");
-        fprintf(output_source, "    HAL_GPIO_WritePin(GPIO%c, GPIO_PIN_%u, GPIO_PIN_%s);\n", current_module->pin.port, current_module->pin.pin_number,
-                (current_module->data.output.active_level == HIGH) ? "RESET" : "SET");
-        fprintf(output_source, "  }\n");
-        fprintf(output_source, "}\n\n");
-        
-        // Generate IS_ON function
-        fprintf(output_source, "/**\n");
-        fprintf(output_source, " * @brief Reads the current state of the '%s' GPIO output.\n", current_module->name);
-        fprintf(output_source, " * @return true if the output is ON; false otherwise.\n");
-        fprintf(output_source, " * @note Considers the active level configuration.\n");
-        fprintf(output_source, " */\n");
-        fprintf(output_source, "bool BSP_%s_IS_ON(void){\n", current_module->name);
-        fprintf(output_source, "  return (HAL_GPIO_ReadPin(GPIO%c, GPIO_PIN_%u) == GPIO_PIN_%s);\n", current_module->pin.port, current_module->pin.pin_number,
-                (current_module->data.output.active_level == HIGH) ? "SET" : "RESET");
-        fprintf(output_source, "}\n");
+        generate_source_gpio_output_func(output_source, current_module);
       } else if(current_module->kind == MODULE_INPUT){
-        // Generate functions for input GPIOs
-        fprintf(output_source, "\n\n// ---------- GPIO INPUT: '%s' ----------\n", current_module->name);
-        
-        // Generate IS_ACTIVE function
-        fprintf(output_source, "/**\n");
-        fprintf(output_source, " * @brief Checks if the '%s' GPIO input is in its active state.\n", current_module->name);
-        fprintf(output_source, " * @return true if the input is active; false otherwise.\n");
-        fprintf(output_source, " * @note Considers the active level configuration.\n");
-        fprintf(output_source, " */\n");
-        fprintf(output_source, "bool BSP_%s_IS_ACTIVE(void){\n", current_module->name);
-        if(current_module->data.input.active_level == HIGH){
-          fprintf(output_source, "  return (HAL_GPIO_ReadPin(GPIO%c, GPIO_PIN_%u) == GPIO_PIN_SET);\n", current_module->pin.port, current_module->pin.pin_number);
-        }
-        else{ // active_level == LOW
-          fprintf(output_source, "  return (HAL_GPIO_ReadPin(GPIO%c, GPIO_PIN_%u) == GPIO_PIN_RESET);\n", current_module->pin.port, current_module->pin.pin_number);
-        }
-        fprintf(output_source, "}\n");
+        generate_source_gpio_input_func(output_source, current_module);
       } else if(current_module->kind == MODULE_PWM_OUTPUT){
         // TODO PWM output functions can be added here in the future
       } else{
-        log_error("generate_source_gpio_func", 0, "Unsupported module kind enum value '%d' for module '%s'", current_module->kind, current_module->name);
+        log_error("generate_source_func", 0, "Unsupported module kind enum value '%d' for module '%s'", current_module->kind, current_module->name);
       }
     }
     current_module = current_module->next;
+  }
+}
+
+/**
+ * @brief Generates the GPIO functions for an output module for the STM32F446RE board support package (BSP).
+ * 
+ * @param output_source File pointer to the output source file.
+ * @param output_module Pointer to the output module AST node.
+ */
+static void generate_source_gpio_output_func(FILE* output_source, ast_module_node_t *output_module){
+  if(output_source == NULL)
+    log_error("generate_source_gpio_func", 0, "Output source file pointer is NULL.");
+  if(output_module == NULL)
+    log_error("generate_source_gpio_func", 0, "Output module is NULL.");
+  if(output_module->kind != MODULE_OUTPUT)
+    log_error("generate_source_gpio_func", 0, "Provided module is not of kind OUTPUT.");
+  
+  if(output_module->enable){
+    // Generate functions for output GPIOs
+    fprintf(output_source, "\n\n// ---------- GPIO OUTPUT: '%s' ----------\n", output_module->name);
+    // Generate ON function
+    fprintf(output_source, "/**\n");
+    fprintf(output_source, " * @brief Turns ON the '%s' GPIO output.\n", output_module->name);
+    fprintf(output_source, " * @note Considers the active level configuration.\n");
+    fprintf(output_source, " */\n");
+    fprintf(output_source, "void BSP_%s_ON(void){\n", output_module->name);
+    fprintf(output_source, "  HAL_GPIO_WritePin(GPIO%c, GPIO_PIN_%u, GPIO_PIN_%s);\n", output_module->pin.port, output_module->pin.pin_number,
+            (output_module->data.output.active_level == HIGH) ? "SET" : "RESET");
+    fprintf(output_source, "}\n\n");
+    
+    // Generate OFF function
+    fprintf(output_source, "/**\n");
+    fprintf(output_source, " * @brief Turns OFF the '%s' GPIO output.\n", output_module->name);
+    fprintf(output_source, " * @note Considers the active level configuration.\n");
+    fprintf(output_source, " */\n");
+    fprintf(output_source, "void BSP_%s_OFF(void){\n", output_module->name);
+    fprintf(output_source, "  HAL_GPIO_WritePin(GPIO%c, GPIO_PIN_%u, GPIO_PIN_%s);\n", output_module->pin.port, output_module->pin.pin_number,
+            (output_module->data.output.active_level == HIGH) ? "RESET" : "SET");
+    fprintf(output_source, "}\n\n");
+    
+    // Generate TOGGLE function
+    fprintf(output_source, "/**\n");
+    fprintf(output_source, " * @brief Toggles the '%s' GPIO output.\n", output_module->name);
+    fprintf(output_source, " */\n");
+    fprintf(output_source, "void BSP_%s_TOGGLE(void){\n", output_module->name);
+    fprintf(output_source, "  HAL_GPIO_TogglePin(GPIO%c, GPIO_PIN_%u);\n", output_module->pin.port, output_module->pin.pin_number);
+    fprintf(output_source, "}\n\n");
+    
+    // Generate SET function
+    fprintf(output_source, "/**\n");
+    fprintf(output_source, " * @brief Sets the '%s' GPIO output to the specified state.\n", output_module->name);
+    fprintf(output_source, " * @param on If true, turns the output on; otherwise, turns it off.\n");
+    fprintf(output_source, " * @note Considers the active level configuration.\n");
+    fprintf(output_source, " */\n");
+    fprintf(output_source, "void BSP_%s_SET(bool on){\n", output_module->name);
+    fprintf(output_source, "  if(on){\n");
+    fprintf(output_source, "    HAL_GPIO_WritePin(GPIO%c, GPIO_PIN_%u, GPIO_PIN_%s);\n", output_module->pin.port, output_module->pin.pin_number,
+            (output_module->data.output.active_level == HIGH) ? "SET" : "RESET");
+    fprintf(output_source, "  }\n");
+    fprintf(output_source, "  else{\n");
+    fprintf(output_source, "    HAL_GPIO_WritePin(GPIO%c, GPIO_PIN_%u, GPIO_PIN_%s);\n", output_module->pin.port, output_module->pin.pin_number,
+            (output_module->data.output.active_level == HIGH) ? "RESET" : "SET");
+    fprintf(output_source, "  }\n");
+    fprintf(output_source, "}\n\n");
+    
+    // Generate IS_ON function
+    fprintf(output_source, "/**\n");
+    fprintf(output_source, " * @brief Reads the current state of the '%s' GPIO output.\n", output_module->name);
+    fprintf(output_source, " * @return true if the output is ON; false otherwise.\n");
+    fprintf(output_source, " * @note Considers the active level configuration.\n");
+    fprintf(output_source, " */\n");
+    fprintf(output_source, "bool BSP_%s_IS_ON(void){\n", output_module->name);
+    fprintf(output_source, "  return (HAL_GPIO_ReadPin(GPIO%c, GPIO_PIN_%u) == GPIO_PIN_%s);\n", output_module->pin.port, output_module->pin.pin_number,
+            (output_module->data.output.active_level == HIGH) ? "SET" : "RESET");
+    fprintf(output_source, "}\n");
+  }
+}
+
+/**
+ * @brief Generates source code functions for a GPIO input module for the STM32F446RE board support package (BSP).
+ * 
+ * @param output_source Pointer to the output source file.
+ * @param input_module Pointer to the input module AST node.
+ */
+static void generate_source_gpio_input_func(FILE* output_source, ast_module_node_t *input_module){
+  if(output_source == NULL)
+    log_error("generate_source_gpio_func", 0, "Output source file pointer is NULL.");
+  if(input_module == NULL)
+    log_error("generate_source_gpio_func", 0, "Input module is NULL.");
+  if(input_module->kind != MODULE_INPUT)
+    log_error("generate_source_gpio_func", 0, "Provided module is not of kind INPUT.");
+  
+  if(input_module->enable){
+    // Generate functions for input GPIOs
+    fprintf(output_source, "\n\n// ---------- GPIO INPUT: '%s' ----------\n", input_module->name);
+    
+    // Generate IS_ACTIVE function
+    fprintf(output_source, "/**\n");
+    fprintf(output_source, " * @brief Checks if the '%s' GPIO input is in its active state.\n", input_module->name);
+    fprintf(output_source, " * @return true if the input is active; false otherwise.\n");
+    fprintf(output_source, " * @note Considers the active level configuration.\n");
+    fprintf(output_source, " */\n");
+    fprintf(output_source, "bool BSP_%s_IS_ACTIVE(void){\n", input_module->name);
+    if(input_module->data.input.active_level == HIGH){
+      fprintf(output_source, "  return (HAL_GPIO_ReadPin(GPIO%c, GPIO_PIN_%u) == GPIO_PIN_SET);\n", input_module->pin.port, input_module->pin.pin_number);
+    }
+    else{ // active_level == LOW
+      fprintf(output_source, "  return (HAL_GPIO_ReadPin(GPIO%c, GPIO_PIN_%u) == GPIO_PIN_RESET);\n", input_module->pin.port, input_module->pin.pin_number);
+    }
+    fprintf(output_source, "}\n");
   }
 }
 
