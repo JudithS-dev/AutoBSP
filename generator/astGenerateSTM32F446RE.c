@@ -7,6 +7,7 @@
 static void generate_header_gpio_func(FILE* output_source, ast_dsl_node_t* dsl_node);
 static void generate_header_pwm_func(FILE* output_source, ast_dsl_node_t* dsl_node);
 
+void generate_source_pwm_init_declaration(FILE* output_source, ast_dsl_node_t* dsl_node);
 static void generate_source_timer_handle_declaration(FILE* output_source, ast_dsl_node_t* dsl_node);
 static void generate_source_pwm_init_call(FILE* output_source, ast_dsl_node_t* dsl_node);
 static void generate_source_gpio_init_func(FILE* output_source, ast_dsl_node_t* dsl_node);
@@ -14,6 +15,7 @@ static void generate_source_pwm_init_func(FILE* output_source, ast_dsl_node_t* d
 static void generate_source_func(FILE* output_source, ast_dsl_node_t* dsl_node);
 static void generate_source_gpio_output_func(FILE* output_source, ast_module_node_t *output_module);
 static void generate_source_gpio_input_func(FILE* output_source, ast_module_node_t *input_module);
+static void generate_source_pwm_output_func(FILE* output_source, ast_module_node_t *pwm_module);
 
 static bool has_enabled_gpio_module(ast_dsl_node_t* dsl_node);
 static bool has_enabled_pwm_module(ast_dsl_node_t* dsl_node);
@@ -38,8 +40,7 @@ void ast_generate_header_stm32f446re(FILE* output_header, ast_dsl_node_t* dsl_no
   fprintf(output_header,"#ifndef __GENERATED_BSP_H__\n");
   fprintf(output_header,"#define __GENERATED_BSP_H__\n");
   
-  if(has_enabled_gpio_module(dsl_node))
-    fprintf(output_header,"\n#include <stdbool.h>");
+  fprintf(output_header,"\n#include <stdbool.h>");
   
   if(has_enabled_pwm_module(dsl_node))
     fprintf(output_header,"\n#include <stdint.h>");
@@ -141,6 +142,7 @@ void ast_generate_source_stm32f446re(FILE* output_source, ast_dsl_node_t* dsl_no
   
   if(has_enabled_gpio_module(dsl_node))
     fprintf(output_source,"\nstatic void BSP_Init_GPIO(void);\n");
+  generate_source_pwm_init_declaration(output_source, dsl_node);
   
   generate_source_timer_handle_declaration(output_source, dsl_node);
   
@@ -165,6 +167,32 @@ void ast_generate_source_stm32f446re(FILE* output_source, ast_dsl_node_t* dsl_no
   
   // Generate usage functions for modules
   generate_source_func(output_source, dsl_node);
+}
+
+/**
+ * @brief Generates the PWM initialization function declarations for enabled PWM modules.
+ * 
+ * @param output_source File pointer to the output source file.
+ * @param dsl_node Pointer to the DSL AST node containing configuration data.
+ */
+void generate_source_pwm_init_declaration(FILE* output_source, ast_dsl_node_t* dsl_node){
+  if(output_source == NULL)
+    log_error("generate_source_pwm_init_declaration", 0, "Output source file pointer is NULL.");
+  if(dsl_node == NULL)
+    log_error("generate_source_pwm_init_declaration", 0, "DSL node is NULL.");
+  
+  if(!has_enabled_gpio_module(dsl_node))
+    fprintf(output_source, "\n");
+  
+  ast_module_node_t *current_module = dsl_node->modules_root;
+  while(current_module != NULL){
+    if(current_module->enable){
+      if(current_module->kind == MODULE_PWM_OUTPUT){
+        fprintf(output_source, "static void BSP_Init_PWM_TIM%u(void);\n", current_module->data.pwm.tim_number);
+      }
+    }
+    current_module = current_module->next;
+  }
 }
 
 /**
@@ -434,7 +462,7 @@ static void generate_source_func(FILE* output_source, ast_dsl_node_t* dsl_node){
       } else if(current_module->kind == MODULE_INPUT){
         generate_source_gpio_input_func(output_source, current_module);
       } else if(current_module->kind == MODULE_PWM_OUTPUT){
-        // TODO PWM output functions can be added here in the future
+        generate_source_pwm_output_func(output_source, current_module);
       } else{
         log_error("generate_source_func", 0, "Unsupported module kind enum value '%d' for module '%s'", current_module->kind, current_module->name);
       }
@@ -549,6 +577,91 @@ static void generate_source_gpio_input_func(FILE* output_source, ast_module_node
     else{ // active_level == LOW
       fprintf(output_source, "  return (HAL_GPIO_ReadPin(GPIO%c, GPIO_PIN_%u) == GPIO_PIN_RESET);\n", input_module->pin.port, input_module->pin.pin_number);
     }
+    fprintf(output_source, "}\n");
+  }
+}
+
+/** 
+ * @brief Generates the PWM output functions for a PWM module for the STM32F446RE board support package (BSP).
+ * 
+ * @param output_source Pointer to the output source file.
+ * @param pwm_module Pointer to the PWM module AST node.
+ */
+static void generate_source_pwm_output_func(FILE* output_source, ast_module_node_t *pwm_module){
+  if(output_source == NULL)
+    log_error("generate_source_pwm_output_func", 0, "Output source file pointer is NULL.");
+  if(pwm_module == NULL)
+    log_error("generate_source_pwm_output_func", 0, "PWM module is NULL.");
+  if(pwm_module->kind != MODULE_PWM_OUTPUT)
+    log_error("generate_source_pwm_output_func", 0, "Provided module is not of kind PWM_OUTPUT.");
+  
+  if(pwm_module->enable){
+    // Generate functions for PWM output modules
+    fprintf(output_source, "\n\n// ---------- PWM OUTPUT: '%s' ----------\n", pwm_module->name);
+    
+    // Generate needed variables
+    fprintf(output_source, "/* Internal state for PWM module '%s' */\n", pwm_module->name);
+    fprintf(output_source, "static bool s_pwm_%s_running = false;\n", pwm_module->name);
+    fprintf(output_source, "static uint16_t s_pwm_%s_duty_permille = 0; // Duty cycle in permille (0..1000)\n\n", pwm_module->name);
+    
+    // Generate Start function
+    fprintf(output_source, "/**\n");
+    fprintf(output_source, " * @brief Starts the PWM signal generation for the '%s' module.\n", pwm_module->name);
+    fprintf(output_source, " */\n");
+    fprintf(output_source, "void BSP_%s_Start(void){\n", pwm_module->name);
+    fprintf(output_source, "  if(!s_pwm_%s_running){\n", pwm_module->name);
+    fprintf(output_source, "    /* Ensure the last set duty cycle is applied before starting */\n");
+    fprintf(output_source, "    BSP_%s_SetDuty(s_pwm_%s_duty_permille);\n    \n", pwm_module->name, pwm_module->name);
+    fprintf(output_source, "    /* Start PWM signal generation */\n");
+    fprintf(output_source, "    if(HAL_TIM_PWM_Start(&htim%u, TIM_CHANNEL_%u) != HAL_OK)\n", pwm_module->data.pwm.tim_number, pwm_module->data.pwm.tim_channel);
+    fprintf(output_source, "      Error_Handler();\n");
+    fprintf(output_source, "    s_pwm_%s_running = true;\n", pwm_module->name);
+    fprintf(output_source, "  }\n");
+    fprintf(output_source, "}\n\n");
+    
+    // Generate Stop function
+    fprintf(output_source, "/**\n");
+    fprintf(output_source, " * @brief Stops the PWM signal generation for the '%s' module.\n", pwm_module->name);
+    fprintf(output_source, " */\n");
+    fprintf(output_source, "void BSP_%s_Stop(void){\n", pwm_module->name);
+    fprintf(output_source, "  if(s_pwm_%s_running){\n", pwm_module->name);
+    fprintf(output_source, "    if(HAL_TIM_PWM_Stop(&htim%u, TIM_CHANNEL_%u) != HAL_OK)\n", pwm_module->data.pwm.tim_number, pwm_module->data.pwm.tim_channel);
+    fprintf(output_source, "      Error_Handler();\n");
+    fprintf(output_source, "    s_pwm_%s_running = false;\n", pwm_module->name);
+    fprintf(output_source, "  }\n  \n");
+    fprintf(output_source, "  /* Force output to inactive level */\n");
+    fprintf(output_source, "  __HAL_TIM_SET_COMPARE(&htim%u, TIM_CHANNEL_%u, 0);\n", pwm_module->data.pwm.tim_number, pwm_module->data.pwm.tim_channel);
+    fprintf(output_source, "}\n\n");
+    
+    // Generate SetDuty function
+    fprintf(output_source, "/**\n");
+    fprintf(output_source, " * @brief Sets the duty cycle for the '%s' PWM output.\n", pwm_module->name);
+    fprintf(output_source, " * @param permille Duty cycle in permille (0..1000).\n");
+    fprintf(output_source, " */\n");
+    fprintf(output_source, "void BSP_%s_SetDuty(uint16_t permille){\n", pwm_module->name);
+    fprintf(output_source, "  if(permille > 1000)\n");
+    fprintf(output_source, "    permille = 1000;\n  \n");
+    fprintf(output_source, "  s_pwm_%s_duty_permille = permille;\n  \n", pwm_module->name);
+    if(pwm_module->data.pwm.active_level == LOW){
+      fprintf(output_source, "  /* Invert duty cycle for active LOW configuration */\n");
+      fprintf(output_source, "  permille = 1000u - permille;\n  \n");
+    }
+    fprintf(output_source, "  /* ARR is the PWM top value */\n");
+    fprintf(output_source, "  uint32_t arr = __HAL_TIM_GET_AUTORELOAD(&htim%u);\n  \n", pwm_module->data.pwm.tim_number);
+    fprintf(output_source, "  /* Convert 0..1000 permille to timer compare value */\n");
+    fprintf(output_source, "  uint32_t crr = (arr * (uint32_t)permille + 500u) / 1000u; // Rounded calculation\n  \n");
+    fprintf(output_source, "  if(crr > arr) crr = arr;\n  \n");
+    fprintf(output_source, "  /* Set the compare register to update duty cycle */\n");
+    fprintf(output_source, "  __HAL_TIM_SET_COMPARE(&htim%u, TIM_CHANNEL_%u, crr);\n", pwm_module->data.pwm.tim_number, pwm_module->data.pwm.tim_channel);
+    fprintf(output_source, "}\n\n");
+    
+    // Generate GetDuty function
+    fprintf(output_source, "/**\n");
+    fprintf(output_source, " * @brief Gets the current duty cycle for the '%s' PWM output.\n", pwm_module->name);
+    fprintf(output_source, " * @return Duty cycle in permille (0..1000).\n");
+    fprintf(output_source, " */\n");
+    fprintf(output_source, "uint16_t BSP_%s_GetDuty(void){\n", pwm_module->name);
+    fprintf(output_source, "  return s_pwm_%s_duty_permille;\n", pwm_module->name);
     fprintf(output_source, "}\n");
   }
 }
