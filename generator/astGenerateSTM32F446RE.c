@@ -261,7 +261,7 @@ static void generate_source_gpio_init_func(FILE* output_source, ast_dsl_node_t* 
   fprintf(output_source,"\n/**\n");
   fprintf(output_source," * @brief Initializes the GPIO pins (inputs and outputs).\n");
   fprintf(output_source," */\n");
-  fprintf(output_source,"void BSP_Init_GPIO(void){\n");
+  fprintf(output_source,"static void BSP_Init_GPIO(void){\n");
   
   // Enable all needed GPIO port clocks
   fprintf(output_source,"  /* Enable GPIO Ports Clock */\n");
@@ -377,7 +377,7 @@ static void generate_source_pwm_init_func(FILE* output_source, ast_dsl_node_t* d
         fprintf(output_source, "\n/**\n");
         fprintf(output_source, " * @brief Initializes the PWM on TIM%u for module '%s'.\n", current_module->data.pwm.tim_number, current_module->name);
         fprintf(output_source, " */\n");
-        fprintf(output_source, "void BSP_Init_PWM_TIM%u(void){\n", current_module->data.pwm.tim_number);
+        fprintf(output_source, "static void BSP_Init_PWM_TIM%u(void){\n", current_module->data.pwm.tim_number);
         
         fprintf(output_source, "  /* Enable clocks */\n");
         fprintf(output_source, "  __HAL_RCC_GPIO%c_CLK_ENABLE();\n", current_module->pin.port);
