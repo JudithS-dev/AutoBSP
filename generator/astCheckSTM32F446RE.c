@@ -29,8 +29,15 @@ void ast_check_stm32f446re_valid_pins(ast_dsl_node_t* dsl_node){
     if(current_module->enable){
       // Check if pin is a valid STM32F446RE pin
       is_valid_stm32f446re_pin(current_module->pin);
-      // Check if pin supports the module functionality
+      
+      // Check if pin is not marked as not usable
       pin_cap_t *cur_cap = (pin_cap_t*)pincap_find_stm32f446re(current_module->pin.port, (uint8_t)(current_module->pin.pin_number));
+      if(cur_cap->not_usable)
+        log_error("are_valid_stm32f446re_pins", current_module->line_nr, "Pin '%s' is marked as not usable on STM32F446RE for module '%s'.",
+                  pin_to_string(current_module->pin),
+                  current_module->name);
+      
+      // Check if pin supports the module functionality
       switch(current_module->kind){
         case MODULE_INPUT:  if(!cur_cap->can_gpio_in)
                               log_error("are_valid_stm32f446re_pins", current_module->line_nr, "Pin '%s' does not support GPIO_INPUT for module '%s'.",

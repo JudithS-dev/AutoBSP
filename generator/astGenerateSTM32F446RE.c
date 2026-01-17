@@ -81,7 +81,7 @@ static void generate_header_gpio_func(FILE* output_source, ast_dsl_node_t* dsl_n
       else if(current_module->kind == MODULE_INPUT){
         // Generate function prototypes for input GPIOs
         fprintf(output_source, "\n/* GPIO INPUT: '%s' */\n", current_module->name);
-        fprintf(output_source, "bool BSP_%s_IS_ACTIVE(void);\n\n", current_module->name);
+        fprintf(output_source, "bool BSP_%s_IS_ACTIVE(void);\n", current_module->name);
       }
     }
     current_module = current_module->next;
