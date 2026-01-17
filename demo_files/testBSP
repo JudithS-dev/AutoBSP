@@ -4,7 +4,7 @@ AutoBSP{
   /*pin This is a /* multi-layered // test comment
       block*/ pushpull*/
   
-  /*OUTPUT{
+  OUTPUT{
     name:    "LED_1"
     pin:     PA5;  // Parameter assignments can be ended with a optional semicolon
     type:    pushpull
@@ -20,6 +20,7 @@ AutoBSP{
   OUTPUT{
     name: "LED_2"
     pin:   PC5
+    enable: false
   }
   
   INPUT{
@@ -36,7 +37,7 @@ AutoBSP{
     name: "BUTTON_2"
     pin:   PB12
     enable: false
-  }*/
+  }
   
   PWM_OUTPUT{
     name:     "PWM_1"
@@ -46,6 +47,17 @@ AutoBSP{
     frequency: 1000  // in Hz
     duty:      0     // initial duty cycle in permille (0..1000)
     active:    high
+    enable:    true
+  }
+  
+  PWM_OUTPUT{
+    name:     "PWM_2"
+    pin:       PA1
+    pull:      none
+    speed:     low
+    frequency: 2000  // in Hz
+    duty:      0     // initial duty cycle in permille (0..1000)
+    active:    low
     enable:    true
   }
 }
