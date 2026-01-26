@@ -116,7 +116,7 @@ static void ast_print_helper(FILE *pfDot, const ast_dsl_node_t* dsl_node, bool p
       fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Pin:</B> %s</TD></TR>",    pin_str);
       free(pin_str);
     } else {
-      char *tx_pin_str = pin_to_string(current_module->data.uart.tx_pin);
+      char *tx_pin_str = pin_to_string(current_module->pin);
       char *rx_pin_str = pin_to_string(current_module->data.uart.rx_pin);
       fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>TX Pin:</B> %s</TD></TR>", tx_pin_str);
       fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>RX Pin:</B> %s</TD></TR>", rx_pin_str);

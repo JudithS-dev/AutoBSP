@@ -57,7 +57,6 @@ ast_module_builder_t* ast_new_module_builder(int line_nr){
   module_builder->active_level_set = false;
   module_builder->frequency_set    = false;
   module_builder->duty_cycle_set   = false;
-  module_builder->tx_pin_set       = false;
   module_builder->rx_pin_set       = false;
   module_builder->baudrate_set     = false;
   module_builder->databits_set     = false;
@@ -741,15 +740,15 @@ void ast_module_builder_set_uart_tx_pin(int line_nr, ast_module_builder_t* modul
   if(module_builder->module->kind != MODULE_UART)
     log_error("ast_module_builder_set_uart_tx_pin", line_nr, "Cannot set uart tx pin for non-uart module '%s'.", 
               module_builder->module->name == NULL ? "<NULL>" : module_builder->module->name);
-  if(module_builder->tx_pin_set)
+  if(module_builder->pin_set)
     log_error("ast_module_builder_set_uart_tx_pin", line_nr, "Trying to set uart tx pin of module '%s' to '%s'.\n"
               "                                                    But uart tx pin has already been set to '%s'.", 
               module_builder->module->name == NULL ? "<NULL>" : module_builder->module->name, 
               pin_to_string(tx_pin),
-              pin_to_string(module_builder->module->data.uart.tx_pin));
+              pin_to_string(module_builder->module->pin));
   
-  module_builder->module->data.uart.tx_pin = tx_pin;
-  module_builder->tx_pin_set = true;
+  module_builder->module->pin = tx_pin;
+  module_builder->pin_set = true;
 }
 
 /**

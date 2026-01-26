@@ -64,11 +64,10 @@ typedef struct{
 /**
  * @brief Structure representing UART module parameters.
  * 
- * Consists of TX and RX pins, baud rate, data bits, stop bits, and parity.
+ * Consists of RX pins, baud rate, data bits, stop bits, and parity. (TX pin is pin in ast_module_node_t)
  * Includes generator selected parameters like USART number, UART/USART type, and GPIO alternate function number.
  */
 typedef struct{
-  pin_t  tx_pin;
   pin_t  rx_pin;
   uint32_t baudrate;
   uint8_t  databits;
@@ -124,7 +123,6 @@ typedef struct ast_module_builder_s{
   bool frequency_set;
   bool duty_cycle_set;
   
-  bool tx_pin_set;
   bool rx_pin_set;
   bool baudrate_set;
   bool databits_set;

@@ -84,7 +84,7 @@ void ast_check_required_module_params(ast_module_builder_t* module_builder){
   
   // Check if pins are set (if UART, tx_pin and rx_pin must be set)
   if(module->kind == MODULE_UART){
-    if(module_builder->tx_pin_set == false)
+    if(module_builder->pin_set == false)
       log_error("ast_check_required_module_params", module->line_nr, "Required field 'tx_pin' is not set for UART module '%s'.", 
                 module->name == NULL ? "<NULL>" : module->name);
     if(module_builder->rx_pin_set == false)
@@ -197,11 +197,11 @@ void ast_check_unique_enabled_pins(ast_dsl_node_t* dsl_node){
     if(current->enable){
       // For UART modules, check that tx_pin and rx_pin are different
       if(current->kind == MODULE_UART){
-        if(current->data.uart.tx_pin.port == current->data.uart.rx_pin.port &&
-            current->data.uart.tx_pin.pin_number == current->data.uart.rx_pin.pin_number){
+        if(current->pin.port == current->data.uart.rx_pin.port &&
+            current->pin.pin_number == current->data.uart.rx_pin.pin_number){
           log_error("ast_check_unique_enabled_pins", current->line_nr,
                     "UART module '%s' has the same pin for tx_pin and rx_pin (Port %c Pin %d).",
-                    current->name, current->data.uart.tx_pin.port, current->data.uart.tx_pin.pin_number);
+                    current->name, current->pin.port, current->pin.pin_number);
         }
       }
       
@@ -212,17 +212,17 @@ void ast_check_unique_enabled_pins(ast_dsl_node_t* dsl_node){
           // Check pins based on module type
           if(current->kind == MODULE_UART && checker->kind == MODULE_UART){
             // Both are UART modules -> check all combinations
-            check_pin_conflict(current, &current->data.uart.tx_pin, checker, &checker->data.uart.tx_pin);
-            check_pin_conflict(current, &current->data.uart.tx_pin, checker, &checker->data.uart.rx_pin);
-            check_pin_conflict(current, &current->data.uart.rx_pin, checker, &checker->data.uart.tx_pin);
+            check_pin_conflict(current, &current->pin, checker, &checker->pin);
+            check_pin_conflict(current, &current->pin, checker, &checker->data.uart.rx_pin);
+            check_pin_conflict(current, &current->data.uart.rx_pin, checker, &checker->pin);
             check_pin_conflict(current, &current->data.uart.rx_pin, checker, &checker->data.uart.rx_pin);
           } else if(current->kind == MODULE_UART && checker->kind != MODULE_UART){
             // Current is UART, checker is regular module
-            check_pin_conflict(current, &current->data.uart.tx_pin, checker, &checker->pin);
+            check_pin_conflict(current, &current->pin, checker, &checker->pin);
             check_pin_conflict(current, &current->data.uart.rx_pin, checker, &checker->pin);
           } else if(current->kind != MODULE_UART && checker->kind == MODULE_UART){
             // Current is regular module, checker is UART
-            check_pin_conflict(current, &current->pin, checker, &checker->data.uart.tx_pin);
+            check_pin_conflict(current, &current->pin, checker, &checker->pin);
             check_pin_conflict(current, &current->pin, checker, &checker->data.uart.rx_pin);
           } else {
             // Both are regular modules

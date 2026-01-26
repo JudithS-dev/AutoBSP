@@ -66,14 +66,14 @@ void ast_check_stm32f446re_valid_pins(ast_dsl_node_t* dsl_node){
         // ----- Perform checks for UART modules -----
         
         // Check if pins are valid STM32F446RE pins
-        is_valid_stm32f446re_pin(current_module->name, current_module->line_nr, current_module->data.uart.tx_pin);
+        is_valid_stm32f446re_pin(current_module->name, current_module->line_nr, current_module->pin);
         is_valid_stm32f446re_pin(current_module->name, current_module->line_nr, current_module->data.uart.rx_pin);
         
         // Check if pins are not marked as not usable
-        pin_cap_t *tx_cap = (pin_cap_t*)pincap_find_stm32f446re(current_module->data.uart.tx_pin.port, (uint8_t)(current_module->data.uart.tx_pin.pin_number));
+        pin_cap_t *tx_cap = (pin_cap_t*)pincap_find_stm32f446re(current_module->pin.port, (uint8_t)(current_module->pin.pin_number));
         if(tx_cap->not_usable)
           log_error("are_valid_stm32f446re_pins", current_module->line_nr, "TX Pin '%s' is marked as not usable on STM32F446RE for module '%s'.",
-                    pin_to_string(current_module->data.uart.tx_pin),
+                    pin_to_string(current_module->pin),
                     current_module->name);
         pin_cap_t *rx_cap = (pin_cap_t*)pincap_find_stm32f446re(current_module->data.uart.rx_pin.port, (uint8_t)(current_module->data.uart.rx_pin.pin_number));
         if(rx_cap->not_usable)
@@ -84,7 +84,7 @@ void ast_check_stm32f446re_valid_pins(ast_dsl_node_t* dsl_node){
         // Check if pins support UART functionality
         if(tx_cap->uart_count == 0)
           log_error("are_valid_stm32f446re_pins", current_module->line_nr, "TX Pin '%s' does not support UART for module '%s'.",
-                    pin_to_string(current_module->data.uart.tx_pin),
+                    pin_to_string(current_module->pin),
                     current_module->name);
         if(rx_cap->uart_count == 0)
           log_error("are_valid_stm32f446re_pins", current_module->line_nr, "RX Pin '%s' does not support UART for module '%s'.",
@@ -101,7 +101,7 @@ void ast_check_stm32f446re_valid_pins(ast_dsl_node_t* dsl_node){
         }
         if(!tx_supports_tx)
           log_error("are_valid_stm32f446re_pins", current_module->line_nr, "TX Pin '%s' does not support UART TX functionality for module '%s'.",
-                    pin_to_string(current_module->data.uart.tx_pin),
+                    pin_to_string(current_module->pin),
                     current_module->name);
         
         bool rx_supports_rx = false;

@@ -545,7 +545,7 @@ int main(int argc, char *argv[]){ //TODO fix leak check error
   
   // Sort modules by pin number for better readability
   log_info("main", LOG_OTHER, 0, "Sorting modules by pin number for better readability");
-  ast_sort_modules_by_pin(ast_root); // TODO fix for UART modules
+  ast_sort_modules_by_pin(ast_root);
   
   // Bind backend specific parameters
   log_info("main", LOG_OTHER, 0, "Binding backend specific parameters to the AST");
