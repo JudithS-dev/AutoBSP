@@ -198,12 +198,14 @@ static void bind_pwm_pins_stm32f446re(ast_dsl_node_t* dsl_node){
           
           tim_used[pwm_opt->tim] = true; // Mark timer as used
           
+          char* pin_str = pin_to_string(current_module->pin);
           log_info("bind_pwm_pins_stm32f446re", LOG_OTHER, 0, "Assigned TIM%d_CH%d (AF%d) to PWM module '%s' on pin '%s'.",
                     current_module->data.pwm.tim_number,
                     current_module->data.pwm.tim_channel,
                     current_module->data.pwm.gpio_af,
                     current_module->name,
-                    pin_to_string(current_module->pin));
+                    pin_str);
+          free(pin_str);
           break;
         }
       }

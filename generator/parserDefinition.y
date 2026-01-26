@@ -494,7 +494,7 @@ void yyerror(const char *msg){
   printf("Error in line %d: %s\n", yylineno, msg);
 }
 
-int main(int argc, char *argv[]){ //TODO fix leak check error
+int main(int argc, char *argv[]){
   // Check for correct number of arguments (./AutoBSP <codefile> [<output_path>])
   if(argc < 2 || argc > 3){
     fprintf(stderr, "\nERROR 'main': Incorrect number of arguments.\n              Usage: %s <codefile_name> [<output_path>]\n", argv[0]);
