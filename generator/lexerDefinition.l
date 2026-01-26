@@ -79,6 +79,9 @@ INVALID_TOKENS      ([^ \n\t\{\}:\/\*;]+|{COMMENT_CHARS})
 "PWM_OUTPUT"        { log_info("\"PWM_OUTPUT\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
                       return kw_pwm_output;
                     }
+"UART"              { log_info("\"UART\"",    LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return kw_uart;
+                    }
 
   /* -------------- Parameter names -------------- */
   /* Multiple used parameter names */
@@ -118,6 +121,26 @@ INVALID_TOKENS      ([^ \n\t\{\}:\/\*;]+|{COMMENT_CHARS})
                     }
 "duty"              { log_info("\"duty\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
                       return kw_pwm_duty;
+                    }
+
+  /* UART specific parameter names */
+"tx_pin"            { log_info("\"tx_pin\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return kw_tx_pin;
+                    }
+"rx_pin"            { log_info("\"rx_pin\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return kw_rx_pin;
+                    }
+"baudrate"          { log_info("\"baudrate\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return kw_baudrate;
+                    }
+"databits"          { log_info("\"databits\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return kw_databits;
+                    }
+"stopbits"          { log_info("\"stopbits\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return kw_stopbits;
+                    }
+"parity"            { log_info("\"parity\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return kw_parity;
                     }
 
   /* -------------- Parameter values ------------- */
@@ -183,6 +206,16 @@ INVALID_TOKENS      ([^ \n\t\{\}:\/\*;]+|{COMMENT_CHARS})
 "off"               { log_info("\"off\"",       LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
                       yylval.u_helper_gpio_init = GPIO_HELPER_INIT_OFF;
                       return val_gpio_init;
+                    }
+
+  /* UART specific parameter values */
+"even"              { log_info("\"even\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      yylval.u_helper_uart_parity = UART_HELPER_PARITY_EVEN;
+                      return val_uart_parity;
+                    }
+"odd"               { log_info("\"odd\"",  LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      yylval.u_helper_uart_parity = UART_HELPER_PARITY_ODD;
+                      return val_uart_parity;
                     }
 
   /* -------------------------------------------- */

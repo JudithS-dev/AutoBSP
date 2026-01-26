@@ -463,6 +463,8 @@ static void generate_source_func(FILE* output_source, ast_dsl_node_t* dsl_node){
         generate_source_gpio_input_func(output_source, current_module);
       } else if(current_module->kind == MODULE_PWM_OUTPUT){
         generate_source_pwm_output_func(output_source, current_module);
+      } else if(current_module->kind == MODULE_UART){
+        // TODO: Implement UART module function generation
       } else{
         log_error("generate_source_func", 0, "Unsupported module kind enum value '%d' for module '%s'", current_module->kind, current_module->name);
       }

@@ -6,6 +6,41 @@
 #include <stdlib.h>
 #include <string.h>
 
+
+/* -------- Module kind conversions -------- */
+/**
+ * @brief Converts module kind enum to string.
+ * 
+ * @param kind Module kind enum value.
+ * @return Corresponding string representation.
+ */
+const char* kind_to_string(ast_module_kind_t kind){
+  switch(kind){
+    case MODULE_OUTPUT:     return "OUTPUT";
+    case MODULE_INPUT:      return "INPUT";
+    case MODULE_PWM_OUTPUT: return "PWM_OUTPUT";
+    case MODULE_UART:       return "UART";
+    default:  log_error("kind_to_string", 0, "Unknown module kind enum value '%d'", kind); 
+              return "UNKNOWN"; // This won't be reached due to log_error exiting
+  }
+}
+
+
+/* -------- General parameter conversions -------- */
+/**
+ * @brief Converts controller enum to string.
+ * 
+ * @param controller Controller enum value.
+ * @return Corresponding string representation.
+ */
+const char* controller_to_string(controller_t controller){
+  switch(controller){
+    case STM32F446RE: return "STM32F446RE";
+    default:  log_error("controller_to_string", 0, "Unknown controller enum value '%d'", controller); 
+              return "UNKNOWN"; // This won't be reached due to log_error exiting
+  }
+}
+
 /**
  * @brief Converts pin structure to string.
  * 
@@ -47,20 +82,6 @@ const char* bool_to_string(bool value){
 }
 
 /**
- * @brief Converts controller enum to string.
- * 
- * @param controller Controller enum value.
- * @return Corresponding string representation.
- */
-const char* controller_to_string(controller_t controller){
-  switch(controller){
-    case STM32F446RE: return "STM32F446RE";
-    default:  log_error("controller_to_string", 0, "Unknown controller enum value '%d'", controller); 
-              return "UNKNOWN"; // This won't be reached due to log_error exiting
-  }
-}
-
-/**
  * @brief Converts level enum to string.
  * 
  * @param level Level enum value.
@@ -75,6 +96,8 @@ const char* level_to_string(level_t level){
   }
 }
 
+
+/* -------- GPIO specific conversions -------- */
 /**
  * @brief Converts GPIO type enum to string.
  * 
@@ -139,18 +162,20 @@ const char* gpio_init_to_string(gpio_init_t init){
   }
 }
 
+
+/* -------- UART specific conversions -------- */
 /**
- * @brief Converts module kind enum to string.
+ * @brief Converts UART parity enum to string.
  * 
- * @param kind Module kind enum value.
+ * @param parity UART parity enum value.
  * @return Corresponding string representation.
  */
-const char* kind_to_string(ast_module_kind_t kind){
-  switch(kind){
-    case MODULE_OUTPUT: return "OUTPUT";
-    case MODULE_INPUT:  return "INPUT";
-    case MODULE_PWM_OUTPUT: return "PWM_OUTPUT";
-    default:  log_error("kind_to_string", 0, "Unknown module kind enum value '%d'", kind); 
+const char* uart_parity_to_string(uart_parity_t parity){
+  switch(parity){
+    case UART_PARITY_NONE:   return "None";
+    case UART_PARITY_EVEN:   return "Even";
+    case UART_PARITY_ODD:    return "Odd";
+    default:  log_error("uart_parity_to_string", 0, "Unknown UART parity enum value '%d'", parity); 
               return "UNKNOWN"; // This won't be reached due to log_error exiting
   }
 }

@@ -8,12 +8,13 @@
 /**
  * @brief Module kind types
  * 
- * Values: MODULE_OUTPUT, MODULE_INPUT
+ * Values: MODULE_OUTPUT, MODULE_INPUT, MODULE_PWM_OUTPUT, MODULE_UART
  */
 typedef enum{
   MODULE_OUTPUT,
   MODULE_INPUT,
-  MODULE_PWM_OUTPUT
+  MODULE_PWM_OUTPUT,
+  MODULE_UART
 } ast_module_kind_t;
 
 /**
@@ -43,6 +44,7 @@ typedef struct{
  * @brief Structure representing PWM module parameters.
  * 
  * Consists of pull-up/pull-down configuration, speed, active level, frequency, and duty cycle.
+ * Includes generator selected parameters like timer number, timer channel, GPIO alternate function number, timer prescaler, and timer period.
  */
 typedef struct{
   gpio_pull_t  pull;
@@ -60,6 +62,26 @@ typedef struct{
 } ast_module_pwm_t;
 
 /**
+ * @brief Structure representing UART module parameters.
+ * 
+ * Consists of TX and RX pins, baud rate, data bits, stop bits, and parity.
+ * Includes generator selected parameters like USART number, UART/USART type, and GPIO alternate function number.
+ */
+typedef struct{
+  pin_t  tx_pin;
+  pin_t  rx_pin;
+  uint32_t baudrate;
+  uint8_t  databits;
+  uint8_t  stopbits;
+  uart_parity_t parity;
+  
+  /* generator selected parameters */
+  uint8_t    usart_number;   // USART number selected by generator
+  bool       is_uart;        // true=UART, false=USART
+  uint8_t    gpio_af;        // GPIO Alternate Function number selected by generator
+} ast_module_uart_t;
+
+/**
  * @brief Structure representing a module node in the AST.
  * 
  * Consists of node ID, line number, name, pin, module kind, module-specific data, and pointer to the next module node.
@@ -75,6 +97,7 @@ typedef struct ast_module_node_s{
     ast_module_output_t  output;
     ast_module_input_t   input;
     ast_module_pwm_t     pwm;
+    ast_module_uart_t    uart;
   } data;
   
   struct ast_module_node_s* next;
@@ -100,6 +123,13 @@ typedef struct ast_module_builder_s{
   
   bool frequency_set;
   bool duty_cycle_set;
+  
+  bool tx_pin_set;
+  bool rx_pin_set;
+  bool baudrate_set;
+  bool databits_set;
+  bool stopbits_set;
+  bool parity_set;
   
   ast_module_node_t *module;
   struct ast_module_builder_s *next;

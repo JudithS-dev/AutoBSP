@@ -58,6 +58,24 @@ AutoBSP{
     frequency: 2000  // in Hz
     duty:      0     // initial duty cycle in permille (0..1000)
     active:    low
+    enable:    false
+  }
+  
+  UART{ //picocom -b 115200 /dev/ttyUSB0 --echo
+    name:     "UART1"
+    tx_pin:    PA0
+    rx_pin:    PA1
+    baudrate:  115200   //check if not 0 and maybe in known set (not <1200 or >1.000.000)
+    databits:  8        // 5, 6, 7, 8, 9 : STM32 only supports 8 or 9
+    stopbits:  1        // 1, 1.5, 2 : STM32 only supports 1 or 2
+    parity:    none     // none, even, odd
     enable:    true
+  }
+  
+  UART{ //picocom -b 115200 /dev/ttyUSB0 --echo
+    name:     "UART2"
+    tx_pin:    PA9
+    rx_pin:    PA10
+    enable:    false
   }
 }

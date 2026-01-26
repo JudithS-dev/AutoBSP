@@ -21,6 +21,7 @@ static const char *lexer_keywords[] = {
   "OUTPUT",
   "INPUT",
   "PWM_OUTPUT",
+  "UART",
   "name",
   "pin",
   "type",
@@ -44,7 +45,9 @@ static const char *lexer_keywords[] = {
   "medium",
   "very_high",
   "on",
-  "off"
+  "off",
+  "even",
+  "odd"
 };
 
 // number of keywords in the lexer_keywords array

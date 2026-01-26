@@ -96,12 +96,12 @@ static void ast_print_helper(FILE *pfDot, const ast_dsl_node_t* dsl_node, bool p
       colour = current_module->enable ? "#C6EFC6" : "#F2FBF2";
     else if(current_module->kind == MODULE_PWM_OUTPUT)
       colour = current_module->enable ? "#F7D8B7" : "#FEF3E8";
+    else if(current_module->kind == MODULE_UART)
+      colour = current_module->enable ? "#F7B7D9" : "#FDE8EF";
     else
       log_error("ast_print_helper", 0, "Unknown module kind enum value '%d'", current_module->kind);
     
     // Print general module info
-    char *pin_str = pin_to_string(current_module->pin);
-    
     fprintf(pfDot, "  Module%d [label=<<TABLE BORDER=\"1\" CELLBORDER=\"0\" CELLSPACING=\"0\" CELLPADDING=\"6\" BGCOLOR=\"%s\">", 
                       current_module->node_id, colour);
     
@@ -110,10 +110,23 @@ static void ast_print_helper(FILE *pfDot, const ast_dsl_node_t* dsl_node, bool p
     
     // General module attributes as bullet points
     fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Kind:</B> %s</TD></TR>",   kind_to_string(current_module->kind));
-    fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Pin:</B> %s</TD></TR>",    pin_str);
+    
+    if(current_module->kind != MODULE_UART){
+      char *pin_str = pin_to_string(current_module->pin);
+      fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Pin:</B> %s</TD></TR>",    pin_str);
+      free(pin_str);
+    } else {
+      char *tx_pin_str = pin_to_string(current_module->data.uart.tx_pin);
+      char *rx_pin_str = pin_to_string(current_module->data.uart.rx_pin);
+      fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>TX Pin:</B> %s</TD></TR>", tx_pin_str);
+      fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>RX Pin:</B> %s</TD></TR>", rx_pin_str);
+      free(tx_pin_str);
+      free(rx_pin_str);
+    }
+
     fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Enable:</B> %s</TD></TR>", bool_to_string(current_module->enable));
     
-    free(pin_str);
+    
     
     // Print module-specific data
     switch(current_module->kind){
@@ -154,6 +167,23 @@ static void ast_print_helper(FILE *pfDot, const ast_dsl_node_t* dsl_node, bool p
                                             current_module->data.pwm.prescaler);
                                   fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Period:</B> %u</TD></TR>",
                                             current_module->data.pwm.period);
+                                }
+                                break;
+      case MODULE_UART:         fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Baudrate:</B> %u</TD></TR>",
+                                                current_module->data.uart.baudrate);
+                                fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Databits:</B> %u</TD></TR>",
+                                                current_module->data.uart.databits);
+                                fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Stopbits:</B> %u</TD></TR>",
+                                                current_module->data.uart.stopbits);
+                                fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Parity:</B> %s</TD></TR>",
+                                                uart_parity_to_string(current_module->data.uart.parity));
+                                if(dsl_node->controller == STM32F446RE){
+                                  fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>USART Number:</B> %u</TD></TR>",
+                                            current_module->data.uart.usart_number);
+                                  fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Is UART:</B> %s</TD></TR>",
+                                            bool_to_string(current_module->data.uart.is_uart));
+                                  fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>GPIO AF:</B> %u</TD></TR>",
+                                            current_module->data.uart.gpio_af);
                                 }
                                 break;
       default:  log_error("ast_print_helper", 0, "Unknown module kind enum value '%d'", current_module->kind);

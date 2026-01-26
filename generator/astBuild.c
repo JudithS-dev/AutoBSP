@@ -57,6 +57,12 @@ ast_module_builder_t* ast_new_module_builder(int line_nr){
   module_builder->active_level_set = false;
   module_builder->frequency_set    = false;
   module_builder->duty_cycle_set   = false;
+  module_builder->tx_pin_set       = false;
+  module_builder->rx_pin_set       = false;
+  module_builder->baudrate_set     = false;
+  module_builder->databits_set     = false;
+  module_builder->stopbits_set     = false;
+  module_builder->parity_set       = false;
   module_builder->next             = NULL;
   
   
@@ -361,6 +367,15 @@ static void ast_initialize_module(ast_module_node_t* module){
                         module->data.pwm.prescaler     = 0;
                         module->data.pwm.period        = 0;
                         break;
+    case MODULE_UART:   // Initialize UART-specific fields to default values
+                        module->data.uart.baudrate     = 115200; // Default baudrate 115200
+                        module->data.uart.databits     = 8;      // Default databits
+                        module->data.uart.stopbits     = 1;      // Default stopbits
+                        module->data.uart.parity       = UART_PARITY_NONE;
+                        module->data.uart.usart_number = 0;
+                        module->data.uart.is_uart      = false;
+                        module->data.uart.gpio_af      = 0;
+                        break;
     default:
       log_error("ast_initialize_module", 0, "Unknown module kind for module '%s'.", 
                 module->name == NULL ? "<NULL>" : module->name);
@@ -578,7 +593,7 @@ void ast_module_builder_set_input_active_level(int line_nr, ast_module_builder_t
  * @param module_builder Pointer to the AST module builder.
  * @param pull PWM pull to set for the PWM module.
  * 
- * @note Logs an error and exits if any parameter is NULL.
+ * @note Logs an error if the pull has already been set, if the module kind is not PWM, or if any parameter is NULL.
  */
 void ast_module_builder_set_pwm_pull(int line_nr, ast_module_builder_t* module_builder, gpio_pull_t pull){
   if(module_builder == NULL)
@@ -605,7 +620,7 @@ void ast_module_builder_set_pwm_pull(int line_nr, ast_module_builder_t* module_b
  * @param module_builder Pointer to the AST module builder.
  * @param speed PWM speed to set for the PWM module.
  * 
- * @note Logs an error and exits if any parameter is NULL.
+ * @note Logs an error if the speed has already been set, if the module kind is not PWM, or if any parameter is NULL.
  */
 void ast_module_builder_set_pwm_speed(int line_nr, ast_module_builder_t* module_builder, gpio_speed_t speed){
   if(module_builder == NULL)
@@ -632,7 +647,7 @@ void ast_module_builder_set_pwm_speed(int line_nr, ast_module_builder_t* module_
  * @param module_builder Pointer to the AST module builder.
  * @param level PWM active level to set for the PWM module.
  * 
- * @note Logs an error and exits if any parameter is NULL.
+ * @note Logs an error if the active level has already been set, if the module kind is not PWM, or if any parameter is NULL.
  */
 void ast_module_builder_set_pwm_active_level(int line_nr, ast_module_builder_t* module_builder, level_t level){
   if(module_builder == NULL)
@@ -658,6 +673,8 @@ void ast_module_builder_set_pwm_active_level(int line_nr, ast_module_builder_t* 
  * @param line_nr Line number where the function is called for logging purposes.
  * @param module_builder Pointer to the AST module builder.
  * @param frequency PWM frequency to set for the PWM module.
+ * 
+ * @note Logs an error if the frequency has already been set, if the module kind is not PWM, or if any parameter is NULL.
  */
 void ast_module_builder_set_pwm_frequency(int line_nr, ast_module_builder_t* module_builder, uint32_t frequency){
   if(module_builder == NULL)
@@ -683,6 +700,8 @@ void ast_module_builder_set_pwm_frequency(int line_nr, ast_module_builder_t* mod
  * @param line_nr Line number where the function is called for logging purposes.
  * @param module_builder Pointer to the AST module builder.
  * @param duty_cycle PWM duty cycle to set for the PWM module.
+ * 
+ * @note Logs an error if the duty cycle has already been set, if the module kind is not PWM, or if any parameter is NULL.
  */
 void ast_module_builder_set_pwm_duty(int line_nr, ast_module_builder_t* module_builder, uint32_t duty_cycle){
   if(module_builder == NULL)
@@ -700,4 +719,178 @@ void ast_module_builder_set_pwm_duty(int line_nr, ast_module_builder_t* module_b
   
   module_builder->module->data.pwm.duty_cycle = duty_cycle;
   module_builder->duty_cycle_set = true;
+}
+
+
+/* -------------------------------------------- */
+/*    Module builder UART specific setters      */
+/* -------------------------------------------- */
+/**
+ * @brief Sets the UART TX pin of the UART module in the AST module builder.
+ * 
+ * @param line_nr Line number where the function is called for logging purposes.
+ * @param module_builder Pointer to the AST module builder.
+ * @param tx_pin UART TX pin to set for the UART module.
+ * 
+ * @note Logs an error if the tx pin has already been set, if the module kind is not UART, or if any parameter is NULL.
+ */
+void ast_module_builder_set_uart_tx_pin(int line_nr, ast_module_builder_t* module_builder, pin_t tx_pin){
+  if(module_builder == NULL)
+    log_error("ast_module_builder_set_uart_tx_pin", 0, "AST module builder is NULL.");
+  
+  if(module_builder->module->kind != MODULE_UART)
+    log_error("ast_module_builder_set_uart_tx_pin", line_nr, "Cannot set uart tx pin for non-uart module '%s'.", 
+              module_builder->module->name == NULL ? "<NULL>" : module_builder->module->name);
+  if(module_builder->tx_pin_set)
+    log_error("ast_module_builder_set_uart_tx_pin", line_nr, "Trying to set uart tx pin of module '%s' to '%s'.\n"
+              "                                                    But uart tx pin has already been set to '%s'.", 
+              module_builder->module->name == NULL ? "<NULL>" : module_builder->module->name, 
+              pin_to_string(tx_pin),
+              pin_to_string(module_builder->module->data.uart.tx_pin));
+  
+  module_builder->module->data.uart.tx_pin = tx_pin;
+  module_builder->tx_pin_set = true;
+}
+
+/**
+ * @brief Sets the UART RX pin of the UART module in the AST module builder.
+ * 
+ * @param line_nr Line number where the function is called for logging purposes.
+ * @param module_builder Pointer to the AST module builder.
+ * @param rx_pin UART RX pin to set for the UART module.
+ * 
+ * @note Logs an error if the rx pin has already been set, if the module kind is not UART, or if any parameter is NULL.
+ */
+void ast_module_builder_set_uart_rx_pin(int line_nr, ast_module_builder_t* module_builder, pin_t rx_pin){
+  if(module_builder == NULL)
+    log_error("ast_module_builder_set_uart_rx_pin", 0, "AST module builder is NULL.");
+  
+  if(module_builder->module->kind != MODULE_UART)
+    log_error("ast_module_builder_set_uart_rx_pin", line_nr, "Cannot set uart rx pin for non-uart module '%s'.", 
+              module_builder->module->name == NULL ? "<NULL>" : module_builder->module->name);
+  if(module_builder->rx_pin_set)
+    log_error("ast_module_builder_set_uart_rx_pin", line_nr, "Trying to set uart rx pin of module '%s' to '%s'.\n"
+              "                                                    But uart rx pin has already been set to '%s'.", 
+              module_builder->module->name == NULL ? "<NULL>" : module_builder->module->name, 
+              pin_to_string(rx_pin),
+              pin_to_string(module_builder->module->data.uart.rx_pin));
+  
+  module_builder->module->data.uart.rx_pin = rx_pin;
+  module_builder->rx_pin_set = true;
+}
+
+/**
+ * @brief Sets the UART baud rate of the UART module in the AST module builder.
+ * 
+ * @param line_nr Line number where the function is called for logging purposes.
+ * @param module_builder Pointer to the AST module builder.
+ * @param baudrate UART baud rate to set for the UART module.
+ * 
+ * @note Logs an error if the baud rate has already been set, if the module kind is not UART, or if any parameter is NULL.
+ */
+void ast_module_builder_set_uart_baudrate(int line_nr, ast_module_builder_t* module_builder, uint32_t baudrate){
+  if(module_builder == NULL)
+    log_error("ast_module_builder_set_uart_baudrate", 0, "AST module builder is NULL.");
+  
+  if(module_builder->module->kind != MODULE_UART)
+    log_error("ast_module_builder_set_uart_baudrate", line_nr, "Cannot set uart baudrate for non-uart module '%s'.", 
+              module_builder->module->name == NULL ? "<NULL>" : module_builder->module->name);
+  if(module_builder->baudrate_set)
+    log_error("ast_module_builder_set_uart_baudrate", line_nr, "Trying to set uart baudrate of module '%s' to '%u'.\n"
+              "                                                     But uart baudrate has already been set to '%u'.", 
+              module_builder->module->name == NULL ? "<NULL>" : module_builder->module->name, 
+              baudrate,
+              module_builder->module->data.uart.baudrate);
+  
+  module_builder->module->data.uart.baudrate = baudrate;
+  module_builder->baudrate_set = true;
+}
+
+/**
+ * @brief Sets the UART data bits of the UART module in the AST module builder.
+ * 
+ * @param line_nr Line number where the function is called for logging purposes.
+ * @param module_builder Pointer to the AST module builder.
+ * @param databits UART data bits to set for the UART module.
+ * 
+ * @note Logs an error if the data bits have already been set, if the module kind is not UART, databits exceed uint8_t max, or if any parameter is NULL.
+ */
+void ast_module_builder_set_uart_databits(int line_nr, ast_module_builder_t* module_builder, uint32_t databits){
+  if(module_builder == NULL)
+    log_error("ast_module_builder_set_uart_databits", 0, "AST module builder is NULL.");
+  
+  if(module_builder->module->kind != MODULE_UART)
+    log_error("ast_module_builder_set_uart_databits", line_nr, "Cannot set uart databits for non-uart module '%s'.", 
+              module_builder->module->name == NULL ? "<NULL>" : module_builder->module->name);
+  if(module_builder->databits_set)
+    log_error("ast_module_builder_set_uart_databits", line_nr, "Trying to set uart databits of module '%s' to '%u'.\n"
+              "                                                     But uart databits has already been set to '%u'.", 
+              module_builder->module->name == NULL ? "<NULL>" : module_builder->module->name, 
+              databits,
+              module_builder->module->data.uart.databits);
+  
+  if(databits > UINT8_MAX) // Validate that databits fit in uint8_t
+    log_error("ast_module_builder_set_uart_databits", line_nr, "UART databits value '%u' exceeds maximum allowed value of '%u'.",
+              databits,
+              UINT8_MAX);
+  
+  module_builder->module->data.uart.databits = databits;
+  module_builder->databits_set = true;
+}
+
+/**
+ * @brief Sets the UART stop bits of the UART module in the AST module builder.
+ * 
+ * @param line_nr Line number where the function is called for logging purposes.
+ * @param module_builder Pointer to the AST module builder.
+ * @param stopbits UART stop bits to set for the UART module.
+ * 
+ * @note Logs an error if the stop bits have already been set, if the module kind is not UART, stopbits exceed uint8_t max, or if any parameter is NULL.
+ */
+void ast_module_builder_set_uart_stopbits(int line_nr, ast_module_builder_t* module_builder, uint32_t stopbits){
+  if(module_builder == NULL)
+    log_error("ast_module_builder_set_uart_stopbits", 0, "AST module builder is NULL.");
+  
+  if(module_builder->module->kind != MODULE_UART)
+    log_error("ast_module_builder_set_uart_stopbits", line_nr, "Cannot set uart stopbits for non-uart module '%s'.", 
+              module_builder->module->name == NULL ? "<NULL>" : module_builder->module->name);
+  if(module_builder->stopbits_set)
+    log_error("ast_module_builder_set_uart_stopbits", line_nr, "Trying to set uart stopbits of module '%s' to '%u'.\n"
+              "                                                     But uart stopbits has already been set to '%u'.", 
+              module_builder->module->name == NULL ? "<NULL>" : module_builder->module->name, 
+              stopbits,
+              module_builder->module->data.uart.stopbits);
+  
+  if(stopbits > UINT8_MAX) // Validate that stopbits fit in uint8_t
+    log_error("ast_module_builder_set_uart_stopbits", line_nr, "UART stopbits value '%u' exceeds maximum allowed value of '%u'.",
+              stopbits,
+              UINT8_MAX);
+  
+  module_builder->module->data.uart.stopbits = stopbits;
+  module_builder->stopbits_set = true;
+}
+
+/**
+ * @brief Sets the UART parity of the UART module in the AST module builder.
+ * 
+ * @param line_nr Line number where the function is called for logging purposes.
+ * @param module_builder Pointer to the AST module builder.
+ * @param parity UART parity to set for the UART module.
+ * 
+ * @note Logs an error if the parity has already been set, if the module kind is not UART, or if any parameter is NULL.
+ */
+void ast_module_builder_set_uart_parity(  int line_nr, ast_module_builder_t* module_builder, uart_parity_t parity){
+  if(module_builder == NULL)
+    log_error("ast_module_builder_set_uart_parity", 0, "AST module builder is NULL.");
+  
+  if(module_builder->module->kind != MODULE_UART)
+    log_error("ast_module_builder_set_uart_parity", line_nr, "Cannot set uart parity for non-uart module '%s'.", 
+              module_builder->module->name == NULL ? "<NULL>" : module_builder->module->name);
+  if(module_builder->parity_set)
+    log_error("ast_module_builder_set_uart_parity", line_nr, "Trying to set uart parity of module '%s'.\n"
+              "                                                     But uart parity has already been set.", 
+              module_builder->module->name == NULL ? "<NULL>" : module_builder->module->name);
+  
+  module_builder->module->data.uart.parity = parity;
+  module_builder->parity_set = true;
 }

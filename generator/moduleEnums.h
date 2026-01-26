@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 
+
 /* -------- Supported microcontrollers -------- */
 
 /**
@@ -13,6 +14,7 @@
 typedef enum{
   STM32F446RE
 } controller_t;
+
 
 /* ---------- General used data types --------- */
 
@@ -40,6 +42,7 @@ typedef struct{
   unsigned int pin_number;
 } pin_t;
 
+
 /* ------ Multiple used parameter values ------ */
 /**
  * @brief Logical levels
@@ -50,6 +53,7 @@ typedef enum{
   LOW,
   HIGH
 } level_t;
+
 
 /* ------ GPIO specific parameter values ------ */
 
@@ -96,5 +100,18 @@ typedef enum{
   GPIO_INIT_OFF,
   GPIO_INIT_NONE
 } gpio_init_t;
+
+
+/* ------ UART specific parameter values ------ */
+/**
+ * @brief UART parity configurations
+ * 
+ * Values: UART_PARITY_NONE, UART_PARITY_EVEN, UART_PARITY_ODD
+ */
+typedef enum{
+  UART_PARITY_NONE,
+  UART_PARITY_EVEN,
+  UART_PARITY_ODD
+} uart_parity_t;
 
 #endif //__MODULE_ENUMS_H__

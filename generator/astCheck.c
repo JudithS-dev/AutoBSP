@@ -12,6 +12,8 @@ static void ast_check_required_module_params(ast_module_builder_t* module_builde
 
 void ast_check_unique_enabled_names(ast_dsl_node_t* dsl_node);
 void ast_check_unique_enabled_pins(ast_dsl_node_t* dsl_node);
+
+static void check_pin_conflict(const ast_module_node_t* module1, const pin_t* pin1, const ast_module_node_t* module2, const pin_t* pin2);
 static bool is_c_keyword(const char* name);
 static int get_line_nr_of_module(ast_dsl_node_t* dsl_node, const char* module_name);
 
@@ -80,9 +82,19 @@ void ast_check_required_module_params(ast_module_builder_t* module_builder){
     log_error("ast_check_required_module_params", 0, "Required field 'name' is not set for module defined in line number %d.",
               module->line_nr);
   
-  if(module_builder->pin_set == false)
-    log_error("ast_check_required_module_params", module->line_nr, "Required field 'pin' is not set for module '%s'.", 
-              module->name == NULL ? "<NULL>" : module->name);
+  // Check if pins are set (if UART, tx_pin and rx_pin must be set)
+  if(module->kind == MODULE_UART){
+    if(module_builder->tx_pin_set == false)
+      log_error("ast_check_required_module_params", module->line_nr, "Required field 'tx_pin' is not set for UART module '%s'.", 
+                module->name == NULL ? "<NULL>" : module->name);
+    if(module_builder->rx_pin_set == false)
+      log_error("ast_check_required_module_params", module->line_nr, "Required field 'rx_pin' is not set for UART module '%s'.", 
+                module->name == NULL ? "<NULL>" : module->name);
+  } else{
+    if(module_builder->pin_set == false)
+      log_error("ast_check_required_module_params", module->line_nr, "Required field 'pin' is not set for module '%s'.", 
+                module->name == NULL ? "<NULL>" : module->name);
+  }
   
   // Check kind-specific fields if needed
   // nothing for now as all fields are optional
@@ -171,6 +183,8 @@ void ast_check_unique_enabled_names(ast_dsl_node_t* dsl_node){
  * @param dsl_node Pointer to the DSL node.
  * 
  * @note Logs an error and exits if duplicate pins are found.
+ * @note Supports both regular modules (single pin) and UART modules (tx_pin and rx_pin).
+ * @note For UART modules, checks that tx_pin and rx_pin are different.
  */
 void ast_check_unique_enabled_pins(ast_dsl_node_t* dsl_node){
   if(dsl_node == NULL)
@@ -181,24 +195,65 @@ void ast_check_unique_enabled_pins(ast_dsl_node_t* dsl_node){
   ast_module_node_t* current = dsl_node->modules_root;
   while(current != NULL){
     if(current->enable){
+      // For UART modules, check that tx_pin and rx_pin are different
+      if(current->kind == MODULE_UART){
+        if(current->data.uart.tx_pin.port == current->data.uart.rx_pin.port &&
+            current->data.uart.tx_pin.pin_number == current->data.uart.rx_pin.pin_number){
+          log_error("ast_check_unique_enabled_pins", current->line_nr,
+                    "UART module '%s' has the same pin for tx_pin and rx_pin (Port %c Pin %d).",
+                    current->name, current->data.uart.tx_pin.port, current->data.uart.tx_pin.pin_number);
+        }
+      }
+      
+      // Check for duplicate pins with other enabled modules
       ast_module_node_t* checker = current->next;
       while(checker != NULL){
-        if(checker->enable){ // TODO fix in the future that it works with UART pins as well
-          if(current->pin.port == checker->pin.port && current->pin.pin_number == checker->pin.pin_number){
-            log_error("ast_check_unique_enabled_pins", 0,
-                      "Duplicate enabled module pin found: Port %c Pin %d is used by both module '%s' (line %d) and module '%s' (line %d).",
-                      current->pin.port,
-                      current->pin.pin_number,
-                      current->name,
-                      current->line_nr,
-                      checker->name,
-                      checker->line_nr);
+        if(checker->enable){
+          // Check pins based on module type
+          if(current->kind == MODULE_UART && checker->kind == MODULE_UART){
+            // Both are UART modules -> check all combinations
+            check_pin_conflict(current, &current->data.uart.tx_pin, checker, &checker->data.uart.tx_pin);
+            check_pin_conflict(current, &current->data.uart.tx_pin, checker, &checker->data.uart.rx_pin);
+            check_pin_conflict(current, &current->data.uart.rx_pin, checker, &checker->data.uart.tx_pin);
+            check_pin_conflict(current, &current->data.uart.rx_pin, checker, &checker->data.uart.rx_pin);
+          } else if(current->kind == MODULE_UART && checker->kind != MODULE_UART){
+            // Current is UART, checker is regular module
+            check_pin_conflict(current, &current->data.uart.tx_pin, checker, &checker->pin);
+            check_pin_conflict(current, &current->data.uart.rx_pin, checker, &checker->pin);
+          } else if(current->kind != MODULE_UART && checker->kind == MODULE_UART){
+            // Current is regular module, checker is UART
+            check_pin_conflict(current, &current->pin, checker, &checker->data.uart.tx_pin);
+            check_pin_conflict(current, &current->pin, checker, &checker->data.uart.rx_pin);
+          } else {
+            // Both are regular modules
+            check_pin_conflict(current, &current->pin, checker, &checker->pin);
           }
         }
         checker = checker->next;
       }
     }
     current = current->next;
+  }
+}
+
+/**
+ * @brief Helper function to check if two pins conflict.
+ * 
+ * @param module1 Pointer to the first module node for error reporting.
+ * @param pin1 Pointer to the first pin.
+ * @param module2 Pointer to the second module node for error reporting.
+ * @param pin2 Pointer to the second pin.
+ */
+static void check_pin_conflict(const ast_module_node_t* module1, const pin_t* pin1, const ast_module_node_t* module2, const pin_t* pin2){
+  if(pin1->port == pin2->port && pin1->pin_number == pin2->pin_number){
+    log_error("ast_check_unique_enabled_pins", 0,
+              "Duplicate enabled module pin found: Port %c Pin %d is used by both module '%s' (line %d) and module '%s' (line %d).",
+              pin1->port,
+              pin1->pin_number,
+              module1->name,
+              module1->line_nr,
+              module2->name,
+              module2->line_nr);
   }
 }
 

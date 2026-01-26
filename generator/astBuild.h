@@ -39,4 +39,12 @@ void ast_module_builder_set_pwm_active_level(int line_nr, ast_module_builder_t* 
 void ast_module_builder_set_pwm_frequency(   int line_nr, ast_module_builder_t* module_builder, uint32_t frequency);
 void ast_module_builder_set_pwm_duty(        int line_nr, ast_module_builder_t* module_builder, uint32_t duty_cycle);
 
+// Module builder UART specific setters
+void ast_module_builder_set_uart_tx_pin(  int line_nr, ast_module_builder_t* module_builder, pin_t tx_pin);
+void ast_module_builder_set_uart_rx_pin(  int line_nr, ast_module_builder_t* module_builder, pin_t rx_pin);
+void ast_module_builder_set_uart_baudrate(int line_nr, ast_module_builder_t* module_builder, uint32_t baudrate);
+void ast_module_builder_set_uart_databits(int line_nr, ast_module_builder_t* module_builder, uint32_t databits);
+void ast_module_builder_set_uart_stopbits(int line_nr, ast_module_builder_t* module_builder, uint32_t stopbits);
+void ast_module_builder_set_uart_parity(  int line_nr, ast_module_builder_t* module_builder, uart_parity_t parity);
+
 #endif //__AST_BUILD_H__

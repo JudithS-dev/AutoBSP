@@ -42,6 +42,11 @@
     GPIO_HELPER_INIT_OFF
   } gpio_init_helper_t;
   
+  typedef enum{
+    UART_HELPER_PARITY_ODD,
+    UART_HELPER_PARITY_EVEN
+  } uart_parity_helper_t;
+  
   /* Conversion helpers */
   static inline gpio_pull_t helper_to_gpio_pull(gpio_pull_helper_t h){
     switch(h){
@@ -78,6 +83,15 @@
     log_error("helper_to_gpio_init", 0, "Invalid gpio_init_helper_t value '%d'", h);
     return GPIO_INIT_OFF;  // This won't be reached due to log_error exiting
   }
+  
+  static inline uart_parity_t helper_to_uart_parity(uart_parity_helper_t h){
+    switch(h){
+      case UART_HELPER_PARITY_EVEN: return UART_PARITY_EVEN;
+      case UART_HELPER_PARITY_ODD:  return UART_PARITY_ODD;
+    }
+    log_error("helper_to_uart_parity", 0, "Invalid uart_parity_helper_t value '%d'", h);
+    return UART_PARITY_NONE;  // This won't be reached due to log_error exiting
+  }
 }
 
   /* -------------------------------------------- */
@@ -97,6 +111,8 @@
   gpio_init_helper_t    u_helper_gpio_init;   // For val_gpio_init
   gpio_init_t           u_gpio_init;          // For parser use
   uint32_t              u_nr;                 // For val_nr
+  uart_parity_helper_t  u_helper_uart_parity; // For val_uart_parity
+  uart_parity_t         u_uart_parity;        // For parser use
 }
 
 %start START
@@ -106,7 +122,7 @@
   /* -------------------------------------------- */
   
   /* -------------- File structure -------------- */
-%token kw_autobsp kw_output kw_input kw_pwm_output
+%token kw_autobsp kw_output kw_input kw_pwm_output kw_uart
   
   /* -------------- Parameter names ------------- */
   /* Multiple used parameter names */
@@ -115,6 +131,8 @@
 %token kw_gpio_type kw_gpio_pull kw_gpio_speed kw_gpio_init kw_gpio_active kw_enable
   /* PWM specific parameter names */
 %token kw_pwm_frequency kw_pwm_duty
+  /* UART specific parameter names */
+%token kw_tx_pin kw_rx_pin kw_baudrate kw_databits kw_stopbits kw_parity
   
   /* ------------- Parameter values ------------- */
   /* Multiple used parameter values */
@@ -127,7 +145,9 @@
 %token <u_gpio_type>  val_gpio_type 
 %token <u_helper_gpio_pull>  val_gpio_pull 
 %token <u_helper_gpio_speed> val_gpio_speed
-%token <u_helper_gpio_init>  val_gpio_init 
+%token <u_helper_gpio_init>  val_gpio_init
+  /* UART specific parameter values */
+%token <u_helper_uart_parity> val_uart_parity
   
   /* -------- Rules for dynamic patterns -------- */
 %token <u_str> val_name 
@@ -137,17 +157,23 @@
   /* -------------------------------------------- */
   /*   Definition of datatypes of non-terminals   */
   /* -------------------------------------------- */
-%type <u_controller> CONTROLLER_PARAM
-%type <u_str>        NAME_PARAM
-%type <u_pin>        PIN_PARAM
-%type <u_bool>       ENABLE_PARAM
-%type <u_gpio_type>  GPIO_TYPE_PARAM
-%type <u_gpio_pull>  GPIO_PULL_PARAM
-%type <u_gpio_speed> GPIO_SPEED_PARAM
-%type <u_gpio_init>  GPIO_INIT_PARAM
-%type <u_level>      GPIO_ACTIVE_PARAM
-%type <u_nr>         PWM_FREQUENCY_PARAM
-%type <u_nr>         PWM_DUTY_PARAM
+%type <u_controller>  CONTROLLER_PARAM
+%type <u_str>         NAME_PARAM
+%type <u_pin>         PIN_PARAM
+%type <u_bool>        ENABLE_PARAM
+%type <u_gpio_type>   GPIO_TYPE_PARAM
+%type <u_gpio_pull>   GPIO_PULL_PARAM
+%type <u_gpio_speed>  GPIO_SPEED_PARAM
+%type <u_gpio_init>   GPIO_INIT_PARAM
+%type <u_level>       GPIO_ACTIVE_PARAM
+%type <u_nr>          PWM_FREQUENCY_PARAM
+%type <u_nr>          PWM_DUTY_PARAM
+%type <u_pin>         UART_PIN_TX_PARAM
+%type <u_pin>         UART_PIN_RX_PARAM
+%type <u_nr>          UART_BAUDRATE_PARAM
+%type <u_nr>          UART_DATABITS_PARAM
+%type <u_nr>          UART_STOPBITS_PARAM
+%type <u_uart_parity> UART_PARITY_PARAM
 
 %%
 
@@ -208,10 +234,21 @@ MODULE_DEF: kw_input  { /* Start new input module builder */
                             current_module_builder = ast_new_module_builder(yylineno);
                             ast_module_builder_set_kind(yylineno, current_module_builder, MODULE_PWM_OUTPUT);
                           }
-              '{' PWM_PARAMS '}' { /* Append the current module builder to the DSL builder */
-                                      ast_dsl_builder_append_module_builder(yylineno, dsl_builder, current_module_builder);
-                                      current_module_builder = NULL;
-                                    }
+              '{' PWM_PARAMS '}'  { /* Append the current module builder to the DSL builder */
+                                    ast_dsl_builder_append_module_builder(yylineno, dsl_builder, current_module_builder);
+                                    current_module_builder = NULL;
+                                  }
+          | kw_uart { /* Start new UART module builder */
+                      log_info("MODULE_DEF", LOG_PARSER_FOUND, yylineno, "Found UART module definition.");
+                      if(current_module_builder != NULL)
+                        log_error("MODULE_DEF", yylineno, "Previous module builder not finalized before starting new UART module.");
+                      current_module_builder = ast_new_module_builder(yylineno);
+                      ast_module_builder_set_kind(yylineno, current_module_builder, MODULE_UART);
+                    }
+              '{' UART_PARAMS '}' { /* Append the current module builder to the DSL builder */
+                                    ast_dsl_builder_append_module_builder(yylineno, dsl_builder, current_module_builder);
+                                    current_module_builder = NULL;
+                                  }
 
 
 INPUT_PARAMS: INPUT_PARAMS INPUT_PARAM END
@@ -322,6 +359,46 @@ PWM_PARAM:  NAME_PARAM          { if(!current_module_builder)
                                   ast_module_builder_set_pwm_duty(yylineno, current_module_builder, $1);
                                 }
 
+UART_PARAMS: UART_PARAMS UART_PARAM END
+            | UART_PARAM END
+
+UART_PARAM:  NAME_PARAM           { if(!current_module_builder)
+                                      log_error("UART_PARAM", yylineno, "No current module builder to set name.");
+                                    ast_module_builder_set_name(yylineno, current_module_builder, $1);
+                                    if($1)
+                                      free($1); // Free the in the lexer allocated string
+                                    else
+                                      log_error("UART_PARAM", yylineno, "UART_PARAM: Name parameter is NULL.");
+                                  }
+            | ENABLE_PARAM        { if(!current_module_builder)
+                                      log_error("UART_PARAM", yylineno, "No current module builder to set enable.");
+                                    ast_module_builder_set_enable(yylineno, current_module_builder, $1);
+                                  }
+            | UART_PIN_TX_PARAM   { if(!current_module_builder)
+                                      log_error("UART_PARAM", yylineno, "No current module builder to set TX pin.");
+                                    ast_module_builder_set_uart_tx_pin(yylineno, current_module_builder, $1);
+                                  }
+            | UART_PIN_RX_PARAM   { if(!current_module_builder)
+                                      log_error("UART_PARAM", yylineno, "No current module builder to set RX pin.");
+                                    ast_module_builder_set_uart_rx_pin(yylineno, current_module_builder, $1);
+                                  }
+            | UART_BAUDRATE_PARAM { if(!current_module_builder)
+                                    log_error("UART_PARAM", yylineno, "No current module builder to set baudrate.");
+                                    ast_module_builder_set_uart_baudrate(yylineno, current_module_builder, $1);
+                                  }
+            | UART_DATABITS_PARAM { if(!current_module_builder)
+                                    log_error("UART_PARAM", yylineno, "No current module builder to set databits.");
+                                    ast_module_builder_set_uart_databits(yylineno, current_module_builder, $1);
+                                  }
+            | UART_STOPBITS_PARAM { if(!current_module_builder)
+                                    log_error("UART_PARAM", yylineno, "No current module builder to set stopbits.");
+                                    ast_module_builder_set_uart_stopbits(yylineno, current_module_builder, $1);
+                                  }
+            | UART_PARITY_PARAM   { if(!current_module_builder)
+                                    log_error("UART_PARAM", yylineno, "No current module builder to set parity.");
+                                    ast_module_builder_set_uart_parity(yylineno, current_module_builder, $1);
+                                  }
+
 NAME_PARAM: kw_name ':' val_name                    { $$ = $3;
                                                       log_info("NAME_PARAM", LOG_PARSER_FOUND, yylineno, "Found name parameter with value '%s'", $3);
                                                     }
@@ -373,6 +450,37 @@ PWM_DUTY_PARAM: kw_pwm_duty ':' val_nr              { $$ = $3;
                                                       log_info("PWM_DUTY_PARAM", LOG_PARSER_FOUND, yylineno, "Found PWM duty cycle parameter with value '%d'", $3);
                                                     }
 
+UART_PIN_TX_PARAM: kw_tx_pin ':' val_pin            { $$ = $3;
+                                                      char *pin_str = pin_to_string($3);
+                                                      log_info("UART_PIN_TX_PARAM", LOG_PARSER_FOUND, yylineno, "Found UART TX pin parameter with value '%s'", pin_str);
+                                                      free(pin_str);
+                                                    }
+
+UART_PIN_RX_PARAM: kw_rx_pin ':' val_pin            { $$ = $3;
+                                                      char *pin_str = pin_to_string($3);
+                                                      log_info("UART_PIN_RX_PARAM", LOG_PARSER_FOUND, yylineno, "Found UART RX pin parameter with value '%s'", pin_str);
+                                                      free(pin_str);
+                                                    }
+
+UART_BAUDRATE_PARAM: kw_baudrate ':' val_nr         { $$ = $3;
+                                                      log_info("UART_BAUDRATE_PARAM", LOG_PARSER_FOUND, yylineno, "Found UART baudrate parameter with value '%d'", $3);
+                                                    }
+
+UART_DATABITS_PARAM: kw_databits ':' val_nr         { $$ = $3;
+                                                      log_info("UART_DATABITS_PARAM", LOG_PARSER_FOUND, yylineno, "Found UART databits parameter with value '%d'", $3);
+                                                    }
+
+UART_STOPBITS_PARAM: kw_stopbits ':' val_nr         { $$ = $3;
+                                                      log_info("UART_STOPBITS_PARAM", LOG_PARSER_FOUND, yylineno, "Found UART stopbits parameter with value '%d'", $3);
+                                                    }
+
+UART_PARITY_PARAM:  kw_parity ':' val_uart_parity   { $$ = helper_to_uart_parity($3);
+                                                      log_info("UART_PARITY_PARAM", LOG_PARSER_FOUND, yylineno, "Found UART parity parameter with value '%s'", uart_parity_to_string($$));
+                                                    }
+                  | kw_parity ':' val_none          { $$ = UART_PARITY_NONE;
+                                                      log_info("UART_PARITY_PARAM", LOG_PARSER_FOUND, yylineno, "Found UART parity parameter with value '%s'", uart_parity_to_string($$));
+                                                    }
+
 END: ';'
     | /* empty */
 
@@ -386,7 +494,7 @@ void yyerror(const char *msg){
   printf("Error in line %d: %s\n", yylineno, msg);
 }
 
-int main(int argc, char *argv[]){
+int main(int argc, char *argv[]){ //TODO fix leak check error
   // Check for correct number of arguments (./AutoBSP <codefile> [<output_path>])
   if(argc < 2 || argc > 3){
     fprintf(stderr, "\nERROR 'main': Incorrect number of arguments.\n              Usage: %s <codefile_name> [<output_path>]\n", argv[0]);
@@ -437,7 +545,7 @@ int main(int argc, char *argv[]){
   
   // Sort modules by pin number for better readability
   log_info("main", LOG_OTHER, 0, "Sorting modules by pin number for better readability");
-  ast_sort_modules_by_pin(ast_root);
+  ast_sort_modules_by_pin(ast_root); // TODO fix for UART modules
   
   // Bind backend specific parameters
   log_info("main", LOG_OTHER, 0, "Binding backend specific parameters to the AST");
