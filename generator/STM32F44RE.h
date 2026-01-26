@@ -31,7 +31,7 @@ typedef struct{
  */
 typedef struct{
   uint8_t usart;     // 1...5
-  bool is_uart;      // true=UART4/5, false=USART1/2/3
+  bool is_uart;      // true=UART4/5, false=USART1/2/3/6
   bool is_tx;        // true=TX pin, false=RX pin
   uint8_t af;        // AF number (e.g., 7)
 } uart_opt_t;

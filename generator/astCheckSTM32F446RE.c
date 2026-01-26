@@ -10,6 +10,7 @@ static const pin_cap_t* pincap_find_stm32f446re(char port, uint8_t num);
 static void is_valid_stm32f446re_pin(const char *module_name, int line_nr, pin_t pin);
 static void bind_pwm_pins_stm32f446re(ast_dsl_node_t* dsl_node);
 static void bind_pwm_prescaler_period_stm32f446re(ast_dsl_node_t* dsl_node);
+static void bind_uart_pins_stm32f446re(ast_dsl_node_t* dsl_node);
 
 
 /* -------------------------------------------- */
@@ -78,6 +79,13 @@ void ast_check_stm32f446re_valid_pins(ast_dsl_node_t* dsl_node){
         pin_cap_t *rx_cap = (pin_cap_t*)pincap_find_stm32f446re(current_module->data.uart.rx_pin.port, (uint8_t)(current_module->data.uart.rx_pin.pin_number));
         if(rx_cap->not_usable)
           log_error("are_valid_stm32f446re_pins", current_module->line_nr, "RX Pin '%s' is marked as not usable on STM32F446RE for module '%s'.",
+                    pin_to_string(current_module->data.uart.rx_pin),
+                    current_module->name);
+        
+        // Check if tx and rx pins are on the same port (required by hardware)
+        if(current_module->pin.port != current_module->data.uart.rx_pin.port)
+          log_error("are_valid_stm32f446re_pins", current_module->line_nr, "TX Pin '%s' and RX Pin '%s' must be on the same port for module '%s'.",
+                    pin_to_string(current_module->pin),
                     pin_to_string(current_module->data.uart.rx_pin),
                     current_module->name);
         
@@ -165,7 +173,7 @@ static void is_valid_stm32f446re_pin(const char *module_name, int line_nr, pin_t
 void ast_check_stm32f446re_bind_pins(ast_dsl_node_t* dsl_node){
   bind_pwm_pins_stm32f446re(dsl_node);
   bind_pwm_prescaler_period_stm32f446re(dsl_node);
-  // TODO: Add UART pin bindings here
+  bind_uart_pins_stm32f446re(dsl_node);
 }
 
 /**
@@ -176,7 +184,7 @@ void ast_check_stm32f446re_bind_pins(ast_dsl_node_t* dsl_node){
  * Assigns timer numbers and channels to PWM output modules based on available options and usage.
  */
 static void bind_pwm_pins_stm32f446re(ast_dsl_node_t* dsl_node){
-  bool tim_used[15] = { false }; // TIM1 to TIM14
+  bool tim_used[15] = { false }; // TIM1 to TIM14 (0 unused)
   
   ast_module_node_t* current_module = dsl_node->modules_root;
   while(current_module != NULL){
@@ -251,6 +259,49 @@ static void bind_pwm_prescaler_period_stm32f446re(ast_dsl_node_t* dsl_node){
         log_error("bind_pwm_prescaler_period_stm32f446re", current_module->line_nr, "Calculated prescaler too high for PWM module '%s'.",
                   current_module->name);
       current_module->data.pwm.prescaler = (uint16_t)prescaler;
+    }
+    current_module = current_module->next;
+  }
+}
+
+/**
+ * @brief Binds UART pins for STM32F446RE.
+ * 
+ * @param dsl_node Pointer to the DSL node.
+ * 
+ * Assigns USART numbers and GPIO alternate function numbers to UART modules based on available options and usage.
+ */
+static void bind_uart_pins_stm32f446re(ast_dsl_node_t* dsl_node){
+  bool usart_used[7] = { false }; // UART/USART1 to UART/USART6 (0 unused)
+  
+  ast_module_node_t* current_module = dsl_node->modules_root;
+  while(current_module != NULL){
+    if(current_module->enable && (current_module->kind == MODULE_UART)){
+      pin_cap_t *tx_cap = (pin_cap_t*)pincap_find_stm32f446re(current_module->pin.port, (uint8_t)(current_module->pin.pin_number));
+      pin_cap_t *rx_cap = (pin_cap_t*)pincap_find_stm32f446re(current_module->data.uart.rx_pin.port, (uint8_t)(current_module->data.uart.rx_pin.pin_number));
+      // Find common USART options between tx and rx pins
+      for(uint8_t i = 0; i < tx_cap->uart_count; i++){
+        uart_opt_t *tx_opt = &tx_cap->uart[i];
+        for(uint8_t j = 0; j < rx_cap->uart_count; j++){
+          uart_opt_t *rx_opt = &rx_cap->uart[j];
+          if((tx_opt->usart == rx_opt->usart) && (tx_opt->is_uart == rx_opt->is_uart)){
+            // Check if this USART is already used
+            if(!usart_used[tx_opt->usart]){
+              // Assign this USART to the module
+              current_module->data.uart.usart_number = tx_opt->usart;
+              current_module->data.uart.is_uart      = tx_opt->is_uart;
+              if(tx_opt->af != rx_opt->af)
+                log_error("bind_uart_pins_stm32f446re", current_module->line_nr, "INTERNAL ERROR: TX pin '%s' and RX pin '%s' for UART module '%s' have different AF numbers.",
+                          pin_to_string(current_module->pin),
+                          pin_to_string(current_module->data.uart.rx_pin),
+                          current_module->name);
+              current_module->data.uart.gpio_af      = tx_opt->af; // TX and RX should have the same AF number
+              usart_used[tx_opt->usart] = true; // Mark USART as used
+              break;
+            }
+          }
+        }
+      }
     }
     current_module = current_module->next;
   }
