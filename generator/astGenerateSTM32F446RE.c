@@ -7,6 +7,7 @@
 static void generate_header_gpio_output_func(FILE* output_source, ast_dsl_node_t* dsl_node);
 static void generate_header_gpio_input_func(FILE* output_source, ast_dsl_node_t* dsl_node);
 static void generate_header_pwm_func(FILE* output_source, ast_dsl_node_t* dsl_node);
+static void generate_header_uart_func(FILE* output_source, ast_dsl_node_t* dsl_node);
 
 void generate_source_pwm_init_declaration(FILE* output_source, ast_dsl_node_t* dsl_node);
 static void generate_source_timer_handle_declaration(FILE* output_source, ast_dsl_node_t* dsl_node);
@@ -21,6 +22,7 @@ static void generate_source_pwm_output_func(FILE* output_source, ast_dsl_node_t*
 
 static bool has_enabled_gpio_module(ast_dsl_node_t* dsl_node);
 static bool has_enabled_pwm_module(ast_dsl_node_t* dsl_node);
+static bool has_enabled_uart_module(ast_dsl_node_t* dsl_node);
 
 
 /* -------------------------------------------- */
@@ -44,7 +46,7 @@ void ast_generate_header_stm32f446re(FILE* output_header, ast_dsl_node_t* dsl_no
   
   fprintf(output_header,"\n#include <stdbool.h>");
   
-  if(has_enabled_pwm_module(dsl_node))
+  if(has_enabled_pwm_module(dsl_node) || has_enabled_uart_module(dsl_node))
     fprintf(output_header,"\n#include <stdint.h>");
   
   fprintf(output_header,"\n\nvoid BSP_Init(void);\n");
@@ -52,7 +54,7 @@ void ast_generate_header_stm32f446re(FILE* output_header, ast_dsl_node_t* dsl_no
   generate_header_gpio_output_func(output_header, dsl_node);
   generate_header_gpio_input_func(output_header, dsl_node);
   generate_header_pwm_func(output_header, dsl_node);
-  // TODO: Add generation of UART functions
+  generate_header_uart_func(output_header, dsl_node);
   
   // Check for unsupported module kinds
   ast_module_node_t *current_module = dsl_node->modules_root;
@@ -145,6 +147,28 @@ static void generate_header_pwm_func(FILE* output_source, ast_dsl_node_t* dsl_no
         fprintf(output_source, "void BSP_%s_Stop(void);\n", current_module->name);
         fprintf(output_source, "void BSP_%s_SetDuty(uint16_t permille); // 0..1000\n", current_module->name);
         fprintf(output_source, "uint16_t BSP_%s_GetDuty(void);\n", current_module->name);
+      }
+    }
+    current_module = current_module->next;
+  }
+}
+
+static void generate_header_uart_func(FILE* output_source, ast_dsl_node_t* dsl_node){
+  if(output_source == NULL)
+    log_error("generate_header_uart_func", 0, "Output source file pointer is NULL.");
+  if(dsl_node == NULL)
+    log_error("generate_header_uart_func", 0, "DSL node is NULL.");
+  
+  ast_module_node_t *current_module = dsl_node->modules_root;
+  while(current_module != NULL){
+    if(current_module->enable){
+      if(current_module->kind == MODULE_UART){
+        // Generate function prototypes for UART modules
+        fprintf(output_source, "\n/* UART: '%s' */\n", current_module->name);
+        fprintf(output_source, "void BSP_%s_SendChar(uint8_t ch);\n", current_module->name);
+        fprintf(output_source, "void BSP_%s_Print(const char *msg);\n", current_module->name);
+        fprintf(output_source, "bool BSP_%s_ReadChar(uint8_t *ch);\n", current_module->name);
+        fprintf(output_source, "bool BSP_%s_TryReadChar(uint8_t *ch);\n", current_module->name);
       }
     }
     current_module = current_module->next;
@@ -753,6 +777,26 @@ static bool has_enabled_pwm_module(ast_dsl_node_t* dsl_node){
   ast_module_node_t *current_module = dsl_node->modules_root;
   while(current_module != NULL){
     if(current_module->enable && current_module->kind == MODULE_PWM_OUTPUT){
+      return true;
+    }
+    current_module = current_module->next;
+  }
+  return false;
+}
+
+/**
+ * @brief Checks if there is at least one enabled UART module in the DSL node.
+ * 
+ * @param dsl_node Pointer to the DSL AST node.
+ * @return true if there is at least one enabled UART module; false otherwise.
+ */
+static bool has_enabled_uart_module(ast_dsl_node_t* dsl_node){
+  if(dsl_node == NULL)
+    log_error("has_enabled_uart_module", 0, "DSL node is NULL.");
+  
+  ast_module_node_t *current_module = dsl_node->modules_root;
+  while(current_module != NULL){
+    if(current_module->enable && current_module->kind == MODULE_UART){
       return true;
     }
     current_module = current_module->next;
