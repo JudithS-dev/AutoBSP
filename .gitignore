@@ -27,6 +27,7 @@ generated_bsp.h
 # --- Some unimportant txt files ---
 some_txt_files/normal_leakreport
 stm-description-hal-and-lowlayer-drivers.pdf
+stm32f446mc.pdf
 
 # --- Demo project ---
 BSP_test_STM32
