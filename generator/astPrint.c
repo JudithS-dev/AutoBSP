@@ -89,16 +89,16 @@ static void ast_print_helper(FILE *pfDot, const ast_dsl_node_t* dsl_node, bool p
       continue;
     }
     // Determine background color based on module kind and enable status
-    const char *colour = "#FFFFFF";
-    if(current_module->kind == MODULE_OUTPUT)
-      colour = current_module->enable ? "#B7D9F7" : "#EEF6FD";
-    else if(current_module->kind == MODULE_INPUT)
-      colour = current_module->enable ? "#C6EFC6" : "#F2FBF2";
-    else if(current_module->kind == MODULE_PWM_OUTPUT)
-      colour = current_module->enable ? "#F7D8B7" : "#FEF3E8";
-    else if(current_module->kind == MODULE_UART)
-      colour = current_module->enable ? "#F7B7D9" : "#FDE8EF";
-    else
+    const char *colour = "#D3D3D3"; // Default (not enabled) is light gray
+    if(current_module->kind == MODULE_OUTPUT){
+      if(current_module->enable) colour = "#B7D9F7";
+    } else if(current_module->kind == MODULE_INPUT){
+      if(current_module->enable) colour = "#C6EFC6";
+    } else if(current_module->kind == MODULE_PWM_OUTPUT){
+      if(current_module->enable) colour = "#F7D8B7";
+    } else if(current_module->kind == MODULE_UART){
+      if(current_module->enable) colour = "#F7B7D9";
+    } else
       log_error("ast_print_helper", 0, "Unknown module kind enum value '%d'", current_module->kind);
     
     // Print general module info
