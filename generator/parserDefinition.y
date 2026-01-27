@@ -113,6 +113,7 @@
   uint32_t              u_nr;                 // For val_nr
   uart_parity_helper_t  u_helper_uart_parity; // For val_uart_parity
   uart_parity_t         u_uart_parity;        // For parser use
+  float                 u_float;              // For val_float
 }
 
 %start START
@@ -147,6 +148,7 @@
 %token <u_helper_gpio_speed> val_gpio_speed
 %token <u_helper_gpio_init>  val_gpio_init
   /* UART specific parameter values */
+%token val_uart_stopbit_1_5
 %token <u_helper_uart_parity> val_uart_parity
   
   /* -------- Rules for dynamic patterns -------- */
@@ -172,7 +174,7 @@
 %type <u_pin>         UART_PIN_RX_PARAM
 %type <u_nr>          UART_BAUDRATE_PARAM
 %type <u_nr>          UART_DATABITS_PARAM
-%type <u_nr>          UART_STOPBITS_PARAM
+%type <u_float>       UART_STOPBITS_PARAM
 %type <u_uart_parity> UART_PARITY_PARAM
 
 %%
@@ -470,9 +472,12 @@ UART_DATABITS_PARAM: kw_databits ':' val_nr         { $$ = $3;
                                                       log_info("UART_DATABITS_PARAM", LOG_PARSER_FOUND, yylineno, "Found UART databits parameter with value '%d'", $3);
                                                     }
 
-UART_STOPBITS_PARAM: kw_stopbits ':' val_nr         { $$ = $3;
-                                                      log_info("UART_STOPBITS_PARAM", LOG_PARSER_FOUND, yylineno, "Found UART stopbits parameter with value '%d'", $3);
-                                                    }
+UART_STOPBITS_PARAM:  kw_stopbits ':' val_nr                { $$ = (float)$3;
+                                                              log_info("UART_STOPBITS_PARAM", LOG_PARSER_FOUND, yylineno, "Found UART stopbits parameter with value '%d' converted in float '%f'", $3, $$);
+                                                            }
+                    | kw_stopbits ':' val_uart_stopbit_1_5  { $$ = 1.5;
+                                                              log_info("UART_STOPBITS_PARAM", LOG_PARSER_FOUND, yylineno, "Found UART stopbits parameter with value '1.5'");
+                                                            }
 
 UART_PARITY_PARAM:  kw_parity ':' val_uart_parity   { $$ = helper_to_uart_parity($3);
                                                       log_info("UART_PARITY_PARAM", LOG_PARSER_FOUND, yylineno, "Found UART parity parameter with value '%s'", uart_parity_to_string($$));

@@ -209,6 +209,9 @@ INVALID_TOKENS      ([^ \n\t\{\}:\/\*;]+|{COMMENT_CHARS})
                     }
 
   /* UART specific parameter values */
+"1.5"               { log_info("\"1.5\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      return val_uart_stopbit_1_5;
+                    }
 "even"              { log_info("\"even\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
                       yylval.u_helper_uart_parity = UART_HELPER_PARITY_EVEN;
                       return val_uart_parity;

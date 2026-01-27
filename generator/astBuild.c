@@ -846,7 +846,7 @@ void ast_module_builder_set_uart_databits(int line_nr, ast_module_builder_t* mod
  * 
  * @note Logs an error if the stop bits have already been set, if the module kind is not UART, stopbits exceed uint8_t max, or if any parameter is NULL.
  */
-void ast_module_builder_set_uart_stopbits(int line_nr, ast_module_builder_t* module_builder, uint32_t stopbits){
+void ast_module_builder_set_uart_stopbits(int line_nr, ast_module_builder_t* module_builder, float stopbits){
   if(module_builder == NULL)
     log_error("ast_module_builder_set_uart_stopbits", 0, "AST module builder is NULL.");
   

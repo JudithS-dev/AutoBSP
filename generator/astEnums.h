@@ -71,7 +71,7 @@ typedef struct{
   pin_t  rx_pin;
   uint32_t baudrate;
   uint8_t  databits;
-  uint8_t  stopbits;
+  float    stopbits;
   uart_parity_t parity;
   
   /* generator selected parameters */

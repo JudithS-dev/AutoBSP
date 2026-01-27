@@ -173,7 +173,7 @@ static void ast_print_helper(FILE *pfDot, const ast_dsl_node_t* dsl_node, bool p
                                                 current_module->data.uart.baudrate);
                                 fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Databits:</B> %u</TD></TR>",
                                                 current_module->data.uart.databits);
-                                fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Stopbits:</B> %u</TD></TR>",
+                                fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Stopbits:</B> %.15g</TD></TR>",
                                                 current_module->data.uart.stopbits);
                                 fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Parity:</B> %s</TD></TR>",
                                                 uart_parity_to_string(current_module->data.uart.parity));
