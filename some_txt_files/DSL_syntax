@@ -1,5 +1,9 @@
 AutoBSP{
-  controller: STM32F446RE
+  // This is a line comment
+  /* This is a /* multi-layered and */ multi-line
+     comment */
+  
+  controller: STM32F446RE;    // Parameter assignments can be ended with a optional semicolon
   
   OUTPUT{
     name:    \"[A-Za-z_][A-Za-z0-9_]*\"                    // C identifier in the code, e.g. "BSP_LED_1_On()"
