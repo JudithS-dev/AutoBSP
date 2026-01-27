@@ -1,81 +1,102 @@
+// sudo ls /dev/ttyUSB*
+// picocom -b 115200 -d 8 -y n -p 1 /dev/ttyUSB0 --echo
+// -b <baudrate>: Baud rate (e.g. 9600, 115200)
+// -d <data bits>: Number of data bits on the PC side
+//                 (STM32: parity is part of the word length, so
+//                  databits=9 with parity -> 8 data bits in picocom)
+// -y <parity>: Parity (n = none, o = odd, e = even)
+// -p <stop bits>: Number of stop bits (1 or 2)
+// --echo: Echo back received characters
+// Quit: ctrl + A then ctrl + X
+
+
 AutoBSP{
   controller: STM32F446RE
-  //name This is a test line comment
-  /*pin This is a /* multi-layered // test comment
-      block*/ pushpull*/
   
   OUTPUT{
-    name:    "LED_1"
-    pin:     PA5;  // Parameter assignments can be ended with a optional semicolon
-    type:    pushpull
-    pull:    none;
-    speed:   medium
+    name:    "LED_RED"
+    pin:     PA5          // PA5 || PA6
     
+    type:    pushpull
+    pull:    none
+    speed:   low
     init:    off
     active:  high
     
-    enable:  true;
+    enable:  true
   }
   
   OUTPUT{
-    name: "LED_2"
-    pin:   PC5
-    enable: false
+    name:    "LED_GREEN"
+    pin:     PC8
+    enable:  false
   }
   
   INPUT{
-    name:    "BUTTON_1"
+    name:    "BUTTON_BOARD"
     pin:     PC13
-    pull:    none
     
+    pull:    none
     active:  low
     
     enable:  true
   }
   
   INPUT{
-    name: "BUTTON_2"
-    pin:   PB12
-    enable: false
+    name:    "BUTTON_OTHER"
+    pin:     PA5
+    enable:  false
   }
   
   PWM_OUTPUT{
-    name:     "PWM_1"
-    pin:       PA6
-    pull:      none
-    speed:     medium
-    frequency: 1000  // in Hz
-    duty:      0     // initial duty cycle in permille (0..1000)
-    active:    high
-    enable:    true
+    name:       "PWM_SIGNAL_1"
+    pin:        PC8              // PC8 || PC6
+    
+    pull:       none
+    speed:      high
+    frequency:  2000
+    duty:       500
+    active:     high
+    
+    enable:     true
   }
   
   PWM_OUTPUT{
-    name:     "PWM_2"
-    pin:       PA1
-    pull:      none
-    speed:     low
-    frequency: 2000  // in Hz
-    duty:      0     // initial duty cycle in permille (0..1000)
-    active:    low
+    name:       "PWM_SIGNAL_2"
+    pin:        PA1
+    enable:     false
+  }
+  
+  UART{ // picocom -b 115200 -d 8 -y n -p 1 /dev/ttyUSB0 --echo
+    name:     "UART_USED"
+    tx_pin:    PA0         // PA0 || PC10
+    rx_pin:    PA1         // PA1 || PC11
+    
+    baudrate:  115200
+    databits:  8
+    stopbits:  1
+    parity:    none
+    
     enable:    false
   }
   
-  UART{ //picocom -b 115200 /dev/ttyUSB0 --echo
-    name:     "UART1"
-    tx_pin:    PA0
-    rx_pin:    PA1
-    baudrate:  115200   //check if not 0 and maybe in known set (not <1200 or >1.000.000)
-    databits:  8        // 5, 6, 7, 8, 9 : STM32 only supports 8 or 9
-    stopbits:  1        // 1, 1.5, 2 : STM32 only supports 1 or 2
-    parity:    none     // none, even, odd
+  UART{ // picocom -b 9600 -d 8 -y o -p 2 /dev/ttyUSB0 --echo
+    name:     "UART_USED"
+    tx_pin:    PA0         // PA0 || PC10
+    rx_pin:    PA1         // PA1 || PC11
+    
+    baudrate:  9600
+    databits:  9
+    stopbits:  2
+    parity:    odd
+    
     enable:    true
   }
   
-  UART{ //picocom -b 115200 /dev/ttyUSB0 --echo
-    name:     "UART2"
-    tx_pin:    PA9
-    rx_pin:    PA10
+  UART{
+    name:     "UART_OTHER"
+    tx_pin:    PB10
+    rx_pin:    PB11
     enable:    false
   }
 }
