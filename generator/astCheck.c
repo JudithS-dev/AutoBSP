@@ -97,7 +97,21 @@ void ast_check_required_module_params(ast_module_builder_t* module_builder){
   }
   
   // Check kind-specific fields if needed
-  // nothing for now as all fields are optional
+  // Check if parameters of uart are reasonable
+  if(module->kind == MODULE_UART){
+    ast_module_uart_t* uart_data = &module->data.uart;
+    if(uart_data->baudrate == 0)
+      log_error("ast_check_required_module_params", module->line_nr, "UART module '%s' has invalid baudrate '0'.", module->name);
+    if(uart_data->baudrate < 1200 || uart_data->baudrate > 1000000)
+      log_error("ast_check_required_module_params", module->line_nr, "UART module '%s' has unsupported baudrate '%u'. Supported range is 1200 to 1,000,000.",
+                module->name, uart_data->baudrate);
+    if(uart_data->databits < 5 || uart_data->databits > 9)
+      log_error("ast_check_required_module_params", module->line_nr, "UART module '%s' has unsupported databits '%u'. Supported range is 5 to 9.",
+                module->name, uart_data->databits);
+    if(uart_data->stopbits != 1 && uart_data->stopbits != 2 && uart_data->stopbits != 1.5)
+      log_error("ast_check_required_module_params", module->line_nr, "UART module '%s' has unsupported stopbits '%f'. Supported values are 1 or 2.",
+                module->name, uart_data->stopbits);
+  }
 }
 
 

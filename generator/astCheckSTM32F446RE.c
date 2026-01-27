@@ -123,6 +123,18 @@ void ast_check_stm32f446re_valid_pins(ast_dsl_node_t* dsl_node){
           log_error("are_valid_stm32f446re_pins", current_module->line_nr, "RX Pin '%s' does not support UART RX functionality for module '%s'.",
                     pin_to_string(current_module->data.uart.rx_pin),
                     current_module->name);
+        
+        // Check if databits is valid (STM32F4 only supports 8 or 9)
+        if((current_module->data.uart.databits != 8) && (current_module->data.uart.databits != 9))
+          log_error("are_valid_stm32f446re_pins", current_module->line_nr, "Databits value '%u' is invalid for UART module '%s' on STM32F446RE. Supported values: 8, 9.",
+                    current_module->data.uart.databits,
+                    current_module->name);
+        
+        // Check if stopbits is valid (STM32F4 only supports 1 or 2)
+        if((current_module->data.uart.stopbits != 1.0f) && (current_module->data.uart.stopbits != 2.0f))
+          log_error("are_valid_stm32f446re_pins", current_module->line_nr, "Stopbits value '%.1f' is invalid for UART module '%s' on STM32F446RE. Supported values: 1, 2.",
+                    current_module->data.uart.stopbits,
+                    current_module->name);
       }
       
     }
