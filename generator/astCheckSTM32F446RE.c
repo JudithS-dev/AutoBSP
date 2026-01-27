@@ -292,7 +292,8 @@ static void bind_uart_pins_stm32f446re(ast_dsl_node_t* dsl_node){
       pin_cap_t *tx_cap = (pin_cap_t*)pincap_find_stm32f446re(current_module->pin.port, (uint8_t)(current_module->pin.pin_number));
       pin_cap_t *rx_cap = (pin_cap_t*)pincap_find_stm32f446re(current_module->data.uart.rx_pin.port, (uint8_t)(current_module->data.uart.rx_pin.pin_number));
       // Find common USART options between tx and rx pins
-      for(uint8_t i = 0; i < tx_cap->uart_count; i++){
+      bool usart_assigned = false;
+      for(uint8_t i = 0; i < tx_cap->uart_count && !usart_assigned; i++){
         uart_opt_t *tx_opt = &tx_cap->uart[i];
         for(uint8_t j = 0; j < rx_cap->uart_count; j++){
           uart_opt_t *rx_opt = &rx_cap->uart[j];
@@ -309,6 +310,7 @@ static void bind_uart_pins_stm32f446re(ast_dsl_node_t* dsl_node){
                           current_module->name);
               current_module->data.uart.gpio_af      = tx_opt->af; // TX and RX should have the same AF number
               usart_used[tx_opt->usart] = true; // Mark USART as used
+              usart_assigned = true;
               break;
             }
           }

@@ -154,7 +154,7 @@ static void generate_header_pwm_func(FILE* output_source, ast_dsl_node_t* dsl_no
         fprintf(output_source, "\n/* PWM OUTPUT: '%s' */\n", current_module->name);
         fprintf(output_source, "void BSP_%s_Start(void);\n", current_module->name);
         fprintf(output_source, "void BSP_%s_Stop(void);\n", current_module->name);
-        fprintf(output_source, "void BSP_%s_SetDuty(uint16_t permille); // 0..1000\n", current_module->name);
+        fprintf(output_source, "void BSP_%s_SetDuty(uint16_t permille);\n", current_module->name);
         fprintf(output_source, "uint16_t BSP_%s_GetDuty(void);\n", current_module->name);
       }
     }
@@ -174,7 +174,7 @@ static void generate_header_uart_func(FILE* output_source, ast_dsl_node_t* dsl_n
       if(current_module->kind == MODULE_UART){
         // Generate function prototypes for UART modules
         fprintf(output_source, "\n/* UART: '%s' */\n", current_module->name);
-        fprintf(output_source, "void BSP_%s_TransmitChar(char ch);\n", current_module->name);
+        fprintf(output_source, "void BSP_%s_TransmitChar(uint8_t ch);\n", current_module->name);
         fprintf(output_source, "void BSP_%s_TransmitMessage(const char *msg);\n", current_module->name);
         fprintf(output_source, "bool BSP_%s_ReceiveChar(uint8_t *ch);\n", current_module->name);
         fprintf(output_source, "bool BSP_%s_TryReceiveChar(uint8_t *ch);\n", current_module->name);
@@ -965,10 +965,10 @@ static void generate_source_uart_func(FILE* output_source, ast_dsl_node_t* dsl_n
       // Generate Transmit-Char function
       fprintf(output_source, "/**\n");
       fprintf(output_source, " * @brief Transmits single character over the '%s' UART module.\n", uart_module->name);
-      fprintf(output_source, " * @param ch Character to transmit.\n");
+      fprintf(output_source, " * @param ch Byte to transmit.\n");
       fprintf(output_source, " */\n");
-      fprintf(output_source, "void BSP_%s_TransmitChar(char ch){\n", uart_module->name);
-      fprintf(output_source, "  HAL_UART_Transmit(&huart%u, (uint8_t*)&ch, 1, HAL_MAX_DELAY);\n", uart_module->data.uart.usart_number);
+      fprintf(output_source, "void BSP_%s_TransmitChar(uint8_t ch){\n", uart_module->name);
+      fprintf(output_source, "  HAL_UART_Transmit(&huart%u, &ch, 1, HAL_MAX_DELAY);\n", uart_module->data.uart.usart_number);
       fprintf(output_source, "}\n\n");
       
       // Generate Transmit-Message function
@@ -985,25 +985,25 @@ static void generate_source_uart_func(FILE* output_source, ast_dsl_node_t* dsl_n
       // Generate Receive-Char function
       fprintf(output_source, "/**\n");
       fprintf(output_source, " * @brief Receives a single character from the '%s' UART module.\n", uart_module->name);
-      fprintf(output_source, " * @param ch Pointer to the character variable to store the received character.\n");
+      fprintf(output_source, " * @param ch Pointer to the variable to store the received byte.\n");
       fprintf(output_source, " * @return true if a character was successfully received; false otherwise.\n");
       fprintf(output_source, " */\n");
-      fprintf(output_source, "bool BSP_%s_ReceiveChar(char* ch){\n", uart_module->name);
+      fprintf(output_source, "bool BSP_%s_ReceiveChar(uint8_t* ch){\n", uart_module->name);
       fprintf(output_source, "  if(ch == NULL)\n");
       fprintf(output_source, "    return false;\n  \n");
-      fprintf(output_source, "  return (HAL_UART_Receive(&huart%u, (uint8_t*)ch, 1, HAL_MAX_DELAY) == HAL_OK);\n", uart_module->data.uart.usart_number);
+      fprintf(output_source, "  return (HAL_UART_Receive(&huart%u, ch, 1, HAL_MAX_DELAY) == HAL_OK);\n", uart_module->data.uart.usart_number);
       fprintf(output_source, "}\n");
       
       // Generate Try-Receive-Char function
       fprintf(output_source, "\n/**\n");
       fprintf(output_source, " * @brief Tries to receive a single character from the '%s' UART module without blocking.\n", uart_module->name);
-      fprintf(output_source, " * @param ch Pointer to the character variable to store the received character.\n");
+      fprintf(output_source, " * @param ch Pointer to the variable to store the received byte.\n");
       fprintf(output_source, " * @return true if a character was successfully received; false otherwise.\n");
       fprintf(output_source, " */\n");
-      fprintf(output_source, "bool BSP_%s_TryReceiveChar(char* ch){\n", uart_module->name);
+      fprintf(output_source, "bool BSP_%s_TryReceiveChar(uint8_t* ch){\n", uart_module->name);
       fprintf(output_source, "  if(ch == NULL)\n");
       fprintf(output_source, "    return false;\n  \n");
-      fprintf(output_source, "  return (HAL_UART_Receive(&huart%u, (uint8_t*)ch, 1, 0) == HAL_OK);\n", uart_module->data.uart.usart_number);
+      fprintf(output_source, "  return (HAL_UART_Receive(&huart%u, ch, 1, 0) == HAL_OK);\n", uart_module->data.uart.usart_number);
       fprintf(output_source, "}\n");
     }
     current_module = current_module->next;
