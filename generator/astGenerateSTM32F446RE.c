@@ -101,11 +101,11 @@ static void generate_header_gpio_output_func(FILE* output_source, ast_dsl_node_t
     if(current_module->enable && current_module->kind == MODULE_OUTPUT){
       // Generate function prototypes for output GPIOs
       fprintf(output_source, "\n/* GPIO OUTPUT: '%s' */\n", current_module->name);
-      fprintf(output_source, "void BSP_%s_ON(void);\n", current_module->name);
-      fprintf(output_source, "void BSP_%s_OFF(void);\n", current_module->name);
-      fprintf(output_source, "void BSP_%s_TOGGLE(void);\n", current_module->name);
-      fprintf(output_source, "void BSP_%s_SET(bool on);\n", current_module->name);
-      fprintf(output_source, "bool BSP_%s_IS_ON(void);\n", current_module->name);
+      fprintf(output_source, "void BSP_%s_On(void);\n", current_module->name);
+      fprintf(output_source, "void BSP_%s_Off(void);\n", current_module->name);
+      fprintf(output_source, "void BSP_%s_Toggle(void);\n", current_module->name);
+      fprintf(output_source, "void BSP_%s_Set(bool on);\n", current_module->name);
+      fprintf(output_source, "bool BSP_%s_IsOn(void);\n", current_module->name);
     }
     current_module = current_module->next;
   }
@@ -128,7 +128,7 @@ static void generate_header_gpio_input_func(FILE* output_source, ast_dsl_node_t*
     if(current_module->enable && current_module->kind == MODULE_INPUT){
       // Generate function prototypes for input GPIOs
       fprintf(output_source, "\n/* GPIO INPUT: '%s' */\n", current_module->name);
-      fprintf(output_source, "bool BSP_%s_IS_ACTIVE(void);\n", current_module->name);
+      fprintf(output_source, "bool BSP_%s_IsActive(void);\n", current_module->name);
     }
     current_module = current_module->next;
   }
@@ -174,10 +174,10 @@ static void generate_header_uart_func(FILE* output_source, ast_dsl_node_t* dsl_n
       if(current_module->kind == MODULE_UART){
         // Generate function prototypes for UART modules
         fprintf(output_source, "\n/* UART: '%s' */\n", current_module->name);
-        fprintf(output_source, "void BSP_%s_SendChar(uint8_t ch);\n", current_module->name);
-        fprintf(output_source, "void BSP_%s_Print(const char *msg);\n", current_module->name);
-        fprintf(output_source, "bool BSP_%s_ReadChar(uint8_t *ch);\n", current_module->name);
-        fprintf(output_source, "bool BSP_%s_TryReadChar(uint8_t *ch);\n", current_module->name);
+        fprintf(output_source, "void BSP_%s_TransmitChar(char ch);\n", current_module->name);
+        fprintf(output_source, "void BSP_%s_TransmitMessage(const char *msg);\n", current_module->name);
+        fprintf(output_source, "bool BSP_%s_ReceiveChar(uint8_t *ch);\n", current_module->name);
+        fprintf(output_source, "bool BSP_%s_TryReceiveChar(uint8_t *ch);\n", current_module->name);
       }
     }
     current_module = current_module->next;
@@ -202,6 +202,10 @@ void ast_generate_source_stm32f446re(FILE* output_source, ast_dsl_node_t* dsl_no
     log_error("ast_generate_source_stm32f446re", 0, "DSL node is NULL.");
   
   fprintf(output_source,"#include \"generated_bsp.h\"\n\n");
+  
+  if(has_enabled_uart_module(dsl_node))
+    fprintf(output_source,"#include <string.h>\n\n");
+  
   fprintf(output_source,"#include \"stm32f4xx_hal.h\"\n");
   
   if(has_enabled_pwm_module(dsl_node) || has_enabled_uart_module(dsl_node)){
@@ -764,7 +768,7 @@ static void generate_source_gpio_output_func(FILE* output_source, ast_dsl_node_t
       fprintf(output_source, " * @brief Turns ON the '%s' GPIO output.\n", output_module->name);
       fprintf(output_source, " * @note Considers the active level configuration.\n");
       fprintf(output_source, " */\n");
-      fprintf(output_source, "void BSP_%s_ON(void){\n", output_module->name);
+      fprintf(output_source, "void BSP_%s_On(void){\n", output_module->name);
       fprintf(output_source, "  HAL_GPIO_WritePin(GPIO%c, GPIO_PIN_%u, GPIO_PIN_%s);\n", output_module->pin.port, output_module->pin.pin_number,
               (output_module->data.output.active_level == HIGH) ? "SET" : "RESET");
       fprintf(output_source, "}\n\n");
@@ -774,7 +778,7 @@ static void generate_source_gpio_output_func(FILE* output_source, ast_dsl_node_t
       fprintf(output_source, " * @brief Turns OFF the '%s' GPIO output.\n", output_module->name);
       fprintf(output_source, " * @note Considers the active level configuration.\n");
       fprintf(output_source, " */\n");
-      fprintf(output_source, "void BSP_%s_OFF(void){\n", output_module->name);
+      fprintf(output_source, "void BSP_%s_Off(void){\n", output_module->name);
       fprintf(output_source, "  HAL_GPIO_WritePin(GPIO%c, GPIO_PIN_%u, GPIO_PIN_%s);\n", output_module->pin.port, output_module->pin.pin_number,
               (output_module->data.output.active_level == HIGH) ? "RESET" : "SET");
       fprintf(output_source, "}\n\n");
@@ -783,7 +787,7 @@ static void generate_source_gpio_output_func(FILE* output_source, ast_dsl_node_t
       fprintf(output_source, "/**\n");
       fprintf(output_source, " * @brief Toggles the '%s' GPIO output.\n", output_module->name);
       fprintf(output_source, " */\n");
-      fprintf(output_source, "void BSP_%s_TOGGLE(void){\n", output_module->name);
+      fprintf(output_source, "void BSP_%s_Toggle(void){\n", output_module->name);
       fprintf(output_source, "  HAL_GPIO_TogglePin(GPIO%c, GPIO_PIN_%u);\n", output_module->pin.port, output_module->pin.pin_number);
       fprintf(output_source, "}\n\n");
       
@@ -793,7 +797,7 @@ static void generate_source_gpio_output_func(FILE* output_source, ast_dsl_node_t
       fprintf(output_source, " * @param on If true, turns the output on; otherwise, turns it off.\n");
       fprintf(output_source, " * @note Considers the active level configuration.\n");
       fprintf(output_source, " */\n");
-      fprintf(output_source, "void BSP_%s_SET(bool on){\n", output_module->name);
+      fprintf(output_source, "void BSP_%s_Set(bool on){\n", output_module->name);
       fprintf(output_source, "  if(on){\n");
       fprintf(output_source, "    HAL_GPIO_WritePin(GPIO%c, GPIO_PIN_%u, GPIO_PIN_%s);\n", output_module->pin.port, output_module->pin.pin_number,
               (output_module->data.output.active_level == HIGH) ? "SET" : "RESET");
@@ -810,7 +814,7 @@ static void generate_source_gpio_output_func(FILE* output_source, ast_dsl_node_t
       fprintf(output_source, " * @return true if the output is ON; false otherwise.\n");
       fprintf(output_source, " * @note Considers the active level configuration.\n");
       fprintf(output_source, " */\n");
-      fprintf(output_source, "bool BSP_%s_IS_ON(void){\n", output_module->name);
+      fprintf(output_source, "bool BSP_%s_IsOn(void){\n", output_module->name);
       fprintf(output_source, "  return (HAL_GPIO_ReadPin(GPIO%c, GPIO_PIN_%u) == GPIO_PIN_%s);\n", output_module->pin.port, output_module->pin.pin_number,
               (output_module->data.output.active_level == HIGH) ? "SET" : "RESET");
       fprintf(output_source, "}\n");
@@ -844,7 +848,7 @@ static void generate_source_gpio_input_func(FILE* output_source, ast_dsl_node_t*
       fprintf(output_source, " * @return true if the input is active; false otherwise.\n");
       fprintf(output_source, " * @note Considers the active level configuration.\n");
       fprintf(output_source, " */\n");
-      fprintf(output_source, "bool BSP_%s_IS_ACTIVE(void){\n", input_module->name);
+      fprintf(output_source, "bool BSP_%s_IsActive(void){\n", input_module->name);
       if(input_module->data.input.active_level == HIGH){
         fprintf(output_source, "  return (HAL_GPIO_ReadPin(GPIO%c, GPIO_PIN_%u) == GPIO_PIN_SET);\n", input_module->pin.port, input_module->pin.pin_number);
       }
@@ -963,7 +967,7 @@ static void generate_source_uart_func(FILE* output_source, ast_dsl_node_t* dsl_n
       fprintf(output_source, " * @brief Transmits single character over the '%s' UART module.\n", uart_module->name);
       fprintf(output_source, " * @param ch Character to transmit.\n");
       fprintf(output_source, " */\n");
-      fprintf(output_source, "void BSP_%s_Transmit_Char(char ch){\n", uart_module->name);
+      fprintf(output_source, "void BSP_%s_TransmitChar(char ch){\n", uart_module->name);
       fprintf(output_source, "  HAL_UART_Transmit(&huart%u, (uint8_t*)&ch, 1, HAL_MAX_DELAY);\n", uart_module->data.uart.usart_number);
       fprintf(output_source, "}\n\n");
       
@@ -972,7 +976,7 @@ static void generate_source_uart_func(FILE* output_source, ast_dsl_node_t* dsl_n
       fprintf(output_source, " * @brief Transmits a message over the '%s' UART module.\n", uart_module->name);
       fprintf(output_source, " * @param message Pointer to the null-terminated message string.\n");
       fprintf(output_source, " */\n");
-      fprintf(output_source, "void BSP_%s_Transmit_Message(const char* message){\n", uart_module->name);
+      fprintf(output_source, "void BSP_%s_TransmitMessage(const char* message){\n", uart_module->name);
       fprintf(output_source, "  if(message == NULL)\n");
       fprintf(output_source, "    return;\n  \n");
       fprintf(output_source, "  HAL_UART_Transmit(&huart%u, (uint8_t*)message, strlen(message), HAL_MAX_DELAY);\n", uart_module->data.uart.usart_number);
@@ -984,7 +988,7 @@ static void generate_source_uart_func(FILE* output_source, ast_dsl_node_t* dsl_n
       fprintf(output_source, " * @param ch Pointer to the character variable to store the received character.\n");
       fprintf(output_source, " * @return true if a character was successfully received; false otherwise.\n");
       fprintf(output_source, " */\n");
-      fprintf(output_source, "bool BSP_%s_Receive_Char(char* ch){\n", uart_module->name);
+      fprintf(output_source, "bool BSP_%s_ReceiveChar(char* ch){\n", uart_module->name);
       fprintf(output_source, "  if(ch == NULL)\n");
       fprintf(output_source, "    return false;\n  \n");
       fprintf(output_source, "  return (HAL_UART_Receive(&huart%u, (uint8_t*)ch, 1, HAL_MAX_DELAY) == HAL_OK);\n", uart_module->data.uart.usart_number);
@@ -996,7 +1000,7 @@ static void generate_source_uart_func(FILE* output_source, ast_dsl_node_t* dsl_n
       fprintf(output_source, " * @param ch Pointer to the character variable to store the received character.\n");
       fprintf(output_source, " * @return true if a character was successfully received; false otherwise.\n");
       fprintf(output_source, " */\n");
-      fprintf(output_source, "bool BSP_%s_Try_Receive_Char(char* ch){\n", uart_module->name);
+      fprintf(output_source, "bool BSP_%s_TryReceiveChar(char* ch){\n", uart_module->name);
       fprintf(output_source, "  if(ch == NULL)\n");
       fprintf(output_source, "    return false;\n  \n");
       fprintf(output_source, "  return (HAL_UART_Receive(&huart%u, (uint8_t*)ch, 1, 0) == HAL_OK);\n", uart_module->data.uart.usart_number);
