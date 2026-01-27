@@ -594,7 +594,7 @@ static void generate_source_pwm_init_func(FILE* output_source, ast_dsl_node_t* d
       fprintf(output_source, "  /* Configure PWM channel */\n");
       fprintf(output_source, "  TIM_OC_InitTypeDef sConfigOC = {0};\n");
       fprintf(output_source, "  sConfigOC.OCMode        = TIM_OCMODE_PWM1;\n"); // Is always PWM1 (PWM2 would be inverted)
-      fprintf(output_source, "  sConfigOC.Pulse         = 0; // Initial duty cycle is 0\n");
+      fprintf(output_source, "  sConfigOC.Pulse         = 0;\n");
       fprintf(output_source, "  sConfigOC.OCPolarity    = ");
       if(current_module->data.pwm.active_level == HIGH)
         fprintf(output_source, "TIM_OCPOLARITY_HIGH;\n");
@@ -883,7 +883,7 @@ static void generate_source_pwm_output_func(FILE* output_source, ast_dsl_node_t*
       // Generate needed variables
       fprintf(output_source, "/* Internal state for PWM module '%s' */\n", pwm_module->name);
       fprintf(output_source, "static bool s_pwm_%s_running = false;\n", pwm_module->name);
-      fprintf(output_source, "static uint16_t s_pwm_%s_duty_permille = 0; // Duty cycle in permille (0..1000)\n\n", pwm_module->name);
+      fprintf(output_source, "static uint16_t s_pwm_%s_duty_permille = %d; // Duty cycle in permille (0..1000)\n\n", pwm_module->name, pwm_module->data.pwm.duty_cycle);
       
       // Generate Start function
       fprintf(output_source, "/**\n");
