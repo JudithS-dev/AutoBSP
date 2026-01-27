@@ -97,6 +97,15 @@ void ast_check_required_module_params(ast_module_builder_t* module_builder){
   }
   
   // Check kind-specific fields if needed
+  // Check if parameters of pwm are reasonable
+  if(module->kind == MODULE_PWM_OUTPUT){
+    ast_module_pwm_t* pwm_data = &module->data.pwm;
+    if(pwm_data->frequency == 0)
+      log_error("ast_check_required_module_params", module->line_nr, "PWM module '%s' has invalid frequency '0'.", module->name);
+    if(pwm_data->duty_cycle > 1000)
+      log_error("ast_check_required_module_params", module->line_nr, "PWM module '%s' has invalid duty cycle '%u'. Must be in range 0..1000 (permille).",
+                module->name, pwm_data->duty_cycle);
+  }
   // Check if parameters of uart are reasonable
   if(module->kind == MODULE_UART){
     ast_module_uart_t* uart_data = &module->data.uart;

@@ -1,0 +1,62 @@
+AutoBSP{
+  controller: STM32F446RE
+  
+  OUTPUT{
+    name:    \"[A-Za-z_][A-Za-z0-9_]*\"                    // C identifier in the code, e.g. "BSP_LED_1_On()"
+    pin:     (P[A-Z]([0-9]|1[0-5]))                        // physical MCU-Pin either in PXn-format or GPIOn-format
+        |    (GPIO([0-9]|[1-9][0-9]))
+    
+  ? type:    (pushpull|opendrain)             = pushpull   // driver type: pushpull (high or low), opendrain (low or floating)
+  ? pull:    (up|down|none)                   = none       // internal resistor
+  ? speed:   (low|medium|high|very_high)      = medium     // speed output can change
+    
+  ? init:    (on|off|none)                    = off        // initial output state (none: don't set default value, maybe bootloader or
+                                                              other peripheral has already set default value and don't change that)
+  ? active:  (high|low)                       = high       // logical active level: if on is logical high or low
+    
+  ? enable:  (true|false)                     = true       // if one wants to exclude it from the BSP code generation (e.g. debug)
+  }
+  
+  INPUT{
+    name:    "[A-Za-z_][A-Za-z0-9_]*"                      // C identifier in the code, e.g. "BSP_BUTTON_1_IsActive()"
+    pin:     (P[A-Z]([0-9]|1[0-5]))                        // physical MCU-Pin either in PXn-format or GPIOn-format
+        |    (GPIO([0-9]|[1-9][0-9]))
+    
+  ? pull:    (up|down|none)                   = none       // internal resistor
+    
+  ? active:  (high|low)                       = high       // logical interpretation of pin level
+    
+  ? enable:  (true|false)                     = true       // if one wants to disable the output from being generated (e.g. debug)
+  }    
+  
+  PWM_OUTPUT{
+    name:    "[A-Za-z_][A-Za-z0-9_]*"                      // C identifier in the code, e.g. "BSP_PWM_1_Start()"
+    pin:     (P[A-Z]([0-9]|1[0-5]))                        // physical MCU-Pin either in PXn-format or GPIOn-format
+        |    (GPIO([0-9]|[1-9][0-9]))
+    
+  ? pull:    (up|down|none)                   = none       // internal resistor
+  ? speed:   (low|medium|high|very_high)      = medium     // speed output can change
+    
+  ? frequency: [0-9]|[1-9][0-9]+              = 1000       // PWM frequency in Hz
+  ? duty:      0 <= duty <= 1000              = 0          // initial duty cycle in permille (0..1000)          
+    
+  ? active:  (high|low)                       = high       // logical active level: if on is logical high or low
+    
+  ? enable:  (true|false)                     = true       // if one wants to exclude it from the BSP code generation (e.g. debug)
+  }
+  
+  UART{ //picocom -b 115200 /dev/ttyUSB0 --echo
+    name:    "[A-Za-z_][A-Za-z0-9_]*"                      // C identifier in the code, e.g. "BSP_UART_1_TransmitChar()"
+    tx_pin:  (P[A-Z]([0-9]|1[0-5]))                        // physical MCU-Pin either in PXn-format or GPIOn-format
+          |  (GPIO([0-9]|[1-9][0-9]))
+    rx_pin:  (P[A-Z]([0-9]|1[0-5]))                        // physical MCU-Pin either in PXn-format or GPIOn-format
+          |  (GPIO([0-9]|[1-9][0-9]))
+    
+  ? baudrate:  1200 <= baudrate <= 1,000,000  = 115200     // baudrate in bits per second
+  ? databits:  (5|6|7|8|9)                    = 8          // number of data bits (STM32 only supports 8 or 9)
+  ? stopbits:  (1|1.5|2)                      = 1          // number of stop bits (STM32 only supports 1 or 2)
+  ? parity:    (none|even|odd)                = none       // parity mode
+    
+  ? enable:  (true|false)                     = true       // if one wants to exclude it from the BSP code generation (e.g. debug)
+  }
+}
