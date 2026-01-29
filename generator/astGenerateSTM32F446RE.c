@@ -302,68 +302,62 @@ static void generate_source_gpio_init_func(FILE* output_source, ast_dsl_node_t* 
   
   // Configure GPIO pins
   ast_module_node_t *current_module = dsl_node->modules_root;
-  bool first_module = true;
   while(current_module != NULL){
     if(current_module->enable){
-      if(first_module && (current_module->kind == MODULE_OUTPUT || current_module->kind == MODULE_INPUT)){
-        fprintf(output_source, "  /* Configure GPIO pins with HAL_GPIO_Init() */\n");
-        fprintf(output_source, "  GPIO_InitTypeDef GPIO_InitStruct = {0};\n");
-        first_module = false;
-      }
       if(current_module->kind == MODULE_OUTPUT){
-        fprintf(output_source, "  \n  /* Configure OUTPUT GPIO pin: '%s' */\n", current_module->name);
-        fprintf(output_source, "  GPIO_InitStruct.Pin   = GPIO_PIN_%u;\n", current_module->pin.pin_number);
-        fprintf(output_source, "  GPIO_InitStruct.Mode  = ");
+        fprintf(output_source, "  /* Configure OUTPUT GPIO pin: '%s' */\n", current_module->name);
+        fprintf(output_source, "  GPIO_InitTypeDef cfg_%s = {\n", current_module->name);
+        fprintf(output_source, "    .Pin   = GPIO_PIN_%u,\n", current_module->pin.pin_number);
+        fprintf(output_source, "    .Mode  = ");
         switch(current_module->data.output.type){
-          case GPIO_TYPE_PUSHPULL:  fprintf(output_source, "GPIO_MODE_OUTPUT_PP;\n"); break;
-          case GPIO_TYPE_OPENDRAIN: fprintf(output_source, "GPIO_MODE_OUTPUT_OD;\n"); break;
-          default:                  log_error("ast_generate_source_stm32f446re", 0, "Unsupported GPIO type enum value '%d' for module '%s'", current_module->data.output.type, current_module->name);
+          case GPIO_TYPE_PUSHPULL:  fprintf(output_source, "GPIO_MODE_OUTPUT_PP,\n"); break;
+          case GPIO_TYPE_OPENDRAIN: fprintf(output_source, "GPIO_MODE_OUTPUT_OD,\n"); break;
+          default:                  log_error("generate_source_gpio_init_func", 0, "Unsupported GPIO type enum value '%d' for module '%s'", current_module->data.output.type, current_module->name);
         }
-        fprintf(output_source, "  GPIO_InitStruct.Pull  = ");
+        fprintf(output_source, "    .Pull  = ");
         switch(current_module->data.output.pull){
-          case GPIO_PULL_UP:   fprintf(output_source, "GPIO_PULLUP;\n");   break;
-          case GPIO_PULL_DOWN: fprintf(output_source, "GPIO_PULLDOWN;\n"); break;
-          case GPIO_PULL_NONE: fprintf(output_source, "GPIO_NOPULL;\n");   break;
-          default:             log_error("ast_generate_source_stm32f446re", 0, "Unsupported GPIO pull enum value '%d' for module '%s'", current_module->data.output.pull, current_module->name);
+          case GPIO_PULL_UP:   fprintf(output_source, "GPIO_PULLUP,\n");   break;
+          case GPIO_PULL_DOWN: fprintf(output_source, "GPIO_PULLDOWN,\n"); break;
+          case GPIO_PULL_NONE: fprintf(output_source, "GPIO_NOPULL,\n");   break;
+          default:             log_error("generate_source_gpio_init_func", 0, "Unsupported GPIO pull enum value '%d' for module '%s'", current_module->data.output.pull, current_module->name);
         }
-        fprintf(output_source, "  GPIO_InitStruct.Speed = ");
+        fprintf(output_source, "    .Speed = ");
         switch(current_module->data.output.speed){
-          case GPIO_SPEED_LOW:        fprintf(output_source, "GPIO_SPEED_FREQ_LOW;\n");        break;
-          case GPIO_SPEED_MEDIUM:     fprintf(output_source, "GPIO_SPEED_FREQ_MEDIUM;\n");     break;
-          case GPIO_SPEED_HIGH:       fprintf(output_source, "GPIO_SPEED_FREQ_HIGH;\n");       break;
-          case GPIO_SPEED_VERY_HIGH:  fprintf(output_source, "GPIO_SPEED_FREQ_VERY_HIGH;\n");  break;
-          default:                    log_error("ast_generate_source_stm32f446re", 0, "Unsupported GPIO speed enum value '%d' for module '%s'", current_module->data.output.speed, current_module->name);
+          case GPIO_SPEED_LOW:        fprintf(output_source, "GPIO_SPEED_FREQ_LOW,\n");        break;
+          case GPIO_SPEED_MEDIUM:     fprintf(output_source, "GPIO_SPEED_FREQ_MEDIUM,\n");     break;
+          case GPIO_SPEED_HIGH:       fprintf(output_source, "GPIO_SPEED_FREQ_HIGH,\n");       break;
+          case GPIO_SPEED_VERY_HIGH:  fprintf(output_source, "GPIO_SPEED_FREQ_VERY_HIGH,\n");  break;
+          default:                    log_error("generate_source_gpio_init_func", 0, "Unsupported GPIO speed enum value '%d' for module '%s'", current_module->data.output.speed, current_module->name);
         }
-        fprintf(output_source, "  HAL_GPIO_Init(GPIO%c, &GPIO_InitStruct);\n", current_module->pin.port);
+        fprintf(output_source, "  };\n");
+        fprintf(output_source, "  HAL_GPIO_Init(GPIO%c, &cfg_%s);\n", current_module->pin.port, current_module->name);
         // Set initial level if specified
-        if(current_module->data.output.init == GPIO_INIT_ON || current_module->data.output.init == GPIO_INIT_OFF){
-          fprintf(output_source, "  HAL_GPIO_WritePin(GPIO%c, GPIO_PIN_%u, ", current_module->pin.port, current_module->pin.pin_number);
-          if(current_module->data.output.active_level == HIGH){
-            if(current_module->data.output.init == GPIO_INIT_ON)
-              fprintf(output_source, "GPIO_PIN_SET);\n");
-            else
-              fprintf(output_source, "GPIO_PIN_RESET);\n");
-          }
-          else{ // active_level == LOW
-            if(current_module->data.output.init == GPIO_INIT_ON)
-              fprintf(output_source, "GPIO_PIN_RESET);\n");
-            else
-              fprintf(output_source, "GPIO_PIN_SET);\n");
-          }
+        if(current_module->data.output.init == GPIO_INIT_ON){
+          if(current_module->data.output.active_level == HIGH)
+            fprintf(output_source, "  HAL_GPIO_WritePin(GPIO%c, GPIO_PIN_%u, GPIO_PIN_SET);\n", current_module->pin.port, current_module->pin.pin_number);
+          else // active_level == LOW
+            fprintf(output_source, "  HAL_GPIO_WritePin(GPIO%c, GPIO_PIN_%u, GPIO_PIN_RESET);\n", current_module->pin.port, current_module->pin.pin_number);
+        } else if(current_module->data.output.init == GPIO_INIT_OFF){
+          if(current_module->data.output.active_level == HIGH)
+            fprintf(output_source, "  HAL_GPIO_WritePin(GPIO%c, GPIO_PIN_%u, GPIO_PIN_RESET);\n", current_module->pin.port, current_module->pin.pin_number);
+          else // active_level == LOW
+            fprintf(output_source, "  HAL_GPIO_WritePin(GPIO%c, GPIO_PIN_%u, GPIO_PIN_SET);\n", current_module->pin.port, current_module->pin.pin_number);
         }
       }
       else if(current_module->kind == MODULE_INPUT){
         fprintf(output_source, "  \n  /* Configure INPUT GPIO pin: '%s' */\n", current_module->name);
-        fprintf(output_source, "  GPIO_InitStruct.Pin  = GPIO_PIN_%u;\n", current_module->pin.pin_number);
-        fprintf(output_source, "  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;\n");
-        fprintf(output_source, "  GPIO_InitStruct.Pull = ");
+        fprintf(output_source, "  GPIO_InitTypeDef cfg_%s = {\n", current_module->name);
+        fprintf(output_source, "    .Pin  = GPIO_PIN_%u,\n", current_module->pin.pin_number);
+        fprintf(output_source, "    .Mode = GPIO_MODE_INPUT,\n");
+        fprintf(output_source, "    .Pull = ");
         switch(current_module->data.input.pull){
-          case GPIO_PULL_UP:   fprintf(output_source, "GPIO_PULLUP;\n");   break;
-          case GPIO_PULL_DOWN: fprintf(output_source, "GPIO_PULLDOWN;\n"); break;
-          case GPIO_PULL_NONE: fprintf(output_source, "GPIO_NOPULL;\n");   break;
-          default:             log_error("ast_generate_source_stm32f446re", 0, "Unsupported GPIO pull enum value '%d' for module '%s'", current_module->data.input.pull, current_module->name);
+          case GPIO_PULL_UP:   fprintf(output_source, "GPIO_PULLUP,\n");   break;
+          case GPIO_PULL_DOWN: fprintf(output_source, "GPIO_PULLDOWN,\n"); break;
+          case GPIO_PULL_NONE: fprintf(output_source, "GPIO_NOPULL,\n");   break;
+          default:             log_error("generate_source_gpio_init_func", 0, "Unsupported GPIO pull enum value '%d' for module '%s'", current_module->data.input.pull, current_module->name);
         }
-        fprintf(output_source, "  HAL_GPIO_Init(GPIO%c, &GPIO_InitStruct);\n", current_module->pin.port);
+        fprintf(output_source, "  };\n");
+        fprintf(output_source, "  HAL_GPIO_Init(GPIO%c, &cfg_%s);\n", current_module->pin.port, current_module->name);
       }
     }
     current_module = current_module->next;
@@ -607,7 +601,7 @@ static void generate_source_gpio_output_func(FILE* output_source, ast_dsl_node_t
       // Generate ON function
       fprintf(output_source, "/**\n");
       fprintf(output_source, " * @brief Turns ON the '%s' GPIO output.\n", output_module->name);
-      fprintf(output_source, " * @note Considers the active level configuration.\n");
+      fprintf(output_source, " * @note The electrical GPIO level is derived from the configured active level.\n");
       fprintf(output_source, " */\n");
       fprintf(output_source, "void BSP_%s_On(void){\n", output_module->name);
       fprintf(output_source, "  HAL_GPIO_WritePin(GPIO%c, GPIO_PIN_%u, GPIO_PIN_%s);\n", output_module->pin.port, output_module->pin.pin_number,
@@ -617,7 +611,7 @@ static void generate_source_gpio_output_func(FILE* output_source, ast_dsl_node_t
       // Generate OFF function
       fprintf(output_source, "/**\n");
       fprintf(output_source, " * @brief Turns OFF the '%s' GPIO output.\n", output_module->name);
-      fprintf(output_source, " * @note Considers the active level configuration.\n");
+      fprintf(output_source, " * @note The electrical GPIO level is derived from the configured active level.\n");
       fprintf(output_source, " */\n");
       fprintf(output_source, "void BSP_%s_Off(void){\n", output_module->name);
       fprintf(output_source, "  HAL_GPIO_WritePin(GPIO%c, GPIO_PIN_%u, GPIO_PIN_%s);\n", output_module->pin.port, output_module->pin.pin_number,
@@ -636,24 +630,19 @@ static void generate_source_gpio_output_func(FILE* output_source, ast_dsl_node_t
       fprintf(output_source, "/**\n");
       fprintf(output_source, " * @brief Sets the '%s' GPIO output to the specified state.\n", output_module->name);
       fprintf(output_source, " * @param on If true, turns the output on; otherwise, turns it off.\n");
-      fprintf(output_source, " * @note Considers the active level configuration.\n");
+      fprintf(output_source, " * @note The electrical GPIO level is derived from the configured active level.\n");
       fprintf(output_source, " */\n");
       fprintf(output_source, "void BSP_%s_Set(bool on){\n", output_module->name);
-      fprintf(output_source, "  if(on){\n");
-      fprintf(output_source, "    HAL_GPIO_WritePin(GPIO%c, GPIO_PIN_%u, GPIO_PIN_%s);\n", output_module->pin.port, output_module->pin.pin_number,
-              (output_module->data.output.active_level == HIGH) ? "SET" : "RESET");
-      fprintf(output_source, "  }\n");
-      fprintf(output_source, "  else{\n");
-      fprintf(output_source, "    HAL_GPIO_WritePin(GPIO%c, GPIO_PIN_%u, GPIO_PIN_%s);\n", output_module->pin.port, output_module->pin.pin_number,
+      fprintf(output_source, "  HAL_GPIO_WritePin(GPIO%c, GPIO_PIN_%u, on ? GPIO_PIN_%s : GPIO_PIN_%s);\n", output_module->pin.port, output_module->pin.pin_number,
+              (output_module->data.output.active_level == HIGH) ? "SET" : "RESET",
               (output_module->data.output.active_level == HIGH) ? "RESET" : "SET");
-      fprintf(output_source, "  }\n");
       fprintf(output_source, "}\n\n");
       
       // Generate IS_ON function
       fprintf(output_source, "/**\n");
       fprintf(output_source, " * @brief Reads the current state of the '%s' GPIO output.\n", output_module->name);
       fprintf(output_source, " * @return true if the output is ON; false otherwise.\n");
-      fprintf(output_source, " * @note Considers the active level configuration.\n");
+      fprintf(output_source, " * @note The electrical GPIO level is derived from the configured active level.\n");
       fprintf(output_source, " */\n");
       fprintf(output_source, "bool BSP_%s_IsOn(void){\n", output_module->name);
       fprintf(output_source, "  return (HAL_GPIO_ReadPin(GPIO%c, GPIO_PIN_%u) == GPIO_PIN_%s);\n", output_module->pin.port, output_module->pin.pin_number,

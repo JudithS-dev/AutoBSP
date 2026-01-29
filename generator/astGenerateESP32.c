@@ -126,7 +126,7 @@ void ast_generate_source_esp32(FILE* output_source, ast_dsl_node_t* dsl_node){
 }*/
 
 /**
- * @brief Generates the BSP_Init function for the STM32F446RE board support package (BSP).
+ * @brief Generates the BSP_Init function for the ESP32 board support package (BSP).
  * 
  * @param output_source File pointer to the output source file.
  * @param dsl_node Pointer to the DSL AST node containing configuration data.
@@ -149,7 +149,7 @@ static void generate_source_BSP_init_function(FILE* output_source, ast_dsl_node_
 }
 
 /**
- * @brief Generates the GPIO initialization function for the STM32F446RE board support package (BSP).
+ * @brief Generates the GPIO initialization function for the ESP32 board support package (BSP).
  * 
  * @param output_source File pointer to the output source file.
  * @param dsl_node Pointer to the DSL AST node containing configuration data.
@@ -179,20 +179,20 @@ static void generate_source_gpio_init_func(FILE* output_source, ast_dsl_node_t* 
         else if(current_module->data.output.type == GPIO_TYPE_OPENDRAIN)
           fprintf(output_source, "GPIO_MODE_OUTPUT_OD,\n");
         else
-          log_error("ast_generate_source_stm32f446re", 0, "Unsupported GPIO type enum value '%d' for module '%s'", current_module->data.output.type, current_module->name);
+          log_error("generate_source_gpio_init_func", 0, "Unsupported GPIO type enum value '%d' for module '%s'", current_module->data.output.type, current_module->name);
         fprintf(output_source, "    .pull_up_en   = ");
         switch(current_module->data.output.pull){
           case GPIO_PULL_UP:   fprintf(output_source, "GPIO_PULLUP_ENABLE,\n");   break;
           case GPIO_PULL_DOWN: // Fallthrough
           case GPIO_PULL_NONE: fprintf(output_source, "GPIO_PULLUP_DISABLE,\n");   break;
-          default:             log_error("ast_generate_source_stm32f446re", 0, "Unsupported GPIO pull enum value '%d' for module '%s'", current_module->data.output.pull, current_module->name);
+          default:             log_error("generate_source_gpio_init_func", 0, "Unsupported GPIO pull enum value '%d' for module '%s'", current_module->data.output.pull, current_module->name);
         }
         fprintf(output_source, "    .pull_down_en = ");
         switch(current_module->data.output.pull){
           case GPIO_PULL_DOWN: fprintf(output_source, "GPIO_PULLDOWN_ENABLE,\n"); break;
           case GPIO_PULL_UP:   // Fallthrough
           case GPIO_PULL_NONE: fprintf(output_source, "GPIO_PULLDOWN_DISABLE,\n"); break;
-          default:             log_error("ast_generate_source_stm32f446re", 0, "Unsupported GPIO pull enum value '%d' for module '%s'", current_module->data.output.pull, current_module->name);
+          default:             log_error("generate_source_gpio_init_func", 0, "Unsupported GPIO pull enum value '%d' for module '%s'", current_module->data.output.pull, current_module->name);
         }
         fprintf(output_source, "    .intr_type    = GPIO_INTR_DISABLE\n");
         fprintf(output_source, "  };\n");
@@ -203,8 +203,7 @@ static void generate_source_gpio_init_func(FILE* output_source, ast_dsl_node_t* 
             fprintf(output_source, "  gpio_set_level(GPIO_NUM_%u, 1);\n", current_module->pin.pin_number);
           else // Active_level == LOW
             fprintf(output_source, "  gpio_set_level(GPIO_NUM_%u, 0);\n", current_module->pin.pin_number);
-        }
-        else if(current_module->data.output.init == GPIO_INIT_OFF){
+        } else if(current_module->data.output.init == GPIO_INIT_OFF){
           if(current_module->data.output.active_level == HIGH)
             fprintf(output_source, "  gpio_set_level(GPIO_NUM_%u, 0);\n", current_module->pin.pin_number);
           else // Active_level == LOW
@@ -220,7 +219,7 @@ static void generate_source_gpio_init_func(FILE* output_source, ast_dsl_node_t* 
           case GPIO_PULL_UP:   fprintf(output_source, "GPIO_PULLUP;\n");   break;
           case GPIO_PULL_DOWN: fprintf(output_source, "GPIO_PULLDOWN;\n"); break;
           case GPIO_PULL_NONE: fprintf(output_source, "GPIO_NOPULL;\n");   break;
-          default:             log_error("ast_generate_source_stm32f446re", 0, "Unsupported GPIO pull enum value '%d' for module '%s'", current_module->data.input.pull, current_module->name);
+          default:             log_error("generate_source_gpio_init_func", 0, "Unsupported GPIO pull enum value '%d' for module '%s'", current_module->data.input.pull, current_module->name);
         }
         fprintf(output_source, "  HAL_GPIO_Init(GPIO%c, &GPIO_InitStruct);\n", current_module->pin.port);
       }
@@ -232,7 +231,7 @@ static void generate_source_gpio_init_func(FILE* output_source, ast_dsl_node_t* 
 }
 
 /**
- * @brief Generates the usage functions for the modules for the STM32F446RE board support package (BSP).
+ * @brief Generates the usage functions for the modules for the ESP32 board support package (BSP).
  * 
  * @param output_source File pointer to the output source file.
  * @param dsl_node Pointer to the DSL AST node containing configuration data.
@@ -266,7 +265,7 @@ static void generate_source_func(FILE* output_source, ast_dsl_node_t* dsl_node){
 }
 
 /**
- * @brief Generates all source code functions for GPIO output modules for the STM32F446RE board support package (BSP).
+ * @brief Generates all source code functions for GPIO output modules for the ESP32 board support package (BSP).
  * 
  * @param output_source Pointer to the output source file.
  * @param dsl_node Pointer to the DSL AST node.
