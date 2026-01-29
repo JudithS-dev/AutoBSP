@@ -1,0 +1,94 @@
+// idf.py build
+// idf.py -p /dev/ttyUSB0 -b 115200 flash
+// idf.py monitor
+
+AutoBSP{
+  controller: ESP32
+  
+  OUTPUT{
+    name:    "LED_RED"
+    pin:     PA5          // PA5 || PA6
+    
+    type:    pushpull
+    pull:    none
+    speed:   low
+    init:    off
+    active:  high
+    
+    enable:  true
+  }
+  
+  OUTPUT{
+    name:    "LED_GREEN"
+    pin:     PC8
+    enable:  false
+  }
+  
+  INPUT{
+    name:    "BUTTON_BOARD"
+    pin:     PC13
+    
+    pull:    none
+    active:  low
+    
+    enable:  true
+  }
+  
+  INPUT{
+    name:    "BUTTON_OTHER"
+    pin:     PA5
+    enable:  false
+  }
+  
+  PWM_OUTPUT{
+    name:       "PWM_SIGNAL_1"
+    pin:        PC8              // PC8 || PC6
+    
+    pull:       none
+    speed:      high
+    frequency:  2000
+    duty:       500
+    active:     high
+    
+    enable:     true
+  }
+  
+  PWM_OUTPUT{
+    name:       "PWM_SIGNAL_2"
+    pin:        PA1
+    enable:     false
+  }
+  
+  UART{ // picocom -b 115200 -d 8 -y n -p 1 /dev/ttyUSB0 --echo
+    name:     "UART_USED"
+    tx_pin:    PA0         // PA0 || PC10
+    rx_pin:    PA1         // PA1 || PC11
+    
+    baudrate:  115200
+    databits:  8
+    stopbits:  1
+    parity:    none
+    
+    enable:    false
+  }
+  
+  UART{ // picocom -b 9600 -d 8 -y o -p 2 /dev/ttyUSB0 --echo
+    name:     "UART_USED"
+    tx_pin:    PA0         // PA0 || PC10
+    rx_pin:    PA1         // PA1 || PC11
+    
+    baudrate:  9600
+    databits:  9
+    stopbits:  2
+    parity:    odd
+    
+    enable:    true
+  }
+  
+  UART{
+    name:     "UART_OTHER"
+    tx_pin:    PB10
+    rx_pin:    PB11
+    enable:    false
+  }
+}

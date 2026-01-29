@@ -21,7 +21,7 @@ if ! [ -x "./generator/AutoBSP" ]; then
 fi
 
 # List of programs to execute
-PROGRAMS=("STM32.dsl")
+PROGRAMS=("ESP32.dsl")
 LENGTH=${#PROGRAMS[@]}
 
 # Check if program list is empty

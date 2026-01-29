@@ -29,10 +29,14 @@ some_txt_files/normal_leakreport
 stm-description-hal-and-lowlayer-drivers.pdf
 stm32f446mc.pdf
 
-# --- Demo project ---
+# --- STM32 demo project ---
 BSP_test_STM32/*
 !BSP_test_STM32/Core
 BSP_test_STM32/Core/*
 !BSP_test_STM32/Core/Src
 BSP_test_STM32/Core/Src/*
 !BSP_test_STM32/Core/Src/main.c
+
+# --- ESP32 demo project ---
+BSP_test_ESP32/*
+!BSP_test_ESP32/main
