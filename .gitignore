@@ -40,3 +40,6 @@ BSP_test_STM32/Core/Src/*
 # --- ESP32 demo project ---
 BSP_test_ESP32/*
 !BSP_test_ESP32/main
+BSP_test_ESP32/main/*
+!BSP_test_ESP32/main/main.c
+!BSP_test_ESP32/main/CMakeLists.txt

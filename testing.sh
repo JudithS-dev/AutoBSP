@@ -103,18 +103,35 @@ else
   echo "createPNGfromDOT.sh not found. Skipping..."
 fi
 
+# If PROGRAM is not STM32.dsl or ESP32.dsl, exit here
+if [ "$PROGRAM" != "STM32.dsl" ] && [ "$PROGRAM" != "ESP32.dsl" ]; then
+  echo -e "\nFinished executing!"
+  exit 0
+fi
+
 # Ask user to choose if the generated code should be copied into a specific directory
 echo "Would you like to copy the generated code into the demo directory?"
 echo " (0) No"
-echo " (1) Yes, into STM32CubeIDE project directory"
+if [ "$PROGRAM" == "STM32.dsl" ]; then
+  echo " (1) Yes, into STM32CubeIDE project directory"
+elif [ "$PROGRAM" == "ESP32.dsl" ]; then
+  echo " (1) Yes, into ESP-IDF project directory"
+fi
 echo -n ": "
 read -r COPY_CHOICE
 
 if [ "$COPY_CHOICE" == "1" ]; then
-  # Check if project directory exists (BSP_test_STM32/Core/Src/ and BSP_test_STM32/Core/Inc/)
-  SRC_DIR="BSP_test_STM32/Core/Src/"
-  INC_DIR="BSP_test_STM32/Core/Inc/"
+  if [ "$PROGRAM" == "STM32.dsl" ]; then
+    # Define project directories for STM32
+    SRC_DIR="BSP_test_STM32/Core/Src/"
+    INC_DIR="BSP_test_STM32/Core/Inc/"
+  elif [ "$PROGRAM" == "ESP32.dsl" ]; then
+    # Define project directories for ESP32
+    SRC_DIR="BSP_test_ESP32/main/"
+    INC_DIR="BSP_test_ESP32/main/"
+  fi
   
+  # Check if project directory exists and copy files
   if [ -d "$SRC_DIR" ] && [ -d "$INC_DIR" ]; then
     echo "Copying generated source file to '$SRC_DIR'..."
     cp "$OUTPUT/generated_bsp.c" "$SRC_DIR"
