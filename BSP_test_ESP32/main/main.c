@@ -7,27 +7,13 @@ void app_main(void){
   // Initialize BSP
     BSP_Init();
   
+  bool last_button, button = false;
   while(1){
-    // Turn LED red ON, LED green OFF
-    BSP_LED_RED_On();
-    BSP_LED_GREEN_Off();
-    vTaskDelay(pdMS_TO_TICKS(500));
-    
-    // Toggle both LEDs
-    BSP_LED_RED_Toggle();
-    BSP_LED_GREEN_Toggle();
-    vTaskDelay(pdMS_TO_TICKS(500));
-    
-    // Explicit set using logical state
-    BSP_LED_RED_Set(false);
-    BSP_LED_GREEN_Set(true);
-    vTaskDelay(pdMS_TO_TICKS(500));
-    
-    // Query state
-    if(BSP_LED_GREEN_IsOn())
-        BSP_LED_RED_On();
-    else
-        BSP_LED_RED_Off();
+    /* --- Button pressed -> Toggle red LED --- */
+    last_button = button;
+    button = BSP_BUTTON_BOARD_IsActive();
+    if(button && !last_button)
+      BSP_LED_RED_Toggle();
     
     vTaskDelay(pdMS_TO_TICKS(500));
   }

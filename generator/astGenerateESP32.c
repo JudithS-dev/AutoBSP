@@ -18,8 +18,8 @@ static void generate_source_uart_init_func(FILE* output_source, ast_dsl_node_t* 
 
 static void generate_source_func(FILE* output_source, ast_dsl_node_t* dsl_node);
 static void generate_source_gpio_output_func(FILE* output_source, ast_dsl_node_t* dsl_node);
-/*static void generate_source_gpio_input_func(FILE* output_source, ast_dsl_node_t* dsl_node); // TODO fix
-static void generate_source_pwm_output_func(FILE* output_source, ast_dsl_node_t* dsl_node);
+static void generate_source_gpio_input_func(FILE* output_source, ast_dsl_node_t* dsl_node); 
+/*static void generate_source_pwm_output_func(FILE* output_source, ast_dsl_node_t* dsl_node); // TODO fix
 static void generate_source_uart_func(FILE* output_source, ast_dsl_node_t* dsl_node); */
 
 
@@ -212,16 +212,26 @@ static void generate_source_gpio_init_func(FILE* output_source, ast_dsl_node_t* 
       }
       else if(current_module->kind == MODULE_INPUT){
         fprintf(output_source, "  \n  /* Configure INPUT GPIO pin: '%s' */\n", current_module->name);
-        fprintf(output_source, "  GPIO_InitStruct.Pin  = GPIO_PIN_%u;\n", current_module->pin.pin_number);
-        fprintf(output_source, "  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;\n");
-        fprintf(output_source, "  GPIO_InitStruct.Pull = ");
+        fprintf(output_source, "  gpio_config_t cfg_%s = {\n", current_module->name);
+        fprintf(output_source, "    .pin_bit_mask = (1ULL << GPIO_NUM_%u),\n", current_module->pin.pin_number);
+        fprintf(output_source, "    .mode         = GPIO_MODE_INPUT,\n");
+        fprintf(output_source, "    .pull_up_en   = ");
         switch(current_module->data.input.pull){
-          case GPIO_PULL_UP:   fprintf(output_source, "GPIO_PULLUP;\n");   break;
-          case GPIO_PULL_DOWN: fprintf(output_source, "GPIO_PULLDOWN;\n"); break;
-          case GPIO_PULL_NONE: fprintf(output_source, "GPIO_NOPULL;\n");   break;
+          case GPIO_PULL_UP:   fprintf(output_source, "GPIO_PULLUP_ENABLE,\n");   break;
+          case GPIO_PULL_DOWN: // Fallthrough
+          case GPIO_PULL_NONE: fprintf(output_source, "GPIO_PULLUP_DISABLE,\n");   break;
           default:             log_error("generate_source_gpio_init_func", 0, "Unsupported GPIO pull enum value '%d' for module '%s'", current_module->data.input.pull, current_module->name);
         }
-        fprintf(output_source, "  HAL_GPIO_Init(GPIO%c, &GPIO_InitStruct);\n", current_module->pin.port);
+        fprintf(output_source, "    .pull_down_en = ");
+        switch(current_module->data.input.pull){
+          case GPIO_PULL_DOWN: fprintf(output_source, "GPIO_PULLDOWN_ENABLE,\n"); break;
+          case GPIO_PULL_UP:   // Fallthrough
+          case GPIO_PULL_NONE: fprintf(output_source, "GPIO_PULLDOWN_DISABLE,\n"); break;
+          default:             log_error("generate_source_gpio_init_func", 0, "Unsupported GPIO pull enum value '%d' for module '%s'", current_module->data.input.pull, current_module->name);
+        }
+        fprintf(output_source, "    .intr_type    = GPIO_INTR_DISABLE\n");
+        fprintf(output_source, "  };\n");
+        fprintf(output_source, "  ESP_ERROR_CHECK(gpio_config(&cfg_%s));\n", current_module->name);
       }
     }
     current_module = current_module->next;
@@ -243,8 +253,8 @@ static void generate_source_func(FILE* output_source, ast_dsl_node_t* dsl_node){
     log_error("generate_source_func", 0, "DSL node is NULL.");
   
   generate_source_gpio_output_func(output_source, dsl_node);
-  /*generate_source_gpio_input_func(output_source, dsl_node); // TODO fix
-  generate_source_pwm_output_func(output_source, dsl_node);
+  generate_source_gpio_input_func(output_source, dsl_node); 
+  /*generate_source_pwm_output_func(output_source, dsl_node); // TODO fix
   generate_source_uart_func(output_source, dsl_node);*/
   
   // Check for unsupported module kinds
@@ -331,6 +341,45 @@ static void generate_source_gpio_output_func(FILE* output_source, ast_dsl_node_t
       fprintf(output_source, "bool BSP_%s_IsOn(void){\n", output_module->name);
       fprintf(output_source, "  return (gpio_get_level(GPIO_NUM_%u) == %u);\n", output_module->pin.pin_number,
               (output_module->data.output.active_level == HIGH) ? 1 : 0);
+      fprintf(output_source, "}\n");
+    }
+    current_module = current_module->next;
+  }
+}
+
+
+/**
+ * @brief Generates all source code functions for GPIO input modules for the ESP32 board support package (BSP).
+ * 
+ * @param output_source Pointer to the output source file.
+ * @param dsl_node Pointer to the DSL AST node.
+ */
+static void generate_source_gpio_input_func(FILE* output_source, ast_dsl_node_t* dsl_node){
+  if(output_source == NULL)
+    log_error("generate_source_gpio_func", 0, "Output source file pointer is NULL.");
+  if(dsl_node == NULL)
+    log_error("generate_source_gpio_func", 0, "DSL node is NULL.");
+  
+  ast_module_node_t *current_module = dsl_node->modules_root;
+  while(current_module != NULL){
+    if(current_module->enable && current_module->kind == MODULE_INPUT){
+      ast_module_node_t *input_module = current_module;
+      // Generate functions for input GPIOs
+      fprintf(output_source, "\n\n// ---------- GPIO INPUT: '%s' ----------\n", input_module->name);
+      
+      // Generate IS_ACTIVE function
+      fprintf(output_source, "/**\n");
+      fprintf(output_source, " * @brief Checks if the '%s' GPIO input is in its active state.\n", input_module->name);
+      fprintf(output_source, " * @return true if the input is active; false otherwise.\n");
+      fprintf(output_source, " * @note Considers the active level configuration.\n");
+      fprintf(output_source, " */\n");
+      fprintf(output_source, "bool BSP_%s_IsActive(void){\n", input_module->name);
+      if(input_module->data.input.active_level == HIGH){
+        fprintf(output_source, "  return (gpio_get_level(GPIO_NUM_%u) == 1);\n", input_module->pin.pin_number);
+      }
+      else{ // active_level == LOW
+        fprintf(output_source, "  return (gpio_get_level(GPIO_NUM_%u) == 0);\n", input_module->pin.pin_number);
+      }
       fprintf(output_source, "}\n");
     }
     current_module = current_module->next;

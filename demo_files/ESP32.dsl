@@ -23,14 +23,14 @@ AutoBSP{
   OUTPUT{
     name:    "LED_GREEN"
     pin:     GPIO26
-    enable:  true
+    enable:  false
   }
   
-  /*INPUT{
+  INPUT{
     name:    "BUTTON_BOARD"
-    pin:     GPIO34
+    pin:     GPIO33
     
-    pull:    none
+    pull:    up
     active:  low
     
     enable:  true
@@ -38,11 +38,11 @@ AutoBSP{
   
   INPUT{
     name:    "BUTTON_OTHER"
-    pin:     GPIO5
+    pin:     GPIO34
     enable:  false
   }
   
-  PWM_OUTPUT{
+  /*PWM_OUTPUT{
     name:       "PWM_SIGNAL_1"
     pin:        GPIO5              // PC8 || PC6 TODO fix alternative Pins
     

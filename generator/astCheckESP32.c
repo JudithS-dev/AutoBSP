@@ -66,6 +66,20 @@ void ast_check_esp32_valid_pins(ast_dsl_node_t* dsl_node){
                                         current_module->name);
         }
         
+        // Check if pins support Pull-Up/Pull-Down functionality (not supported on Pins GPIO34-GPIO35)
+        if(current_module->pin.pin_number >= 34){
+          if(current_module->kind == MODULE_INPUT){
+            if(current_module->data.input.pull != GPIO_PULL_NONE)
+              log_error("ast_check_esp32_valid_pins", current_module->line_nr, "Pin '%s' does not support Pull-Up/Pull-Down functionality for GPIO_INPUT module '%s'.",
+                        pin_to_string(current_module->pin),
+                        current_module->name);
+          } else{
+            log_error("ast_check_esp32_valid_pins", current_module->line_nr, "INTERNAL ERROR: The pin '%s' is invalid for non-input module '%s'. An error should have been raised earlier.",
+                      pin_to_string(current_module->pin),
+                      current_module->name);
+          }
+        }
+        
       } else{ 
         // ----- Perform checks for UART modules -----
         
