@@ -17,12 +17,12 @@ createPNGfromDOT.sh
 removePNGandDOT.sh
 
 # --- AST output (Graphviz) ---
-*.gv
-*.png
+output/*.gv
+output/*.png
 
 # --- Generated BSP files ---
-generated_bsp.c
-generated_bsp.h
+output/generated_bsp.c
+output/generated_bsp.h
 
 # --- Some unimportant txt files ---
 some_txt_files/normal_leakreport
@@ -30,4 +30,9 @@ stm-description-hal-and-lowlayer-drivers.pdf
 stm32f446mc.pdf
 
 # --- Demo project ---
-BSP_test_STM32
+BSP_test_STM32/*
+!BSP_test_STM32/Core
+BSP_test_STM32/Core/*
+!BSP_test_STM32/Core/Src
+BSP_test_STM32/Core/Src/*
+!BSP_test_STM32/Core/Src/main.c
