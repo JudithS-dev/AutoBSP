@@ -1,27 +1,34 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "driver/gpio.h"
 
-#define LED_GPIO GPIO_NUM_2
+#include "generated_bsp.h"
 
-void app_main(void)
-{
-    // configure LED GPIO
-    gpio_config_t io_conf = {
-        .pin_bit_mask = 1ULL << LED_GPIO,
-        .mode = GPIO_MODE_OUTPUT,
-        .pull_up_en = GPIO_PULLUP_DISABLE,
-        .pull_down_en = GPIO_PULLDOWN_DISABLE,
-        .intr_type = GPIO_INTR_DISABLE,
-    };
-    gpio_config(&io_conf);
-
-    // toggle LED
-    while (1) {
-        gpio_set_level(LED_GPIO, 1);
-        vTaskDelay(pdMS_TO_TICKS(500));
-
-        gpio_set_level(LED_GPIO, 0);
-        vTaskDelay(pdMS_TO_TICKS(500));
-    }
+void app_main(void){
+  // Initialize BSP
+    BSP_Init();
+  
+  while(1){
+    // Turn LED red ON, LED green OFF
+    BSP_LED_RED_On();
+    BSP_LED_GREEN_Off();
+    vTaskDelay(pdMS_TO_TICKS(500));
+    
+    // Toggle both LEDs
+    BSP_LED_RED_Toggle();
+    BSP_LED_GREEN_Toggle();
+    vTaskDelay(pdMS_TO_TICKS(500));
+    
+    // Explicit set using logical state
+    BSP_LED_RED_Set(false);
+    BSP_LED_GREEN_Set(true);
+    vTaskDelay(pdMS_TO_TICKS(500));
+    
+    // Query state
+    if(BSP_LED_GREEN_IsOn())
+        BSP_LED_RED_On();
+    else
+        BSP_LED_RED_Off();
+    
+    vTaskDelay(pdMS_TO_TICKS(500));
+  }
 }

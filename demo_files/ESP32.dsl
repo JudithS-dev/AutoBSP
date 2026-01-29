@@ -1,6 +1,8 @@
+// source ~/esp/esp-idf/export.sh
 // idf.py build
 // idf.py -p /dev/ttyUSB0 -b 115200 flash
 // idf.py monitor
+// Quit: Ctrl + ]
 
 AutoBSP{
   controller: ESP32
@@ -21,10 +23,10 @@ AutoBSP{
   OUTPUT{
     name:    "LED_GREEN"
     pin:     GPIO26
-    enable:  false
+    enable:  true
   }
   
-  INPUT{
+  /*INPUT{
     name:    "BUTTON_BOARD"
     pin:     GPIO34
     
@@ -90,5 +92,5 @@ AutoBSP{
     tx_pin:    GPIO10
     rx_pin:    GPIO11
     enable:    false
-  }
+  }*/
 }
