@@ -5,7 +5,7 @@ LEX = flex
 YACC = bison
 
 TARGET = AutoBSP
-OBJS = parserInC.o lexerInC.o lexerHelper.o lexerErrorHelper.o astBuild.o astPrint.o astCheck.o astCheckSTM32F446RE.o astCheckESP32.o astGenerate.o astGenerateSTM32F446RE.o astGenerateESP32.o astEnums2Str.o logging.o
+OBJS = parserInC.o lexerInC.o lexerHelper.o lexerErrorHelper.o astBuild.o astPrint.o astCheck.o astCheckSTM32F446RE.o astCheckESP32.o astGenerate.o astGenerateSTM32F446RE.o astGenerateESP32.o astEnums2Str.o astHelper.o logging.o
 
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
@@ -22,13 +22,15 @@ astCheckSTM32F446RE.o: astCheckSTM32F446RE.c astCheckSTM32F446RE.h STM32F44RE.h 
 
 astCheckESP32.o: astCheckESP32.c astCheckESP32.h ESP32.h logging.h astEnums.h moduleEnums.h astEnums2Str.h
 
-astGenerate.o: astGenerate.c astGenerate.h astGenerateSTM32F446RE.h astGenerateESP32.h logging.h astEnums.h moduleEnums.h
+astGenerate.o: astGenerate.c astGenerate.h astGenerateSTM32F446RE.h astGenerateESP32.h astHelper.h logging.h astEnums.h moduleEnums.h
 
-astGenerateSTM32F446RE.o: astGenerateSTM32F446RE.c astGenerateSTM32F446RE.h logging.h astEnums.h moduleEnums.h
+astGenerateSTM32F446RE.o: astGenerateSTM32F446RE.c astGenerateSTM32F446RE.h astHelper.h logging.h astEnums.h moduleEnums.h
 
-astGenerateESP32.o: astGenerateESP32.c astGenerateESP32.h logging.h astEnums.h moduleEnums.h
+astGenerateESP32.o: astGenerateESP32.c astGenerateESP32.h astHelper.h logging.h astEnums.h moduleEnums.h
 
 astEnums2Str.o: astEnums2Str.c astEnums2Str.h astEnums.h moduleEnums.h logging.h
+
+astHelper.o: astHelper.c astHelper.h logging.h astEnums.h moduleEnums.h
 
 lexerInC.o: lexerInC.c logging.h parserInC.h moduleEnums.h  lexerHelper.h lexerErrorHelper.h
 

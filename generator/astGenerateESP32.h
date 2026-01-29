@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include "astEnums.h"
 
-void ast_generate_header_esp32(FILE* output_header, ast_dsl_node_t* dsl_node);
 void ast_generate_source_esp32(FILE* output_source, ast_dsl_node_t* dsl_node);
 
 #endif // __AST_CHECK_ESP32_H__
