@@ -61,7 +61,7 @@ int main(void){
   bool last_button, button = false;
   while(1){
     /* --- 1) Button pressed -> Toggle red LED --- */
-	last_button = button;
+    last_button = button;
     button = BSP_BUTTON_BOARD_IsActive();
     if(button && !last_button)
       BSP_LED_RED_Toggle();
@@ -92,9 +92,9 @@ int main(void){
     else if(ch == '-'){
       uint16_t duty = BSP_PWM_SIGNAL_1_GetDuty();
       if(duty > step)
-    	  duty = duty - step;
+        duty = duty - step;
       else
-    	  duty = 0;
+        duty = 0;
       BSP_PWM_SIGNAL_1_SetDuty(duty);
       duty = BSP_PWM_SIGNAL_1_GetDuty();
 
