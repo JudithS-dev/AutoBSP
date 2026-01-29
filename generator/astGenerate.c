@@ -4,6 +4,7 @@
 
 #include "logging.h"
 #include "astGenerateSTM32F446RE.h"
+#include "astGenerateESP32.h"
 
 /**
  * @brief Generates board support package (BSP) code files based on the provided DSL AST node.
@@ -38,6 +39,9 @@ void ast_generate_code(const char* output_path, ast_dsl_node_t* dsl_node){
   switch(dsl_node->controller){
     case STM32F446RE: ast_generate_header_stm32f446re(output_header, dsl_node);
                       ast_generate_source_stm32f446re(output_source, dsl_node);
+                      break;
+    case ESP32:       ast_generate_header_esp32(output_header, dsl_node);
+                      ast_generate_source_esp32(output_source, dsl_node);
                       break;
     default:          log_error("ast_generate_code", 0, "Unsupported controller type enum value '%d'", dsl_node->controller);
   }

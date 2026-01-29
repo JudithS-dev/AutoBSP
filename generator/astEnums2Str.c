@@ -36,6 +36,7 @@ const char* kind_to_string(ast_module_kind_t kind){
 const char* controller_to_string(controller_t controller){
   switch(controller){
     case STM32F446RE: return "STM32F446RE";
+    case ESP32:       return "ESP32";
     default:  log_error("controller_to_string", 0, "Unknown controller enum value '%d'", controller); 
               return "UNKNOWN"; // This won't be reached due to log_error exiting
   }

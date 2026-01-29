@@ -5,6 +5,7 @@
 
 #include "logging.h"
 #include "astCheckSTM32F446RE.h"
+#include "astCheckESP32.h"
 #include "astEnums2Str.h"
 
 static void ast_check_required_dsl_params(ast_dsl_builder_t* dsl_builder);
@@ -139,6 +140,8 @@ void ast_check_all_enabled_modules(ast_dsl_node_t* dsl_node){
   // Perform microcontroller specific checks
   switch(dsl_node->controller){
     case STM32F446RE: ast_check_stm32f446re_valid_pins(dsl_node);
+                      break;
+    case ESP32:       ast_check_esp32_valid_pins(dsl_node);
                       break;
     default:          log_error("ast_check_all_enabled_modules", 0, "Unsupported controller '%s' for uniqueness checks.", controller_to_string(dsl_node->controller));
   }
@@ -432,6 +435,8 @@ void ast_bind_backend_specific_params(ast_dsl_node_t* dsl_node){
   // Perform microcontroller specific bindings
   switch(dsl_node->controller){
     case STM32F446RE: ast_check_stm32f446re_bind_pins(dsl_node);
+                      break;
+    case ESP32:       ast_check_esp32_bind_pins(dsl_node);
                       break;
     default:          log_error("ast_bind_backend_specific_params", 0, "Unsupported controller '%s' for backend specific parameter bindings.", controller_to_string(dsl_node->controller));
   }

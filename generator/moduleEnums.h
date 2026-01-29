@@ -9,10 +9,11 @@
 /**
  * @brief Supported microcontroller types
  * 
- * Values: STM32F446RE
+ * Values: STM32F446RE, ESP32
  */
 typedef enum{
-  STM32F446RE
+  STM32F446RE,
+  ESP32
 } controller_t;
 
 

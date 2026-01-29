@@ -173,6 +173,10 @@ INVALID_TOKENS      ([^ \n\t\{\}:\/\*;]+|{COMMENT_CHARS})
                       yylval.u_controller = STM32F446RE;
                       return val_controller;
                     }
+"ESP32"             { log_info("\"ESP32\"", LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
+                      yylval.u_controller = ESP32;
+                      return val_controller;
+                    }
 
   /* GPIO specific parameter values */
 "pushpull"          { log_info("\"pushpull\"",  LOG_LEXER_TOKEN, yylineno, "Found '%s'", yytext);
