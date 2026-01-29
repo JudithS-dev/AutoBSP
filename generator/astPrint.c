@@ -76,7 +76,7 @@ static void ast_print_helper(FILE *pfDot, const ast_dsl_node_t* dsl_node, bool p
   // Print controller node
   fprintf(pfDot,
   "  Controller [label=<<TABLE BORDER=\"1\" CELLBORDER=\"0\" CELLSPACING=\"0\" CELLPADDING=\"8\" BGCOLOR=\"#E8E8E8\">"
-  "\n    <TR><TD><B>Controller</B></TD></TR>\n    <TR><TD ALIGN=\"LEFT\">%s</TD></TR>\n    </TABLE>>];\n",
+  "\n    <TR><TD><B>Controller</B></TD></TR>\n    <TR><TD>%s</TD></TR>\n    </TABLE>>];\n",
   controller_to_string(dsl_node->controller)
   );
   
@@ -154,8 +154,8 @@ static void ast_print_helper(FILE *pfDot, const ast_dsl_node_t* dsl_node, bool p
                                           level_to_string(current_module->data.pwm.active_level));
                                 fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Frequency:</B> %u Hz</TD></TR>",
                                           current_module->data.pwm.frequency);
-                                fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Duty Cycle:</B> %u %%</TD></TR>",
-                                          current_module->data.pwm.duty_cycle);
+                                fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Duty Cycle:</B> %.1f %%</TD></TR>",
+                                          (float)current_module->data.pwm.duty_cycle / 10.0f);
                                 if(dsl_node->controller == STM32F446RE){
                                   fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>TIM Number:</B> %u</TD></TR>",
                                             current_module->data.pwm.tim_number);
