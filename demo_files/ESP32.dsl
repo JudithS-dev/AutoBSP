@@ -7,7 +7,7 @@ AutoBSP{
   
   OUTPUT{
     name:    "LED_RED"
-    pin:     PA5          // PA5 || PA6
+    pin:     GPIO12          // PA5 || PA6 TODO fix alternative Pins
     
     type:    pushpull
     pull:    none
@@ -20,13 +20,13 @@ AutoBSP{
   
   OUTPUT{
     name:    "LED_GREEN"
-    pin:     PC8
+    pin:     GPIO26
     enable:  false
   }
   
   INPUT{
     name:    "BUTTON_BOARD"
-    pin:     PC13
+    pin:     GPIO34
     
     pull:    none
     active:  low
@@ -36,13 +36,13 @@ AutoBSP{
   
   INPUT{
     name:    "BUTTON_OTHER"
-    pin:     PA5
+    pin:     GPIO5
     enable:  false
   }
   
   PWM_OUTPUT{
     name:       "PWM_SIGNAL_1"
-    pin:        PC8              // PC8 || PC6
+    pin:        GPIO5              // PC8 || PC6 TODO fix alternative Pins
     
     pull:       none
     speed:      high
@@ -55,14 +55,14 @@ AutoBSP{
   
   PWM_OUTPUT{
     name:       "PWM_SIGNAL_2"
-    pin:        PA1
+    pin:        GPIO1
     enable:     false
   }
   
   UART{ // picocom -b 115200 -d 8 -y n -p 1 /dev/ttyUSB0 --echo
     name:     "UART_USED"
-    tx_pin:    PA0         // PA0 || PC10
-    rx_pin:    PA1         // PA1 || PC11
+    tx_pin:    GPIO0         // PA0 || PC10 TODO fix alternative Pins
+    rx_pin:    GPIO1         // PA1 || PC11 TODO fix alternative Pins
     
     baudrate:  115200
     databits:  8
@@ -74,8 +74,8 @@ AutoBSP{
   
   UART{ // picocom -b 9600 -d 8 -y o -p 2 /dev/ttyUSB0 --echo
     name:     "UART_USED"
-    tx_pin:    PA0         // PA0 || PC10
-    rx_pin:    PA1         // PA1 || PC11
+    tx_pin:    GPIO0         // PA0 || PC10 TODO fix alternative Pins
+    rx_pin:    GPIO1         // PA1 || PC11 TODO fix alternative Pins
     
     baudrate:  9600
     databits:  9
@@ -87,8 +87,8 @@ AutoBSP{
   
   UART{
     name:     "UART_OTHER"
-    tx_pin:    PB10
-    rx_pin:    PB11
+    tx_pin:    GPIO10
+    rx_pin:    GPIO11
     enable:    false
   }
 }

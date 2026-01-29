@@ -20,7 +20,7 @@ astCheck.o: astCheck.c astCheck.h logging.h astEnums.h moduleEnums.h astCheckSTM
 
 astCheckSTM32F446RE.o: astCheckSTM32F446RE.c astCheckSTM32F446RE.h STM32F44RE.h logging.h astEnums.h moduleEnums.h astEnums2Str.h
 
-astCheckESP32.o: astCheckESP32.c astCheckESP32.h logging.h astEnums.h moduleEnums.h astEnums2Str.h
+astCheckESP32.o: astCheckESP32.c astCheckESP32.h ESP32.h logging.h astEnums.h moduleEnums.h astEnums2Str.h
 
 astGenerate.o: astGenerate.c astGenerate.h astGenerateSTM32F446RE.h astGenerateESP32.h logging.h astEnums.h moduleEnums.h
 

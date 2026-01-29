@@ -25,10 +25,13 @@ static void bind_uart_pins_stm32f446re(ast_dsl_node_t* dsl_node);
  * Checks if the pins assigned to enabled modules are valid for the STM32F446RE (exist and support the required functionality).
  */
 void ast_check_stm32f446re_valid_pins(ast_dsl_node_t* dsl_node){
+  if(dsl_node == NULL)
+    log_error("ast_check_stm32f446re_valid_pins", 0, "DSL node is NULL.");
+  
   ast_module_node_t* current_module = dsl_node->modules_root;
   while(current_module != NULL){
     if(current_module->enable){
-
+      
       // ----- Perform checks for non-UART modules -----
       if(current_module->kind != MODULE_UART){
         // Check if pin is a valid STM32F446RE pin
@@ -37,28 +40,28 @@ void ast_check_stm32f446re_valid_pins(ast_dsl_node_t* dsl_node){
         // Check if pin is not marked as not usable
         pin_cap_t *cur_cap = (pin_cap_t*)pincap_find_stm32f446re(current_module->pin.port, (uint8_t)(current_module->pin.pin_number));
         if(cur_cap->not_usable)
-          log_error("are_valid_stm32f446re_pins", current_module->line_nr, "Pin '%s' is marked as not usable on STM32F446RE for module '%s'.",
+          log_error("ast_check_stm32f446re_valid_pins", current_module->line_nr, "Pin '%s' is marked as not usable on STM32F446RE for module '%s'.",
                     pin_to_string(current_module->pin),
                     current_module->name);
         
         // Check if pin supports the module functionality
         switch(current_module->kind){
           case MODULE_INPUT:  if(!cur_cap->can_gpio_in)
-                                log_error("are_valid_stm32f446re_pins", current_module->line_nr, "Pin '%s' does not support GPIO_INPUT for module '%s'.",
+                                log_error("ast_check_stm32f446re_valid_pins", current_module->line_nr, "Pin '%s' does not support GPIO_INPUT for module '%s'.",
                                           pin_to_string(current_module->pin),
                                           current_module->name);
                               break;
           case MODULE_OUTPUT: if(!cur_cap->can_gpio_out)
-                                log_error("are_valid_stm32f446re_pins", current_module->line_nr, "Pin '%s' does not support GPIO_OUTPUT for module '%s'.",
+                                log_error("ast_check_stm32f446re_valid_pins", current_module->line_nr, "Pin '%s' does not support GPIO_OUTPUT for module '%s'.",
                                           pin_to_string(current_module->pin),
                                           current_module->name);
                               break;
           case MODULE_PWM_OUTPUT: if(cur_cap->pwm_count == 0)
-                                    log_error("are_valid_stm32f446re_pins", current_module->line_nr, "Pin '%s' does not support PWM_OUTPUT for module '%s'.",
+                                    log_error("ast_check_stm32f446re_valid_pins", current_module->line_nr, "Pin '%s' does not support PWM_OUTPUT for module '%s'.",
                                               pin_to_string(current_module->pin),
                                               current_module->name);
                                   break;
-          default:            log_error("are_valid_stm32f446re_pins", current_module->line_nr, "Unknown module kind '%d' for module '%s'.",
+          default:            log_error("ast_check_stm32f446re_valid_pins", current_module->line_nr, "Unknown module kind '%d' for module '%s'.",
                                         current_module->kind,
                                         current_module->name);
         }
@@ -73,29 +76,29 @@ void ast_check_stm32f446re_valid_pins(ast_dsl_node_t* dsl_node){
         // Check if pins are not marked as not usable
         pin_cap_t *tx_cap = (pin_cap_t*)pincap_find_stm32f446re(current_module->pin.port, (uint8_t)(current_module->pin.pin_number));
         if(tx_cap->not_usable)
-          log_error("are_valid_stm32f446re_pins", current_module->line_nr, "TX Pin '%s' is marked as not usable on STM32F446RE for module '%s'.",
+          log_error("ast_check_stm32f446re_valid_pins", current_module->line_nr, "TX Pin '%s' is marked as not usable on STM32F446RE for module '%s'.",
                     pin_to_string(current_module->pin),
                     current_module->name);
         pin_cap_t *rx_cap = (pin_cap_t*)pincap_find_stm32f446re(current_module->data.uart.rx_pin.port, (uint8_t)(current_module->data.uart.rx_pin.pin_number));
         if(rx_cap->not_usable)
-          log_error("are_valid_stm32f446re_pins", current_module->line_nr, "RX Pin '%s' is marked as not usable on STM32F446RE for module '%s'.",
+          log_error("ast_check_stm32f446re_valid_pins", current_module->line_nr, "RX Pin '%s' is marked as not usable on STM32F446RE for module '%s'.",
                     pin_to_string(current_module->data.uart.rx_pin),
                     current_module->name);
         
         // Check if tx and rx pins are on the same port (required by hardware)
         if(current_module->pin.port != current_module->data.uart.rx_pin.port)
-          log_error("are_valid_stm32f446re_pins", current_module->line_nr, "TX Pin '%s' and RX Pin '%s' must be on the same port for module '%s'.",
+          log_error("ast_check_stm32f446re_valid_pins", current_module->line_nr, "TX Pin '%s' and RX Pin '%s' must be on the same port for module '%s'.",
                     pin_to_string(current_module->pin),
                     pin_to_string(current_module->data.uart.rx_pin),
                     current_module->name);
         
         // Check if pins support UART functionality
         if(tx_cap->uart_count == 0)
-          log_error("are_valid_stm32f446re_pins", current_module->line_nr, "TX Pin '%s' does not support UART for module '%s'.",
+          log_error("ast_check_stm32f446re_valid_pins", current_module->line_nr, "TX Pin '%s' does not support UART for module '%s'.",
                     pin_to_string(current_module->pin),
                     current_module->name);
         if(rx_cap->uart_count == 0)
-          log_error("are_valid_stm32f446re_pins", current_module->line_nr, "RX Pin '%s' does not support UART for module '%s'.",
+          log_error("ast_check_stm32f446re_valid_pins", current_module->line_nr, "RX Pin '%s' does not support UART for module '%s'.",
                     pin_to_string(current_module->data.uart.rx_pin),
                     current_module->name);
         
@@ -108,7 +111,7 @@ void ast_check_stm32f446re_valid_pins(ast_dsl_node_t* dsl_node){
           }
         }
         if(!tx_supports_tx)
-          log_error("are_valid_stm32f446re_pins", current_module->line_nr, "TX Pin '%s' does not support UART TX functionality for module '%s'.",
+          log_error("ast_check_stm32f446re_valid_pins", current_module->line_nr, "TX Pin '%s' does not support UART TX functionality for module '%s'.",
                     pin_to_string(current_module->pin),
                     current_module->name);
         
@@ -120,19 +123,19 @@ void ast_check_stm32f446re_valid_pins(ast_dsl_node_t* dsl_node){
           }
         }
         if(!rx_supports_rx)
-          log_error("are_valid_stm32f446re_pins", current_module->line_nr, "RX Pin '%s' does not support UART RX functionality for module '%s'.",
+          log_error("ast_check_stm32f446re_valid_pins", current_module->line_nr, "RX Pin '%s' does not support UART RX functionality for module '%s'.",
                     pin_to_string(current_module->data.uart.rx_pin),
                     current_module->name);
         
         // Check if databits is valid (STM32F4 only supports 8 or 9)
         if((current_module->data.uart.databits != 8) && (current_module->data.uart.databits != 9))
-          log_error("are_valid_stm32f446re_pins", current_module->line_nr, "Databits value '%u' is invalid for UART module '%s' on STM32F446RE. Supported values: 8, 9.",
+          log_error("ast_check_stm32f446re_valid_pins", current_module->line_nr, "Databits value '%u' is invalid for UART module '%s' on STM32F446RE. Supported values: 8, 9.",
                     current_module->data.uart.databits,
                     current_module->name);
         
         // Check if stopbits is valid (STM32F4 only supports 1 or 2)
         if((current_module->data.uart.stopbits != 1.0f) && (current_module->data.uart.stopbits != 2.0f))
-          log_error("are_valid_stm32f446re_pins", current_module->line_nr, "Stopbits value '%.1f' is invalid for UART module '%s' on STM32F446RE. Supported values: 1, 2.",
+          log_error("ast_check_stm32f446re_valid_pins", current_module->line_nr, "Stopbits value '%.1f' is invalid for UART module '%s' on STM32F446RE. Supported values: 1, 2.",
                     current_module->data.uart.stopbits,
                     current_module->name);
       }
@@ -152,6 +155,10 @@ void ast_check_stm32f446re_valid_pins(ast_dsl_node_t* dsl_node){
  * Checks if the pin follows the PXn format and is within the valid range for STM32F446RE.
  */
 static void is_valid_stm32f446re_pin(const char *module_name, int line_nr, pin_t pin){
+  if(module_name == NULL)
+    log_error("is_valid_stm32f446re_pin", line_nr, "Module name is NULL for pin '%s'.",
+              pin_to_string(pin));
+  
   if(pin.identifier != PXn)
     log_error("is_valid_stm32f446re_pin", line_nr, "Pin '%s' for module '%s' is not in PXn format (required for STM32F446RE).",
               pin_to_string(pin),
@@ -183,6 +190,9 @@ static void is_valid_stm32f446re_pin(const char *module_name, int line_nr, pin_t
  * Binds parameters such as timer numbers and channels for PWM modules based on pin capabilities.
  */
 void ast_check_stm32f446re_bind_pins(ast_dsl_node_t* dsl_node){
+  if(dsl_node == NULL)
+    log_error("ast_check_stm32f446re_bind_pins", 0, "DSL node is NULL.");
+  
   bind_pwm_pins_stm32f446re(dsl_node);
   bind_pwm_prescaler_period_stm32f446re(dsl_node);
   bind_uart_pins_stm32f446re(dsl_node);
@@ -196,6 +206,9 @@ void ast_check_stm32f446re_bind_pins(ast_dsl_node_t* dsl_node){
  * Assigns timer numbers and channels to PWM output modules based on available options and usage.
  */
 static void bind_pwm_pins_stm32f446re(ast_dsl_node_t* dsl_node){
+  if(dsl_node == NULL)
+    log_error("bind_pwm_pins_stm32f446re", 0, "DSL node is NULL.");
+  
   bool tim_used[15] = { false }; // TIM1 to TIM14 (0 unused)
   
   ast_module_node_t* current_module = dsl_node->modules_root;
@@ -246,6 +259,9 @@ static void bind_pwm_pins_stm32f446re(ast_dsl_node_t* dsl_node){
  * Calculates and assigns prescaler and period values for PWM output modules based on target frequency.
  */
 static void bind_pwm_prescaler_period_stm32f446re(ast_dsl_node_t* dsl_node){
+  if(dsl_node == NULL)
+    log_error("bind_pwm_prescaler_period_stm32f446re", 0, "DSL node is NULL.");
+  
   ast_module_node_t* current_module = dsl_node->modules_root;
   while(current_module != NULL){
     if(current_module->enable && (current_module->kind == MODULE_PWM_OUTPUT)){
@@ -284,6 +300,9 @@ static void bind_pwm_prescaler_period_stm32f446re(ast_dsl_node_t* dsl_node){
  * Assigns USART numbers and GPIO alternate function numbers to UART modules based on available options and usage.
  */
 static void bind_uart_pins_stm32f446re(ast_dsl_node_t* dsl_node){
+  if(dsl_node == NULL)
+    log_error("bind_uart_pins_stm32f446re", 0, "DSL node is NULL.");
+  
   bool usart_used[7] = { false }; // UART/USART1 to UART/USART6 (0 unused)
   
   ast_module_node_t* current_module = dsl_node->modules_root;

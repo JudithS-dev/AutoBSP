@@ -76,7 +76,7 @@ void ast_check_required_module_params(ast_module_builder_t* module_builder){
   
   // Check common fields
   if(module->line_nr == 0)
-    log_error("ast_check_required_module_params", 0, "Required field 'line_nr' is not set for module '%s'. This is an internal error.",
+    log_error("ast_check_required_module_params", 0, "INTERNAL ERROR: Required field 'line_nr' is not set for module '%s'.",
               module->name == NULL ? "<NULL>" : module->name);
   
   if(module_builder->name_set == false || module->name == NULL)
@@ -172,7 +172,7 @@ void ast_check_unique_enabled_names(ast_dsl_node_t* dsl_node){
       // Check for duplicate names
       for(unsigned int i = 0; i < existing_names_count; i++){
         if(existing_names == NULL)
-          log_error("ast_check_unique_enabled_names", 0, "Internal error: existing names list is NULL.");
+          log_error("ast_check_unique_enabled_names", 0, "INTERNAL ERROR: existing names list is NULL.");
         if(strcmp(existing_names[i], current->name) == 0)
           log_error("ast_check_unique_enabled_names", 0,
                     "Duplicate enabled module name '%s' found.\n"
@@ -196,7 +196,7 @@ void ast_check_unique_enabled_names(ast_dsl_node_t* dsl_node){
   // Free existing names list
   for(unsigned int i = 0; i < existing_names_count; i++){
     if(existing_names[i] == NULL)
-      log_error("ast_check_unique_enabled_names", 0, "Internal error: existing name at index %u is NULL.", i);
+      log_error("ast_check_unique_enabled_names", 0, "INTERNAL ERROR: existing name at index %u is NULL.", i);
     free(existing_names[i]);
     existing_names[i] = NULL;
   }
