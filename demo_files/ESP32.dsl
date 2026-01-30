@@ -54,7 +54,7 @@ AutoBSP{
   
   PWM_OUTPUT{
     name:       "PWM_SIGNAL_2"
-    pin:        GPIO1
+    pin:        GPIO3
     enable:     false
   }
   

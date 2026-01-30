@@ -156,11 +156,13 @@ static void ast_print_helper(FILE *pfDot, const ast_dsl_node_t* dsl_node, bool p
                                           current_module->data.pwm.frequency);
                                 fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Duty Cycle:</B> %.1f %%</TD></TR>",
                                           (float)current_module->data.pwm.duty_cycle / 10.0f);
-                                if(dsl_node->controller == STM32F446RE){
+                                if(current_module->enable && (dsl_node->controller == STM32F446RE || dsl_node->controller == ESP32)){
                                   fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>TIM Number:</B> %u</TD></TR>",
                                             current_module->data.pwm.tim_number);
                                   fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>TIM Channel:</B> %u</TD></TR>",
                                             current_module->data.pwm.tim_channel);
+                                }
+                                if(current_module->enable && dsl_node->controller == STM32F446RE){
                                   fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>GPIO AF:</B> %u</TD></TR>",
                                             current_module->data.pwm.gpio_af);
                                   fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Prescaler:</B> %u</TD></TR>",
@@ -177,13 +179,16 @@ static void ast_print_helper(FILE *pfDot, const ast_dsl_node_t* dsl_node, bool p
                                                 current_module->data.uart.stopbits);
                                 fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Parity:</B> %s</TD></TR>",
                                                 uart_parity_to_string(current_module->data.uart.parity));
-                                if(dsl_node->controller == STM32F446RE){
+                                if(current_module->enable && dsl_node->controller == STM32F446RE){
                                   fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>USART Number:</B> %u</TD></TR>",
                                             current_module->data.uart.usart_number);
                                   fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>Is UART:</B> %s</TD></TR>",
                                             bool_to_string(current_module->data.uart.is_uart));
                                   fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>GPIO AF:</B> %u</TD></TR>",
                                             current_module->data.uart.gpio_af);
+                                } else if(current_module->enable && dsl_node->controller == ESP32){
+                                  fprintf(pfDot, "\n    <TR><TD ALIGN=\"LEFT\">&#8226; <B>UART Number:</B> %u</TD></TR>",
+                                            current_module->data.uart.usart_number);
                                 }
                                 break;
       default:  log_error("ast_print_helper", 0, "Unknown module kind enum value '%d'", current_module->kind);
