@@ -182,6 +182,7 @@ static void is_valid_stm32f446re_pin(const char *module_name, int line_nr, pin_t
 /* -------------------------------------------- */
 /*      Backend specific parameter bindings     */
 /* -------------------------------------------- */
+
 /**
  * @brief Backend specific parameter bindings for STM32F446RE.
  * 

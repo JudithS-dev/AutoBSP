@@ -42,20 +42,20 @@ void ast_generate_source_stm32f446re(FILE* output_source, ast_dsl_node_t* dsl_no
   if(dsl_node == NULL)
     log_error("ast_generate_source_stm32f446re", 0, "DSL node is NULL.");
   
-  fprintf(output_source,"#include \"generated_bsp.h\"\n\n");
+  fprintf(output_source, "#include \"generated_bsp.h\"\n\n");
   
   if(has_enabled_uart_module(dsl_node))
-    fprintf(output_source,"#include <string.h>\n\n");
+    fprintf(output_source, "#include <string.h>\n\n");
   
-  fprintf(output_source,"#include \"stm32f4xx_hal.h\"\n");
+  fprintf(output_source, "#include \"stm32f4xx_hal.h\"\n");
   
   if(has_enabled_pwm_module(dsl_node) || has_enabled_uart_module(dsl_node)){
-    fprintf(output_source,"\nextern void Error_Handler(void);\n\n");
+    fprintf(output_source, "\nextern void Error_Handler(void);\n\n");
   }
   
   // Forward declarations of initialization functions
   if(has_enabled_gpio_module(dsl_node))
-    fprintf(output_source,"static void BSP_Init_GPIO(void);\n");
+    fprintf(output_source, "static void BSP_Init_GPIO(void);\n");
   generate_source_pwm_init_declaration(output_source, dsl_node);
   generate_source_uart_init_declaration(output_source, dsl_node);
   
@@ -63,7 +63,7 @@ void ast_generate_source_stm32f446re(FILE* output_source, ast_dsl_node_t* dsl_no
   generate_source_timer_handle_declaration(output_source, dsl_node);
   generate_source_uart_handle_declaration(output_source, dsl_node);
   
-  fprintf(output_source,"\n\n// ---------- INITIALIZATION FUNCTIONS ----------\n\n");
+  fprintf(output_source, "\n\n// ---------- INITIALIZATION FUNCTIONS ----------\n\n");
   
   // Generate BSP_Init function
   generate_source_BSP_init_function(output_source, dsl_node);
@@ -401,7 +401,7 @@ static void generate_source_pwm_init_func(FILE* output_source, ast_dsl_node_t* d
         case GPIO_PULL_UP:   fprintf(output_source, "GPIO_PULLUP;\n");   break;
         case GPIO_PULL_DOWN: fprintf(output_source, "GPIO_PULLDOWN;\n"); break;
         case GPIO_PULL_NONE: fprintf(output_source, "GPIO_NOPULL;\n");   break;
-        default:             log_error("ast_generate_source_stm32f446re", 0, "Unsupported GPIO pull enum value '%d' for module '%s'", current_module->data.pwm.pull, current_module->name);
+        default:             log_error("generate_source_pwm_init_func", 0, "Unsupported GPIO pull enum value '%d' for module '%s'", current_module->data.pwm.pull, current_module->name);
       }
       fprintf(output_source, "  GPIO_InitStruct.Speed     = ");
       switch(current_module->data.pwm.speed){
@@ -409,7 +409,7 @@ static void generate_source_pwm_init_func(FILE* output_source, ast_dsl_node_t* d
         case GPIO_SPEED_MEDIUM:     fprintf(output_source, "GPIO_SPEED_FREQ_MEDIUM;\n");     break;
         case GPIO_SPEED_HIGH:       fprintf(output_source, "GPIO_SPEED_FREQ_HIGH;\n");       break;
         case GPIO_SPEED_VERY_HIGH:  fprintf(output_source, "GPIO_SPEED_FREQ_VERY_HIGH;\n");  break;
-        default:                    log_error("ast_generate_source_stm32f446re", 0, "Unsupported GPIO speed enum value '%d' for module '%s'", current_module->data.pwm.speed, current_module->name);
+        default:                    log_error("generate_source_pwm_init_func", 0, "Unsupported GPIO speed enum value '%d' for module '%s'", current_module->data.pwm.speed, current_module->name);
       }
       fprintf(output_source, "  GPIO_InitStruct.Alternate = GPIO_AF%u_TIM%u;\n", current_module->data.pwm.gpio_af, current_module->data.pwm.tim_number);
       fprintf(output_source, "  HAL_GPIO_Init(GPIO%c, &GPIO_InitStruct);\n", current_module->pin.port);
