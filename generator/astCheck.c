@@ -41,6 +41,10 @@ void ast_check_required_params(ast_dsl_builder_t* dsl_builder){
     ast_check_required_module_params(current_builder);
     current_builder = current_builder->next;
   }
+  
+  // Microcontroller specific checks
+  if(dsl_builder->controller == ESP32)
+    ast_check_esp32_required_params(dsl_builder);
 }
 
 /**

@@ -12,7 +12,7 @@ AutoBSP{
     
   ? type:    (pushpull|opendrain)             = pushpull   // driver type: pushpull (high or low), opendrain (low or floating)
   ? pull:    (up|down|none)                   = none       // internal resistor
-  ? speed:   (low|medium|high|very_high)      = medium     // speed output can change
+  ? speed:   (low|medium|high|very_high)      = medium     // speed output can change (not supported on ESP32)
     
   ? init:    (on|off|none)                    = off        // initial output state (none: don't set default value, maybe bootloader or
                                                               other peripheral has already set default value and don't change that)
@@ -38,8 +38,8 @@ AutoBSP{
     pin:     (P[A-Z]([0-9]|1[0-5]))                        // physical MCU-Pin either in PXn-format or GPIOn-format
         |    (GPIO([0-9]|[1-9][0-9]))
     
-  ? pull:    (up|down|none)                   = none       // internal resistor
-  ? speed:   (low|medium|high|very_high)      = medium     // speed output can change
+  ? pull:    (up|down|none)                   = none       // internal resistor (not supported on ESP32)
+  ? speed:   (low|medium|high|very_high)      = medium     // speed output can change (not supported on ESP32)
     
   ? frequency: [0-9]|[1-9][0-9]+              = 1000       // PWM frequency in Hz
   ? duty:      0 <= duty <= 1000              = 0          // initial duty cycle in permille (0..1000)          

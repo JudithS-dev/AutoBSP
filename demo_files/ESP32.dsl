@@ -7,13 +7,12 @@
 AutoBSP{
   controller: ESP32
   
-  OUTPUT{
+  OUTPUT{ // no speed parameter supported
     name:    "LED_RED"
     pin:     GPIO12          // PA5 || PA6 TODO fix alternative Pins
     
     type:    pushpull
     pull:    none
-    speed:   low
     init:    off
     active:  high
     
@@ -42,12 +41,10 @@ AutoBSP{
     enable:  false
   }
   
-  PWM_OUTPUT{
+  PWM_OUTPUT{  // no speed or pull parameter supported
     name:       "PWM_SIGNAL_1"
     pin:        GPIO5              // PC8 || PC6 TODO fix alternative Pins
     
-    pull:       none
-    speed:      high
     frequency:  2000
     duty:       500
     active:     high

@@ -13,6 +13,41 @@ static void bind_pwm_pins_esp32(ast_dsl_node_t* dsl_node);
 
 
 /* -------------------------------------------- */
+/*      Required parameter checks for ESP32     */
+/* -------------------------------------------- */
+/**
+ * @brief Checks that unsupported parameters are not set for ESP32 modules.
+ * 
+ * @param dsl_builder Pointer to the DSL builder.
+ * 
+ * Checks that parameters not supported by ESP32 (e.g., speed, pull for PWM) are not set.
+ */
+void ast_check_esp32_required_params(ast_dsl_builder_t* dsl_builder){
+  if(dsl_builder == NULL)
+    log_error("ast_check_esp32_required_params", 0, "DSL builder is NULL.");
+  
+  ast_module_builder_t* current_builder = dsl_builder->module_builders_root;
+  while(current_builder != NULL){
+    // ESP32 doesn't support speed setting for modules
+    if(current_builder->speed_set == true)
+      log_error("ast_check_esp32_required_params", current_builder->module->line_nr,
+                "Parameter 'speed' is not supported for ESP32 in module '%s'.",
+                current_builder->module->name == NULL ? "<NULL>" : current_builder->module->name);
+    
+    // ESP32 doesn't support pull setting for PWM modules
+    if(current_builder->module->kind == MODULE_PWM_OUTPUT){
+      if(current_builder->pull_set == true)
+        log_error("ast_check_esp32_required_params", current_builder->module->line_nr,
+                  "Parameter 'pull' is not supported for PWM modules on ESP32 in module '%s'.",
+                  current_builder->module->name == NULL ? "<NULL>" : current_builder->module->name);
+    }
+    
+    current_builder = current_builder->next;
+  }
+}
+
+
+/* -------------------------------------------- */
 /*           Validity checks for ESP32          */
 /* -------------------------------------------- */
 
