@@ -42,7 +42,7 @@ AutoBSP{
     enable:  false
   }
   
-  /*PWM_OUTPUT{
+  PWM_OUTPUT{
     name:       "PWM_SIGNAL_1"
     pin:        GPIO5              // PC8 || PC6 TODO fix alternative Pins
     
@@ -61,7 +61,7 @@ AutoBSP{
     enable:     false
   }
   
-  UART{ // picocom -b 115200 -d 8 -y n -p 1 /dev/ttyUSB0 --echo
+  /*UART{ // picocom -b 115200 -d 8 -y n -p 1 /dev/ttyUSB0 --echo
     name:     "UART_USED"
     tx_pin:    GPIO0         // PA0 || PC10 TODO fix alternative Pins
     rx_pin:    GPIO1         // PA1 || PC11 TODO fix alternative Pins

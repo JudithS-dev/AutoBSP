@@ -8,8 +8,7 @@
 
 static const pin_cap_t* pincap_find_esp32(uint8_t num);
 static void is_valid_esp32_pin(const char *module_name, int line_nr, pin_t pin);
-//static void bind_pwm_pins_esp32(ast_dsl_node_t* dsl_node);
-//static void bind_pwm_prescaler_period_esp32(ast_dsl_node_t* dsl_node);
+static void bind_pwm_pins_esp32(ast_dsl_node_t* dsl_node);
 //static void bind_uart_pins_esp32(ast_dsl_node_t* dsl_node);
 
 
@@ -56,11 +55,11 @@ void ast_check_esp32_valid_pins(ast_dsl_node_t* dsl_node){
                                           pin_to_string(current_module->pin),
                                           current_module->name);
                               break;
-          case MODULE_PWM_OUTPUT: /*if(cur_cap->pwm_count == 0) // TODO: maybe add PWM support check later (at least check if output capable)
+          case MODULE_PWM_OUTPUT: if(!cur_cap->can_gpio_out) // PWM-signal can be routed to all output-capable pins on ESP32
                                     log_error("ast_check_esp32_valid_pins", current_module->line_nr, "Pin '%s' does not support PWM_OUTPUT for module '%s'.",
                                               pin_to_string(current_module->pin),
-                                              current_module->name);*/
-                                  break; 
+                                              current_module->name);
+                                  break;
           default:            log_error("ast_check_esp32_valid_pins", current_module->line_nr, "Unknown module kind '%d' for module '%s'.",
                                         current_module->kind,
                                         current_module->name);
@@ -194,6 +193,11 @@ static void is_valid_esp32_pin(const char *module_name, int line_nr, pin_t pin){
               module_name);
 }
 
+
+/* -------------------------------------------- */
+/*      Backend specific parameter bindings     */
+/* -------------------------------------------- */
+
 /**
  * @brief Backend specific parameter bindings for ESP32.
  * 
@@ -204,9 +208,49 @@ static void is_valid_esp32_pin(const char *module_name, int line_nr, pin_t pin){
 void ast_check_esp32_bind_pins(ast_dsl_node_t* dsl_node){
   if(dsl_node == NULL)
     log_error("ast_check_esp32_bind_pins", 0, "DSL node is NULL.");
-  /*bind_pwm_pins_esp32(dsl_node); // TODO: Implement ESP32 specific bindings
-  bind_pwm_prescaler_period_esp32(dsl_node);
-  bind_uart_pins_esp32(dsl_node);*/
+  bind_pwm_pins_esp32(dsl_node);
+  /*bind_uart_pins_esp32(dsl_node);*/
+}
+
+/**
+ * @brief Binds PWM pins for ESP32.
+ * 
+ * @param dsl_node Pointer to the DSL node.
+ * 
+ * Assigns timer numbers and channels to PWM output modules by iteration.
+ */
+static void bind_pwm_pins_esp32(ast_dsl_node_t* dsl_node){
+  if(dsl_node == NULL)
+    log_error("bind_pwm_pins_esp32", 0, "DSL node is NULL.");
+  
+  const uint8_t MAX_TIMERS = 4; // ESP32 has 4 LEDC timers (0-3)
+  uint8_t nr_tim_used = 0;
+  
+  ast_module_node_t* current_module = dsl_node->modules_root;
+  while(current_module != NULL){
+    if(current_module->enable && (current_module->kind == MODULE_PWM_OUTPUT)){
+      pin_cap_t *cur_cap = (pin_cap_t*)pincap_find_esp32((uint8_t)(current_module->pin.pin_number));
+      if(cur_cap->can_gpio_out == false)
+        log_error("bind_pwm_pins_esp32", 0, "Pin '%s' does not support PWM for module '%s'.",
+                  pin_to_string(current_module->pin),
+                  current_module->name);
+      
+      // Pick the first PWM option whose timer is still free
+      if(nr_tim_used >= MAX_TIMERS)
+        log_error("bind_pwm_pins_esp32", current_module->line_nr, "All available PWM timers are already assigned. Cannot assign PWM module '%s' on pin '%s'.",
+                  current_module->name,
+                  pin_to_string(current_module->pin));
+      
+      current_module->data.pwm.tim_number = nr_tim_used; // Assign next free timer number
+      current_module->data.pwm.tim_channel = nr_tim_used; // For simplicity, use same number for channel (channels are shared between timers on ESP32)
+      current_module->data.pwm.gpio_af   = 0; // Not used on ESP32
+      current_module->data.pwm.prescaler = 0; // Not used on ESP32
+      current_module->data.pwm.period    = 0; // Not used on ESP32
+      
+      nr_tim_used++;
+    }
+    current_module = current_module->next;
+  }
 }
 
 

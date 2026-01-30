@@ -5,22 +5,22 @@
 #include "astHelper.h"
 #include "logging.h"
 
-//static void generate_source_pwm_init_declaration(FILE* output_source, ast_dsl_node_t* dsl_node); // TODO fix
-//static void generate_source_uart_init_declaration(FILE* output_source, ast_dsl_node_t* dsl_node);
+static void generate_source_pwm_init_declaration(FILE* output_source, ast_dsl_node_t* dsl_node);
+//static void generate_source_uart_init_declaration(FILE* output_source, ast_dsl_node_t* dsl_node); // TODO fix
 
 static void generate_source_BSP_init_function(FILE* output_source, ast_dsl_node_t* dsl_node);
-/*static void generate_source_pwm_init_call(FILE* output_source, ast_dsl_node_t* dsl_node); // TODO fix
-static void generate_source_uart_init_call(FILE* output_source, ast_dsl_node_t* dsl_node); */
+static void generate_source_pwm_init_call(FILE* output_source, ast_dsl_node_t* dsl_node);
+/*static void generate_source_uart_init_call(FILE* output_source, ast_dsl_node_t* dsl_node); */ // TODO fix
 
 static void generate_source_gpio_init_func(FILE* output_source, ast_dsl_node_t* dsl_node);
-/*static void generate_source_pwm_init_func(FILE* output_source, ast_dsl_node_t* dsl_node); // TODO fix
-static void generate_source_uart_init_func(FILE* output_source, ast_dsl_node_t* dsl_node);*/
+static void generate_source_pwm_init_func(FILE* output_source, ast_dsl_node_t* dsl_node);
+/*static void generate_source_uart_init_func(FILE* output_source, ast_dsl_node_t* dsl_node);*/ // TODO fix
 
 static void generate_source_func(FILE* output_source, ast_dsl_node_t* dsl_node);
 static void generate_source_gpio_output_func(FILE* output_source, ast_dsl_node_t* dsl_node);
 static void generate_source_gpio_input_func(FILE* output_source, ast_dsl_node_t* dsl_node); 
-/*static void generate_source_pwm_output_func(FILE* output_source, ast_dsl_node_t* dsl_node); // TODO fix
-static void generate_source_uart_func(FILE* output_source, ast_dsl_node_t* dsl_node); */
+static void generate_source_pwm_output_func(FILE* output_source, ast_dsl_node_t* dsl_node);
+/*static void generate_source_uart_func(FILE* output_source, ast_dsl_node_t* dsl_node); */ // TODO fix
 
 
 /* -------------------------------------------- */
@@ -39,24 +39,27 @@ void ast_generate_source_esp32(FILE* output_source, ast_dsl_node_t* dsl_node){
   if(dsl_node == NULL)
     log_error("ast_generate_source_esp32", 0, "DSL node is NULL.");
   
-  fprintf(output_source,"#include \"generated_bsp.h\"\n\n");
+  fprintf(output_source, "#include \"generated_bsp.h\"\n\n");
   
   if(has_enabled_uart_module(dsl_node))
-    fprintf(output_source,"#include <string.h>\n\n");
+    fprintf(output_source, "#include <string.h>\n\n");
   
   if(has_enabled_gpio_module(dsl_node))
-    fprintf(output_source,"#include \"driver/gpio.h\"\n");
+    fprintf(output_source, "#include \"driver/gpio.h\"\n");
+  if(has_enabled_pwm_module(dsl_node))
+    fprintf(output_source, "#include \"driver/ledc.h\"\n");
+  
   //fprintf(output_source,"#include \"esp32_hal.h\"\n"); //TODO fix
-  if(has_enabled_gpio_module(dsl_node) || has_enabled_pwm_module(dsl_node) || has_enabled_uart_module(dsl_node))
-    fprintf(output_source,"\n");
+  
+  fprintf(output_source, "\n#include \"esp_err.h\"\n\n"); // Needed for ESP_ERROR_CHECK macro
   
   // Forward declarations of initialization functions
   if(has_enabled_gpio_module(dsl_node))
-    fprintf(output_source,"static void BSP_Init_GPIO(void);\n");
-  //generate_source_pwm_init_declaration(output_source, dsl_node); // TODO fix
-  //generate_source_uart_init_declaration(output_source, dsl_node);
+    fprintf(output_source, "static void BSP_Init_GPIO(void);\n");
+  generate_source_pwm_init_declaration(output_source, dsl_node);
+  //generate_source_uart_init_declaration(output_source, dsl_node); // TODO fix
   
-  fprintf(output_source,"\n\n// ---------- INITIALIZATION FUNCTIONS ----------\n\n");
+  fprintf(output_source, "\n\n// ---------- INITIALIZATION FUNCTIONS ----------\n\n");
   
   // Generate BSP_Init function
   generate_source_BSP_init_function(output_source, dsl_node);
@@ -65,8 +68,8 @@ void ast_generate_source_esp32(FILE* output_source, ast_dsl_node_t* dsl_node){
   if(has_enabled_gpio_module(dsl_node))
     generate_source_gpio_init_func(output_source, dsl_node);
   
-  /*if(has_enabled_pwm_module(dsl_node)) // TODO fix
-    generate_source_pwm_init_func(output_source, dsl_node);*/
+  if(has_enabled_pwm_module(dsl_node))
+    generate_source_pwm_init_func(output_source, dsl_node);
   
   /*if(has_enabled_uart_module(dsl_node)) // TODO fix
     generate_source_uart_init_func(output_source, dsl_node);*/
@@ -81,7 +84,7 @@ void ast_generate_source_esp32(FILE* output_source, ast_dsl_node_t* dsl_node){
  * @param output_source File pointer to the output source file.
  * @param dsl_node Pointer to the DSL AST node containing configuration data.
  */
-/*static void generate_source_pwm_init_declaration(FILE* output_source, ast_dsl_node_t* dsl_node){
+static void generate_source_pwm_init_declaration(FILE* output_source, ast_dsl_node_t* dsl_node){
   if(output_source == NULL)
     log_error("generate_source_pwm_init_declaration", 0, "Output source file pointer is NULL.");
   if(dsl_node == NULL)
@@ -96,7 +99,7 @@ void ast_generate_source_esp32(FILE* output_source, ast_dsl_node_t* dsl_node){
     }
     current_module = current_module->next;
   }
-}*/
+}
 
 /**
  * @brief Generates the UART initialization function declarations for enabled UART modules.
@@ -143,9 +146,32 @@ static void generate_source_BSP_init_function(FILE* output_source, ast_dsl_node_
   fprintf(output_source,"void BSP_Init(void){\n");
   if(has_enabled_gpio_module(dsl_node))
     fprintf(output_source,"  BSP_Init_GPIO();\n");
-  /*generate_source_pwm_init_call(output_source, dsl_node); // TODO fix
-  generate_source_uart_init_call(output_source, dsl_node); */
+  generate_source_pwm_init_call(output_source, dsl_node);
+  /*generate_source_uart_init_call(output_source, dsl_node); */ // TODO fix
   fprintf(output_source,"}\n");
+}
+
+/**
+ * @brief Generates the PWM initialization calls for enabled PWM modules.
+ * 
+ * @param output_source File pointer to the output source file.
+ * @param dsl_node Pointer to the DSL AST node containing configuration data.
+ */
+static void generate_source_pwm_init_call(FILE* output_source, ast_dsl_node_t* dsl_node){
+  if(output_source == NULL)
+    log_error("generate_source_pwm_init_call", 0, "Output source file pointer is NULL.");
+  if(dsl_node == NULL)
+    log_error("generate_source_pwm_init_call", 0, "DSL node is NULL.");
+  
+  ast_module_node_t *current_module = dsl_node->modules_root;
+  while(current_module != NULL){
+    if(current_module->enable){
+      if(current_module->kind == MODULE_PWM_OUTPUT){
+        fprintf(output_source, "  BSP_Init_PWM_TIM%u();\n", current_module->data.pwm.tim_number);
+      }
+    }
+    current_module = current_module->next;
+  }
 }
 
 /**
@@ -171,7 +197,7 @@ static void generate_source_gpio_init_func(FILE* output_source, ast_dsl_node_t* 
     if(current_module->enable){
       if(current_module->kind == MODULE_OUTPUT){
         fprintf(output_source, "  \n  /* Configure OUTPUT GPIO pin: '%s' */\n", current_module->name);
-        fprintf(output_source, "  gpio_config_t cfg_%s = {\n", current_module->name);
+        fprintf(output_source, "  const gpio_config_t cfg_%s = {\n", current_module->name);
         fprintf(output_source, "    .pin_bit_mask = (1ULL << GPIO_NUM_%u),\n", current_module->pin.pin_number);
         fprintf(output_source, "    .mode         = ");
         if(current_module->data.output.type == GPIO_TYPE_PUSHPULL)
@@ -212,7 +238,7 @@ static void generate_source_gpio_init_func(FILE* output_source, ast_dsl_node_t* 
       }
       else if(current_module->kind == MODULE_INPUT){
         fprintf(output_source, "  \n  /* Configure INPUT GPIO pin: '%s' */\n", current_module->name);
-        fprintf(output_source, "  gpio_config_t cfg_%s = {\n", current_module->name);
+        fprintf(output_source, "  const gpio_config_t cfg_%s = {\n", current_module->name);
         fprintf(output_source, "    .pin_bit_mask = (1ULL << GPIO_NUM_%u),\n", current_module->pin.pin_number);
         fprintf(output_source, "    .mode         = GPIO_MODE_INPUT,\n");
         fprintf(output_source, "    .pull_up_en   = ");
@@ -241,6 +267,63 @@ static void generate_source_gpio_init_func(FILE* output_source, ast_dsl_node_t* 
 }
 
 /**
+ * @brief Generates the PWM initialization function for the ESP32 board support package (BSP).
+ * 
+ * @param output_source File pointer to the output source file.
+ * @param dsl_node Pointer to the DSL AST node containing configuration data.
+ */
+static void generate_source_pwm_init_func(FILE* output_source, ast_dsl_node_t* dsl_node){
+  if(output_source == NULL)
+    log_error("generate_source_pwm_init_func", 0, "Output source file pointer is NULL.");
+  if(dsl_node == NULL)
+    log_error("generate_source_pwm_init_func", 0, "DSL node is NULL.");
+  
+  ast_module_node_t *current_module = dsl_node->modules_root;
+  while(current_module != NULL){
+    if(current_module->enable && current_module->kind == MODULE_PWM_OUTPUT){
+      // Generate PWM initialization function
+      fprintf(output_source, "\n/**\n");
+      fprintf(output_source, " * @brief Initializes the PWM on TIM%u for module '%s'.\n", current_module->data.pwm.tim_number, current_module->name);
+      fprintf(output_source, " */\n");
+      fprintf(output_source, "static void BSP_Init_PWM_TIM%u(void){\n", current_module->data.pwm.tim_number);
+      
+      fprintf(output_source, "  /* Configure LEDC timer TIM%u for PWM */\n", current_module->data.pwm.tim_number);
+      fprintf(output_source, "  const ledc_timer_config_t timer_cfg = {\n");
+      fprintf(output_source, "    .speed_mode       = LEDC_HIGH_SPEED_MODE,\n"); // always use high speed (4 high speed modes on ESP32)
+      fprintf(output_source, "    .duty_resolution  = LEDC_TIMER_10_BIT,\n");    // always use 10-bit resolution, as it maps well to 0..1000 permille
+      fprintf(output_source, "    .timer_num        = LEDC_TIMER_%u,\n", current_module->data.pwm.tim_number);
+      fprintf(output_source, "    .freq_hz          = %u,\n", current_module->data.pwm.frequency);
+      fprintf(output_source, "    .clk_cfg          = LEDC_AUTO_CLK\n");         // always use auto: LEDC_AUTO_CLK (selects the source clock automatically)
+      fprintf(output_source, "  };\n");
+      fprintf(output_source, "  ESP_ERROR_CHECK(ledc_timer_config(&timer_cfg));\n  \n");
+      
+      fprintf(output_source, "  /* Configure LEDC channel */\n");
+      fprintf(output_source, "  const ledc_channel_config_t channel_cfg = {\n");
+      fprintf(output_source, "    .gpio_num   = GPIO_NUM_%u,\n", current_module->pin.pin_number);
+      fprintf(output_source, "    .speed_mode = LEDC_HIGH_SPEED_MODE,\n");           // always use high speed (4 high speed modes on ESP32)
+      fprintf(output_source, "    .channel    = LEDC_CHANNEL_%u,\n", current_module->data.pwm.tim_channel);
+      fprintf(output_source, "    .timer_sel  = LEDC_TIMER_%u,\n", current_module->data.pwm.tim_number);
+      fprintf(output_source, "    .duty       = 0,\n");                              // always 0 at init and set duty later
+      fprintf(output_source, "    .hpoint     = 0,\n");                              // always 0 (start of the PWM period)
+      fprintf(output_source, "    .sleep_mode = LEDC_SLEEP_MODE_NO_ALIVE_NO_PD,\n"); // always LEDC_SLEEP_MODE_NO_ALIVE_NO_PD (light sleep is not supported by generator)
+      if(current_module->data.pwm.active_level == HIGH)
+        fprintf(output_source, "    .flags = { .output_invert = 0 }\n"); // active high
+      else
+        fprintf(output_source, "    .flags = { .output_invert = 1 }\n"); // active low
+      fprintf(output_source, "  };\n");
+      fprintf(output_source, "  ESP_ERROR_CHECK(ledc_channel_config(&channel_cfg));\n  \n");
+      
+      fprintf(output_source, "  /* Ensure PWM is stopped initially */\n");
+      fprintf(output_source, "  ESP_ERROR_CHECK(ledc_set_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_%u, 0));\n", current_module->data.pwm.tim_channel);
+      fprintf(output_source, "  ESP_ERROR_CHECK(ledc_update_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_%u));\n", current_module->data.pwm.tim_channel);
+      
+      fprintf(output_source, "}\n");
+    }
+    current_module = current_module->next;
+  }
+}
+
+/**
  * @brief Generates the usage functions for the modules for the ESP32 board support package (BSP).
  * 
  * @param output_source File pointer to the output source file.
@@ -254,8 +337,8 @@ static void generate_source_func(FILE* output_source, ast_dsl_node_t* dsl_node){
   
   generate_source_gpio_output_func(output_source, dsl_node);
   generate_source_gpio_input_func(output_source, dsl_node); 
-  /*generate_source_pwm_output_func(output_source, dsl_node); // TODO fix
-  generate_source_uart_func(output_source, dsl_node);*/
+  generate_source_pwm_output_func(output_source, dsl_node);
+  /*generate_source_uart_func(output_source, dsl_node);*/ // TODO fix
   
   // Check for unsupported module kinds
   ast_module_node_t *current_module = dsl_node->modules_root;
@@ -380,6 +463,90 @@ static void generate_source_gpio_input_func(FILE* output_source, ast_dsl_node_t*
       else{ // active_level == LOW
         fprintf(output_source, "  return (gpio_get_level(GPIO_NUM_%u) == 0);\n", input_module->pin.pin_number);
       }
+      fprintf(output_source, "}\n");
+    }
+    current_module = current_module->next;
+  }
+}
+
+/** 
+ * @brief Generates all source code functions for PWM output modules for the ESP32 board support package (BSP).
+ * 
+ * @param output_source Pointer to the output source file.
+ * @param dsl_node Pointer to the DSL AST node.
+ */
+static void generate_source_pwm_output_func(FILE* output_source, ast_dsl_node_t* dsl_node){
+  if(output_source == NULL)
+    log_error("generate_source_pwm_output_func", 0, "Output source file pointer is NULL.");
+  if(dsl_node == NULL)
+    log_error("generate_source_pwm_output_func", 0, "DSL node is NULL.");
+  
+  ast_module_node_t *current_module = dsl_node->modules_root;
+  while(current_module != NULL){
+    if(current_module->enable && current_module->kind == MODULE_PWM_OUTPUT){
+      ast_module_node_t *pwm_module = current_module;
+      // Generate functions for PWM output modules
+      fprintf(output_source, "\n\n// ---------- PWM OUTPUT: '%s' ----------\n", pwm_module->name);
+      fprintf(output_source, "#define BSP_PWM_%s_MAX_SCALED_DUTY ((1U << 10) - 1U) // 10-bit resolution (0..1023)\n\n", pwm_module->name);
+      
+      // Generate needed variables
+      fprintf(output_source, "/* Internal state for PWM module '%s' */\n", pwm_module->name);
+      fprintf(output_source, "static bool s_pwm_%s_running = false;\n", pwm_module->name);
+      fprintf(output_source, "static uint16_t s_pwm_%s_duty_permille = %d; // Duty cycle in permille (0..1000)\n\n", pwm_module->name, pwm_module->data.pwm.duty_cycle);
+      
+      // Generate Start function
+      fprintf(output_source, "/**\n");
+      fprintf(output_source, " * @brief Starts the PWM signal generation for the '%s' module.\n", pwm_module->name);
+      fprintf(output_source, " */\n");
+      fprintf(output_source, "void BSP_%s_Start(void){\n", pwm_module->name);
+      fprintf(output_source, "  if(!s_pwm_%s_running){\n", pwm_module->name);
+      fprintf(output_source, "    /* Ensure the last set duty cycle is applied before starting */\n");
+      fprintf(output_source, "    uint32_t scaled_duty = ((uint32_t)s_pwm_%s_duty_permille * BSP_PWM_%s_MAX_SCALED_DUTY + 500u) / 1000u; // Rounded calculation\n", pwm_module->name, pwm_module->name);
+      fprintf(output_source, "    ESP_ERROR_CHECK(ledc_set_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_%u, scaled_duty));\n    \n", pwm_module->data.pwm.tim_channel);
+      fprintf(output_source, "    /* Start PWM signal generation */\n");
+      fprintf(output_source, "    ESP_ERROR_CHECK(ledc_update_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_%u));\n", pwm_module->data.pwm.tim_channel);
+      fprintf(output_source, "    s_pwm_%s_running = true;\n", pwm_module->name);
+      fprintf(output_source, "  }\n");
+      fprintf(output_source, "}\n\n");
+      
+      // Generate Stop function
+      fprintf(output_source, "/**\n");
+      fprintf(output_source, " * @brief Stops the PWM signal generation for the '%s' module.\n", pwm_module->name);
+      fprintf(output_source, " */\n");
+      fprintf(output_source, "void BSP_%s_Stop(void){\n", pwm_module->name);
+      fprintf(output_source, "  if(s_pwm_%s_running){\n", pwm_module->name);
+      fprintf(output_source, "    /* Force output to inactive level by setting duty to 0 */\n");
+      fprintf(output_source, "    ESP_ERROR_CHECK(ledc_set_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_%u, 0));\n", pwm_module->data.pwm.tim_channel);
+      fprintf(output_source, "    ESP_ERROR_CHECK(ledc_update_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_%u));\n", pwm_module->data.pwm.tim_channel);
+      fprintf(output_source, "    s_pwm_%s_running = false;\n", pwm_module->name);
+      fprintf(output_source, "  }\n");
+      fprintf(output_source, "}\n\n");
+      
+      // Generate SetDuty function
+      fprintf(output_source, "/**\n");
+      fprintf(output_source, " * @brief Sets the duty cycle for the '%s' PWM output.\n", pwm_module->name);
+      fprintf(output_source, " * @param permille Duty cycle in permille (0..1000).\n");
+      fprintf(output_source, " */\n");
+      fprintf(output_source, "void BSP_%s_SetDuty(uint16_t permille){\n", pwm_module->name);
+      fprintf(output_source, "  if(permille > 1000)\n");
+      fprintf(output_source, "    permille = 1000;\n  \n");
+      fprintf(output_source, "  s_pwm_%s_duty_permille = permille;\n  \n", pwm_module->name);
+      
+      fprintf(output_source, "  /* Only affect the PWM output if the PWM is currently running */\n");
+      fprintf(output_source, "  if(s_pwm_%s_running){\n", pwm_module->name);
+      fprintf(output_source, "    uint32_t scaled_duty = ((uint32_t)permille * BSP_PWM_%s_MAX_SCALED_DUTY + 500u) / 1000u; // Rounded calculation\n", pwm_module->name);
+      fprintf(output_source, "    ESP_ERROR_CHECK(ledc_set_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_%u, scaled_duty));\n", pwm_module->data.pwm.tim_channel);
+      fprintf(output_source, "    ESP_ERROR_CHECK(ledc_update_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_%u));\n", pwm_module->data.pwm.tim_channel);
+      fprintf(output_source, "  }\n");
+      fprintf(output_source, "}\n\n");
+      
+      // Generate GetDuty function
+      fprintf(output_source, "/**\n");
+      fprintf(output_source, " * @brief Gets the current duty cycle for the '%s' PWM output.\n", pwm_module->name);
+      fprintf(output_source, " * @return Duty cycle in permille (0..1000).\n");
+      fprintf(output_source, " */\n");
+      fprintf(output_source, "uint16_t BSP_%s_GetDuty(void){\n", pwm_module->name);
+      fprintf(output_source, "  return s_pwm_%s_duty_permille;\n", pwm_module->name);
       fprintf(output_source, "}\n");
     }
     current_module = current_module->next;
