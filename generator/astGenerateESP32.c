@@ -6,21 +6,21 @@
 #include "logging.h"
 
 static void generate_source_pwm_init_declaration(FILE* output_source, ast_dsl_node_t* dsl_node);
-//static void generate_source_uart_init_declaration(FILE* output_source, ast_dsl_node_t* dsl_node); // TODO fix
+static void generate_source_uart_init_declaration(FILE* output_source, ast_dsl_node_t* dsl_node);
 
 static void generate_source_BSP_init_function(FILE* output_source, ast_dsl_node_t* dsl_node);
 static void generate_source_pwm_init_call(FILE* output_source, ast_dsl_node_t* dsl_node);
-/*static void generate_source_uart_init_call(FILE* output_source, ast_dsl_node_t* dsl_node); */ // TODO fix
+static void generate_source_uart_init_call(FILE* output_source, ast_dsl_node_t* dsl_node);
 
 static void generate_source_gpio_init_func(FILE* output_source, ast_dsl_node_t* dsl_node);
 static void generate_source_pwm_init_func(FILE* output_source, ast_dsl_node_t* dsl_node);
-/*static void generate_source_uart_init_func(FILE* output_source, ast_dsl_node_t* dsl_node);*/ // TODO fix
+static void generate_source_uart_init_func(FILE* output_source, ast_dsl_node_t* dsl_node);
 
 static void generate_source_func(FILE* output_source, ast_dsl_node_t* dsl_node);
 static void generate_source_gpio_output_func(FILE* output_source, ast_dsl_node_t* dsl_node);
 static void generate_source_gpio_input_func(FILE* output_source, ast_dsl_node_t* dsl_node); 
 static void generate_source_pwm_output_func(FILE* output_source, ast_dsl_node_t* dsl_node);
-/*static void generate_source_uart_func(FILE* output_source, ast_dsl_node_t* dsl_node); */ // TODO fix
+static void generate_source_uart_func(FILE* output_source, ast_dsl_node_t* dsl_node);
 
 
 /* -------------------------------------------- */
@@ -48,8 +48,8 @@ void ast_generate_source_esp32(FILE* output_source, ast_dsl_node_t* dsl_node){
     fprintf(output_source, "#include \"driver/gpio.h\"\n");
   if(has_enabled_pwm_module(dsl_node))
     fprintf(output_source, "#include \"driver/ledc.h\"\n");
-  
-  //fprintf(output_source,"#include \"esp32_hal.h\"\n"); //TODO fix
+  if(has_enabled_uart_module(dsl_node))
+    fprintf(output_source, "#include \"driver/uart.h\"\n");
   
   fprintf(output_source, "\n#include \"esp_err.h\"\n\n"); // Needed for ESP_ERROR_CHECK macro
   
@@ -57,7 +57,7 @@ void ast_generate_source_esp32(FILE* output_source, ast_dsl_node_t* dsl_node){
   if(has_enabled_gpio_module(dsl_node))
     fprintf(output_source, "static void BSP_Init_GPIO(void);\n");
   generate_source_pwm_init_declaration(output_source, dsl_node);
-  //generate_source_uart_init_declaration(output_source, dsl_node); // TODO fix
+  generate_source_uart_init_declaration(output_source, dsl_node);
   
   fprintf(output_source, "\n\n// ---------- INITIALIZATION FUNCTIONS ----------\n\n");
   
@@ -71,8 +71,8 @@ void ast_generate_source_esp32(FILE* output_source, ast_dsl_node_t* dsl_node){
   if(has_enabled_pwm_module(dsl_node))
     generate_source_pwm_init_func(output_source, dsl_node);
   
-  /*if(has_enabled_uart_module(dsl_node)) // TODO fix
-    generate_source_uart_init_func(output_source, dsl_node);*/
+  if(has_enabled_uart_module(dsl_node))
+    generate_source_uart_init_func(output_source, dsl_node);
   
   // Generate usage functions for modules
   generate_source_func(output_source, dsl_node);
@@ -92,11 +92,9 @@ static void generate_source_pwm_init_declaration(FILE* output_source, ast_dsl_no
   
   ast_module_node_t *current_module = dsl_node->modules_root;
   while(current_module != NULL){
-    if(current_module->enable){
-      if(current_module->kind == MODULE_PWM_OUTPUT){
-        fprintf(output_source, "static void BSP_Init_PWM_TIM%u(void);\n", current_module->data.pwm.tim_number);
-      }
-    }
+    if(current_module->enable && current_module->kind == MODULE_PWM_OUTPUT)
+      fprintf(output_source, "static void BSP_Init_PWM_TIM%u(void);\n", current_module->data.pwm.tim_number);
+    
     current_module = current_module->next;
   }
 }
@@ -107,7 +105,7 @@ static void generate_source_pwm_init_declaration(FILE* output_source, ast_dsl_no
  * @param output_source File pointer to the output source file.
  * @param dsl_node Pointer to the DSL AST node containing configuration data.
  */
-/*static void generate_source_uart_init_declaration(FILE* output_source, ast_dsl_node_t* dsl_node){
+static void generate_source_uart_init_declaration(FILE* output_source, ast_dsl_node_t* dsl_node){
   if(output_source == NULL)
     log_error("generate_source_uart_init_declaration", 0, "Output source file pointer is NULL.");
   if(dsl_node == NULL)
@@ -115,18 +113,12 @@ static void generate_source_pwm_init_declaration(FILE* output_source, ast_dsl_no
   
   ast_module_node_t *current_module = dsl_node->modules_root;
   while(current_module != NULL){
-    if(current_module->enable){
-      if(current_module->kind == MODULE_UART){
-        fprintf(output_source, "static void BSP_Init_UART_U");
-        if(current_module->data.uart.is_uart)
-          fprintf(output_source, "ART%u(void);\n", current_module->data.uart.usart_number);
-        else
-          fprintf(output_source, "SART%u(void);\n", current_module->data.uart.usart_number);
-      }
-    }
+    if(current_module->enable && current_module->kind == MODULE_UART)
+      fprintf(output_source, "static void BSP_Init_UART_UART%u(void);\n", current_module->data.uart.usart_number);
+    
     current_module = current_module->next;
   }
-}*/
+}
 
 /**
  * @brief Generates the BSP_Init function for the ESP32 board support package (BSP).
@@ -147,7 +139,7 @@ static void generate_source_BSP_init_function(FILE* output_source, ast_dsl_node_
   if(has_enabled_gpio_module(dsl_node))
     fprintf(output_source,"  BSP_Init_GPIO();\n");
   generate_source_pwm_init_call(output_source, dsl_node);
-  /*generate_source_uart_init_call(output_source, dsl_node); */ // TODO fix
+  generate_source_uart_init_call(output_source, dsl_node);
   fprintf(output_source,"}\n");
 }
 
@@ -165,11 +157,30 @@ static void generate_source_pwm_init_call(FILE* output_source, ast_dsl_node_t* d
   
   ast_module_node_t *current_module = dsl_node->modules_root;
   while(current_module != NULL){
-    if(current_module->enable){
-      if(current_module->kind == MODULE_PWM_OUTPUT){
+    if(current_module->enable && current_module->kind == MODULE_PWM_OUTPUT)
         fprintf(output_source, "  BSP_Init_PWM_TIM%u();\n", current_module->data.pwm.tim_number);
-      }
-    }
+    
+    current_module = current_module->next;
+  }
+}
+
+/**
+ * @brief Generates the UART initialization calls for enabled UART modules.
+ * 
+ * @param output_source File pointer to the output source file.
+ * @param dsl_node Pointer to the DSL AST node containing configuration data.
+ */
+static void generate_source_uart_init_call(FILE* output_source, ast_dsl_node_t* dsl_node){
+  if(output_source == NULL)
+    log_error("generate_source_uart_init_call", 0, "Output source file pointer is NULL.");
+  if(dsl_node == NULL)
+    log_error("generate_source_uart_init_call", 0, "DSL node is NULL.");
+  
+  ast_module_node_t *current_module = dsl_node->modules_root;
+  while(current_module != NULL){
+    if(current_module->enable && current_module->kind == MODULE_UART)
+        fprintf(output_source, "  BSP_Init_UART_UART%u();\n", current_module->data.uart.usart_number);
+    
     current_module = current_module->next;
   }
 }
@@ -288,17 +299,17 @@ static void generate_source_pwm_init_func(FILE* output_source, ast_dsl_node_t* d
       fprintf(output_source, "static void BSP_Init_PWM_TIM%u(void){\n", current_module->data.pwm.tim_number);
       
       fprintf(output_source, "  /* Configure LEDC timer TIM%u for PWM */\n", current_module->data.pwm.tim_number);
-      fprintf(output_source, "  const ledc_timer_config_t timer_cfg = {\n");
+      fprintf(output_source, "  const ledc_timer_config_t cfg_timer = {\n");
       fprintf(output_source, "    .speed_mode       = LEDC_HIGH_SPEED_MODE,\n"); // always use high speed (4 high speed modes on ESP32)
       fprintf(output_source, "    .duty_resolution  = LEDC_TIMER_10_BIT,\n");    // always use 10-bit resolution, as it maps well to 0..1000 permille
       fprintf(output_source, "    .timer_num        = LEDC_TIMER_%u,\n", current_module->data.pwm.tim_number);
       fprintf(output_source, "    .freq_hz          = %u,\n", current_module->data.pwm.frequency);
       fprintf(output_source, "    .clk_cfg          = LEDC_AUTO_CLK\n");         // always use auto: LEDC_AUTO_CLK (selects the source clock automatically)
       fprintf(output_source, "  };\n");
-      fprintf(output_source, "  ESP_ERROR_CHECK(ledc_timer_config(&timer_cfg));\n  \n");
+      fprintf(output_source, "  ESP_ERROR_CHECK(ledc_timer_config(&cfg_timer));\n  \n");
       
       fprintf(output_source, "  /* Configure LEDC channel */\n");
-      fprintf(output_source, "  const ledc_channel_config_t channel_cfg = {\n");
+      fprintf(output_source, "  const ledc_channel_config_t cfg_channel = {\n");
       fprintf(output_source, "    .gpio_num   = GPIO_NUM_%u,\n", current_module->pin.pin_number);
       fprintf(output_source, "    .speed_mode = LEDC_HIGH_SPEED_MODE,\n");           // always use high speed (4 high speed modes on ESP32)
       fprintf(output_source, "    .channel    = LEDC_CHANNEL_%u,\n", current_module->data.pwm.tim_channel);
@@ -311,11 +322,82 @@ static void generate_source_pwm_init_func(FILE* output_source, ast_dsl_node_t* d
       else
         fprintf(output_source, "    .flags = { .output_invert = 1 }\n"); // active low
       fprintf(output_source, "  };\n");
-      fprintf(output_source, "  ESP_ERROR_CHECK(ledc_channel_config(&channel_cfg));\n  \n");
+      fprintf(output_source, "  ESP_ERROR_CHECK(ledc_channel_config(&cfg_channel));\n  \n");
       
       fprintf(output_source, "  /* Ensure PWM is stopped initially */\n");
       fprintf(output_source, "  ESP_ERROR_CHECK(ledc_set_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_%u, 0));\n", current_module->data.pwm.tim_channel);
       fprintf(output_source, "  ESP_ERROR_CHECK(ledc_update_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_%u));\n", current_module->data.pwm.tim_channel);
+      
+      fprintf(output_source, "}\n");
+    }
+    current_module = current_module->next;
+  }
+}
+
+/**
+ * @brief Generates the UART initialization functions for all enabled UART modules.
+ * 
+ * @param output_source The file pointer to the output source file.
+ * @param dsl_node The root node of the DSL AST.
+ */
+static void generate_source_uart_init_func(FILE* output_source, ast_dsl_node_t* dsl_node){
+  if(output_source == NULL)
+    log_error("generate_source_uart_init_func", 0, "Output source file pointer is NULL.");
+  if(dsl_node == NULL)
+    log_error("generate_source_uart_init_func", 0, "DSL node is NULL.");
+  
+  ast_module_node_t *current_module = dsl_node->modules_root;
+  while(current_module != NULL){
+    if(current_module->enable && current_module->kind == MODULE_UART){
+      // Generate UART initialization function
+      fprintf(output_source, "\n/**\n");
+      fprintf(output_source, " * @brief Initializes the UART on UART%u for module '%s'.\n",
+              current_module->data.uart.usart_number,
+              current_module->name);
+      fprintf(output_source, " */\n");
+      fprintf(output_source, "static void BSP_Init_UART_UART%u(void){\n", current_module->data.uart.usart_number);
+      
+      fprintf(output_source, "  /* Install UART%u driver */\n", current_module->data.uart.usart_number);
+      fprintf(output_source, "  ESP_ERROR_CHECK(uart_driver_install(");
+      fprintf(output_source, "UART_NUM_%u, ", current_module->data.uart.usart_number);
+      fprintf(output_source, "1024, ");     // RX buffer size
+      fprintf(output_source, "1024, ");     // TX buffer size
+      fprintf(output_source, "0, ");        // No event queue
+      fprintf(output_source, "NULL, ");     // No event queue handle
+      fprintf(output_source, "0));\n  \n"); // No interrupt allocation flags
+      
+      fprintf(output_source, "  /* Set communication parameters */\n");
+      fprintf(output_source, "  const uart_config_t cfg_uart = {\n");
+      fprintf(output_source, "    .baud_rate = %u,\n", current_module->data.uart.baudrate);
+      fprintf(output_source, "    .data_bits = UART_DATA_%u_BITS,\n", current_module->data.uart.databits);
+      fprintf(output_source, "    .parity    = ");
+      switch(current_module->data.uart.parity){
+        case UART_PARITY_NONE: fprintf(output_source, "UART_PARITY_DISABLE,\n"); break;
+        case UART_PARITY_EVEN: fprintf(output_source, "UART_PARITY_EVEN,\n");   break;
+        case UART_PARITY_ODD:  fprintf(output_source, "UART_PARITY_ODD,\n");    break;
+        default:               log_error("generate_source_uart_init_func", 0, "Unsupported UART parity enum value '%d' for module '%s'", current_module->data.uart.parity, current_module->name);
+      }
+      fprintf(output_source, "    .stop_bits = ");
+      if(current_module->data.uart.stopbits == 1.0f)
+        fprintf(output_source, "UART_STOP_BITS_1,\n");
+      else if(current_module->data.uart.stopbits == 1.5f)
+        fprintf(output_source, "UART_STOP_BITS_1_5,\n");
+      else if(current_module->data.uart.stopbits == 2.0f)
+        fprintf(output_source, "UART_STOP_BITS_2,\n");
+      else
+        log_error("generate_source_uart_init_func", 0, "Unsupported UART stopbits value '%u' for module '%s'", current_module->data.uart.stopbits, current_module->name);
+      fprintf(output_source, "    .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,\n"); // always disable flow control for UART (not supported by generator)
+      fprintf(output_source, "    .source_clk = UART_SCLK_DEFAULT\n");        // always use default clock
+      fprintf(output_source, "  };\n");
+      fprintf(output_source, "  ESP_ERROR_CHECK(uart_param_config(UART_NUM_%u, &cfg_uart));\n  \n", current_module->data.uart.usart_number);
+      
+      fprintf(output_source, "  /* Set communication pins */\n");
+      fprintf(output_source, "  ESP_ERROR_CHECK(uart_set_pin(");
+      fprintf(output_source, "UART_NUM_%u, ", current_module->data.uart.usart_number);
+      fprintf(output_source, "GPIO_NUM_%u, ", current_module->pin.pin_number); // TX pin
+      fprintf(output_source, "GPIO_NUM_%u, ", current_module->data.uart.rx_pin.pin_number); // RX pin
+      fprintf(output_source, "UART_PIN_NO_CHANGE, ");    // RTS pin (not used)
+      fprintf(output_source, "UART_PIN_NO_CHANGE));\n"); // CTS pin (not used)
       
       fprintf(output_source, "}\n");
     }
@@ -338,7 +420,7 @@ static void generate_source_func(FILE* output_source, ast_dsl_node_t* dsl_node){
   generate_source_gpio_output_func(output_source, dsl_node);
   generate_source_gpio_input_func(output_source, dsl_node); 
   generate_source_pwm_output_func(output_source, dsl_node);
-  /*generate_source_uart_func(output_source, dsl_node);*/ // TODO fix
+  generate_source_uart_func(output_source, dsl_node);
   
   // Check for unsupported module kinds
   ast_module_node_t *current_module = dsl_node->modules_root;
@@ -429,7 +511,6 @@ static void generate_source_gpio_output_func(FILE* output_source, ast_dsl_node_t
     current_module = current_module->next;
   }
 }
-
 
 /**
  * @brief Generates all source code functions for GPIO input modules for the ESP32 board support package (BSP).
@@ -547,6 +628,67 @@ static void generate_source_pwm_output_func(FILE* output_source, ast_dsl_node_t*
       fprintf(output_source, " */\n");
       fprintf(output_source, "uint16_t BSP_%s_GetDuty(void){\n", pwm_module->name);
       fprintf(output_source, "  return s_pwm_%s_duty_permille;\n", pwm_module->name);
+      fprintf(output_source, "}\n");
+    }
+    current_module = current_module->next;
+  }
+}
+
+static void generate_source_uart_func(FILE* output_source, ast_dsl_node_t* dsl_node){
+  if(output_source == NULL)
+    log_error("generate_source_uart_func", 0, "Output source file pointer is NULL.");
+  if(dsl_node == NULL)
+    log_error("generate_source_uart_func", 0, "DSL node is NULL.");
+  
+  ast_module_node_t *current_module = dsl_node->modules_root;
+  while(current_module != NULL){
+    if(current_module->enable && current_module->kind == MODULE_UART){
+      ast_module_node_t *uart_module = current_module;
+      // Generate functions for UART modules
+      fprintf(output_source, "\n\n// ---------- UART: '%s' ----------\n", uart_module->name);
+      
+      // Generate Transmit-Char function
+      fprintf(output_source, "/**\n");
+      fprintf(output_source, " * @brief Transmits single character over the '%s' UART module.\n", uart_module->name);
+      fprintf(output_source, " * @param ch Byte to transmit.\n");
+      fprintf(output_source, " */\n");
+      fprintf(output_source, "void BSP_%s_TransmitChar(uint8_t ch){\n", uart_module->name);
+      fprintf(output_source, "  (void)uart_write_bytes(UART_NUM_%u, (const char*)&ch, 1);\n", uart_module->data.uart.usart_number);
+      fprintf(output_source, "}\n\n");
+      
+      // Generate Transmit-Message function
+      fprintf(output_source, "/**\n");
+      fprintf(output_source, " * @brief Transmits a message over the '%s' UART module.\n", uart_module->name);
+      fprintf(output_source, " * @param message Pointer to the null-terminated message string.\n");
+      fprintf(output_source, " */\n");
+      fprintf(output_source, "void BSP_%s_TransmitMessage(const char* message){\n", uart_module->name);
+      fprintf(output_source, "  if(message == NULL)\n");
+      fprintf(output_source, "    return;\n  \n");
+      fprintf(output_source, "  (void)uart_write_bytes(UART_NUM_%u, message, strlen(message));\n", uart_module->data.uart.usart_number);
+      fprintf(output_source, "}\n\n");
+      
+      // Generate Receive-Char function
+      fprintf(output_source, "/**\n");
+      fprintf(output_source, " * @brief Receives a single character from the '%s' UART module.\n", uart_module->name);
+      fprintf(output_source, " * @param ch Pointer to the variable to store the received byte.\n");
+      fprintf(output_source, " * @return true if a character was successfully received; false otherwise.\n");
+      fprintf(output_source, " */\n");
+      fprintf(output_source, "bool BSP_%s_ReceiveChar(uint8_t* ch){\n", uart_module->name);
+      fprintf(output_source, "  if(ch == NULL)\n");
+      fprintf(output_source, "    return false;\n  \n");
+      fprintf(output_source, "  return (uart_read_bytes(UART_NUM_%u, ch, 1, portMAX_DELAY) == 1);\n", uart_module->data.uart.usart_number);
+      fprintf(output_source, "}\n");
+      
+      // Generate Try-Receive-Char function
+      fprintf(output_source, "\n/**\n");
+      fprintf(output_source, " * @brief Tries to receive a single character from the '%s' UART module without blocking.\n", uart_module->name);
+      fprintf(output_source, " * @param ch Pointer to the variable to store the received byte.\n");
+      fprintf(output_source, " * @return true if a character was successfully received; false otherwise.\n");
+      fprintf(output_source, " */\n");
+      fprintf(output_source, "bool BSP_%s_TryReceiveChar(uint8_t* ch){\n", uart_module->name);
+      fprintf(output_source, "  if(ch == NULL)\n");
+      fprintf(output_source, "    return false;\n  \n");
+      fprintf(output_source, "  return (uart_read_bytes(UART_NUM_%u, ch, 1, 0) == 1);\n", uart_module->data.uart.usart_number);
       fprintf(output_source, "}\n");
     }
     current_module = current_module->next;

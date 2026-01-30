@@ -9,7 +9,7 @@
 static const pin_cap_t* pincap_find_esp32(uint8_t num);
 static void is_valid_esp32_pin(const char *module_name, int line_nr, pin_t pin);
 static void bind_pwm_pins_esp32(ast_dsl_node_t* dsl_node);
-//static void bind_uart_pins_esp32(ast_dsl_node_t* dsl_node);
+static void bind_uart_pins_esp32(ast_dsl_node_t* dsl_node);
 
 
 /* -------------------------------------------- */
@@ -133,53 +133,21 @@ void ast_check_esp32_valid_pins(ast_dsl_node_t* dsl_node){
                     pin_to_string(current_module->data.uart.rx_pin),
                     current_module->name);
         
-        // Check if pins support UART functionality
-        /*if(tx_cap->uart_count == 0) // TODO: Maybe add UART support check later (at least check if input/output capable)
+        // Check if pins support UART functionality (supports both gpio input and output)
+        if(tx_cap->can_gpio_in != true || tx_cap->can_gpio_out != true)
           log_error("ast_check_esp32_valid_pins", current_module->line_nr, "TX Pin '%s' does not support UART for module '%s'.",
                     pin_to_string(current_module->pin),
                     current_module->name);
-        if(rx_cap->uart_count == 0)
+        if(rx_cap->can_gpio_in != true || rx_cap->can_gpio_out != true)
           log_error("ast_check_esp32_valid_pins", current_module->line_nr, "RX Pin '%s' does not support UART for module '%s'.",
                     pin_to_string(current_module->data.uart.rx_pin),
                     current_module->name);
         
-        // Check if pins support tx and rx functionality
-        bool tx_supports_tx = false;
-        for(uint8_t i = 0; i < tx_cap->uart_count; i++){
-          if(tx_cap->uart[i].is_tx){
-            tx_supports_tx = true;
-            break;
-          }
-        }
-        if(!tx_supports_tx)
-          log_error("ast_check_esp32_valid_pins", current_module->line_nr, "TX Pin '%s' does not support UART TX functionality for module '%s'.",
-                    pin_to_string(current_module->pin),
-                    current_module->name);
-        
-        bool rx_supports_rx = false;
-        for(uint8_t i = 0; i < rx_cap->uart_count; i++){
-          if(rx_cap->uart[i].is_tx == false){
-            rx_supports_rx = true;
-            break;
-          }
-        }
-        if(!rx_supports_rx)
-          log_error("ast_check_esp32_valid_pins", current_module->line_nr, "RX Pin '%s' does not support UART RX functionality for module '%s'.",
-                    pin_to_string(current_module->data.uart.rx_pin),
-                    current_module->name);
-        */
-        
-        // Check if databits is valid (STM32F4 only supports 8 or 9)
-        /*if((current_module->data.uart.databits != 8) && (current_module->data.uart.databits != 9)) // TODO: Adjust checks for ESP32
-          log_error("ast_check_esp32_valid_pins", current_module->line_nr, "Databits value '%u' is invalid for UART module '%s' on STM32F446RE. Supported values: 8, 9.",
+        // Check if databits is valid (ESP only supports 5-8)
+        if((current_module->data.uart.databits < 5) || (current_module->data.uart.databits > 8))
+          log_error("ast_check_esp32_valid_pins", current_module->line_nr, "Databits value '%u' is invalid for UART module '%s' on ESP32. Supported values: 5-8.",
                     current_module->data.uart.databits,
                     current_module->name);
-        
-        // Check if stopbits is valid (STM32F4 only supports 1 or 2)
-        if((current_module->data.uart.stopbits != 1.0f) && (current_module->data.uart.stopbits != 2.0f))
-          log_error("ast_check_esp32_valid_pins", current_module->line_nr, "Stopbits value '%.1f' is invalid for UART module '%s' on STM32F446RE. Supported values: 1, 2.",
-                    current_module->data.uart.stopbits,
-                    current_module->name);*/
       }
       
     }
@@ -244,7 +212,7 @@ void ast_check_esp32_bind_pins(ast_dsl_node_t* dsl_node){
   if(dsl_node == NULL)
     log_error("ast_check_esp32_bind_pins", 0, "DSL node is NULL.");
   bind_pwm_pins_esp32(dsl_node);
-  /*bind_uart_pins_esp32(dsl_node);*/
+  bind_uart_pins_esp32(dsl_node);
 }
 
 /**
@@ -264,12 +232,6 @@ static void bind_pwm_pins_esp32(ast_dsl_node_t* dsl_node){
   ast_module_node_t* current_module = dsl_node->modules_root;
   while(current_module != NULL){
     if(current_module->enable && (current_module->kind == MODULE_PWM_OUTPUT)){
-      pin_cap_t *cur_cap = (pin_cap_t*)pincap_find_esp32((uint8_t)(current_module->pin.pin_number));
-      if(cur_cap->can_gpio_out == false)
-        log_error("bind_pwm_pins_esp32", 0, "Pin '%s' does not support PWM for module '%s'.",
-                  pin_to_string(current_module->pin),
-                  current_module->name);
-      
       // Pick the first PWM option whose timer is still free
       if(nr_tim_used >= MAX_TIMERS)
         log_error("bind_pwm_pins_esp32", current_module->line_nr, "All available PWM timers are already assigned. Cannot assign PWM module '%s' on pin '%s'.",
@@ -283,6 +245,39 @@ static void bind_pwm_pins_esp32(ast_dsl_node_t* dsl_node){
       current_module->data.pwm.period    = 0; // Not used on ESP32
       
       nr_tim_used++;
+    }
+    current_module = current_module->next;
+  }
+}
+
+/**
+ * @brief Binds UART pins for ESP32.
+ * 
+ * @param dsl_node Pointer to the DSL node.
+ * 
+ * Assigns USART numbers and GPIO alternate function numbers to UART modules based on available options and usage.
+ */
+static void bind_uart_pins_esp32(ast_dsl_node_t* dsl_node){
+  if(dsl_node == NULL)
+    log_error("bind_uart_pins_esp32", 0, "DSL node is NULL.");
+  
+  const uint8_t MAX_UARTS = 3; // ESP32 has 3 UART controllers (UART0 to UART2)
+  uint8_t nr_uart_used = 0;
+  
+  ast_module_node_t* current_module = dsl_node->modules_root;
+  while(current_module != NULL){
+    if(current_module->enable && (current_module->kind == MODULE_UART)){
+      // Pick the first UART option whose UART is still free
+      if(nr_uart_used >= MAX_UARTS)
+        log_error("bind_uart_pins_esp32", current_module->line_nr, "All available UARTs are already assigned. Cannot assign UART module '%s' on pins TX='%s' RX='%s'.",
+                  current_module->name,
+                  pin_to_string(current_module->pin),
+                  pin_to_string(current_module->data.uart.rx_pin));
+      
+      current_module->data.uart.usart_number = nr_uart_used;
+      current_module->data.uart.is_uart      = true; // Not used on ESP32, all are UART
+      current_module->data.uart.gpio_af      = 0;    // Not used on ESP32
+      nr_uart_used++;
     }
     current_module = current_module->next;
   }
