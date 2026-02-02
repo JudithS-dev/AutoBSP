@@ -471,6 +471,10 @@ static void generate_source_gpio_output_func(FILE* output_source, ast_dsl_node_t
       ast_module_node_t *output_module = current_module;
       // Generate functions for output GPIOs
       fprintf(output_source, "\n\n// ---------- GPIO OUTPUT: '%s' ----------\n", output_module->name);
+      // Generate internal state variable (ESP32 doesn't support gpio_get_level for output pins)
+      fprintf(output_source, "// Internal state variable for output module '%s'\n", output_module->name);
+      fprintf(output_source, "static bool s_output_%s_is_on = %s;\n\n", output_module->name,
+              (output_module->data.output.init == GPIO_INIT_ON) ? "true" : "false" );
       // Generate ON function
       fprintf(output_source, "/**\n");
       fprintf(output_source, " * @brief Turns ON the '%s' GPIO output.\n", output_module->name);
@@ -479,6 +483,7 @@ static void generate_source_gpio_output_func(FILE* output_source, ast_dsl_node_t
       fprintf(output_source, "void BSP_%s_On(void){\n", output_module->name);
       fprintf(output_source, "  (void)gpio_set_level(GPIO_NUM_%u, %u);\n", output_module->pin.pin_number,
               (output_module->data.output.active_level == HIGH) ? 1 : 0);
+      fprintf(output_source, "  s_output_%s_is_on = true;\n", output_module->name);
       fprintf(output_source, "}\n\n");
       
       // Generate OFF function
@@ -489,6 +494,7 @@ static void generate_source_gpio_output_func(FILE* output_source, ast_dsl_node_t
       fprintf(output_source, "void BSP_%s_Off(void){\n", output_module->name);
       fprintf(output_source, "  (void)gpio_set_level(GPIO_NUM_%u, %u);\n", output_module->pin.pin_number,
               (output_module->data.output.active_level == HIGH) ? 0 : 1);
+      fprintf(output_source, "  s_output_%s_is_on = false;\n", output_module->name);
       fprintf(output_source, "}\n\n");
       
       // Generate TOGGLE function
@@ -496,7 +502,8 @@ static void generate_source_gpio_output_func(FILE* output_source, ast_dsl_node_t
       fprintf(output_source, " * @brief Toggles the '%s' GPIO output.\n", output_module->name);
       fprintf(output_source, " */\n");
       fprintf(output_source, "void BSP_%s_Toggle(void){\n", output_module->name);
-      fprintf(output_source, "  (void)gpio_set_level(GPIO_NUM_%u, !gpio_get_level(GPIO_NUM_%u));\n", output_module->pin.pin_number, output_module->pin.pin_number);
+      fprintf(output_source, "  (void)gpio_set_level(GPIO_NUM_%u, !s_output_%s_is_on);\n", output_module->pin.pin_number, output_module->name);
+      fprintf(output_source, "  s_output_%s_is_on = !s_output_%s_is_on;\n", output_module->name, output_module->name);
       fprintf(output_source, "}\n\n");
       
       // Generate SET function
@@ -509,6 +516,7 @@ static void generate_source_gpio_output_func(FILE* output_source, ast_dsl_node_t
       fprintf(output_source, "  (void)gpio_set_level(GPIO_NUM_%u, on ? %u : %u);\n", output_module->pin.pin_number,
               (output_module->data.output.active_level == HIGH) ? 1 : 0,
               (output_module->data.output.active_level == HIGH) ? 0 : 1);
+      fprintf(output_source, "  s_output_%s_is_on = on;\n", output_module->name);
       fprintf(output_source, "}\n\n");
       
       // Generate IS_ON function
@@ -518,8 +526,7 @@ static void generate_source_gpio_output_func(FILE* output_source, ast_dsl_node_t
       fprintf(output_source, " * @note The electrical GPIO level is derived from the configured active level.\n");
       fprintf(output_source, " */\n");
       fprintf(output_source, "bool BSP_%s_IsOn(void){\n", output_module->name);
-      fprintf(output_source, "  return (gpio_get_level(GPIO_NUM_%u) == %u);\n", output_module->pin.pin_number,
-              (output_module->data.output.active_level == HIGH) ? 1 : 0);
+      fprintf(output_source, "  return s_output_%s_is_on;\n", output_module->name);
       fprintf(output_source, "}\n");
     }
     current_module = current_module->next;
