@@ -131,7 +131,7 @@ static void generate_header_gpio_output_func(FILE* output_source, ast_dsl_node_t
   while(current_module != NULL){
     if(current_module->enable && current_module->kind == MODULE_OUTPUT){
       // Generate function prototypes for output GPIOs
-      fprintf(output_source, "\n/* GPIO OUTPUT: '%s' */\n", current_module->name);
+      fprintf(output_source, "\n// GPIO OUTPUT: '%s'\n", current_module->name);
       fprintf(output_source, "void BSP_%s_On(void);\n", current_module->name);
       fprintf(output_source, "void BSP_%s_Off(void);\n", current_module->name);
       fprintf(output_source, "void BSP_%s_Toggle(void);\n", current_module->name);
@@ -158,7 +158,7 @@ static void generate_header_gpio_input_func(FILE* output_source, ast_dsl_node_t*
   while(current_module != NULL){
     if(current_module->enable && current_module->kind == MODULE_INPUT){
       // Generate function prototypes for input GPIOs
-      fprintf(output_source, "\n/* GPIO INPUT: '%s' */\n", current_module->name);
+      fprintf(output_source, "\n// GPIO INPUT: '%s'\n", current_module->name);
       fprintf(output_source, "bool BSP_%s_IsActive(void);\n", current_module->name);
     }
     current_module = current_module->next;
@@ -182,7 +182,7 @@ static void generate_header_pwm_func(FILE* output_source, ast_dsl_node_t* dsl_no
     if(current_module->enable){
       if(current_module->kind == MODULE_PWM_OUTPUT){
         // Generate function prototypes for PWM output modules
-        fprintf(output_source, "\n/* PWM OUTPUT: '%s' */\n", current_module->name);
+        fprintf(output_source, "\n// PWM OUTPUT: '%s'\n", current_module->name);
         fprintf(output_source, "void BSP_%s_Start(void);\n", current_module->name);
         fprintf(output_source, "void BSP_%s_Stop(void);\n", current_module->name);
         fprintf(output_source, "void BSP_%s_SetDuty(uint16_t permille);\n", current_module->name);
@@ -204,7 +204,7 @@ static void generate_header_uart_func(FILE* output_source, ast_dsl_node_t* dsl_n
     if(current_module->enable){
       if(current_module->kind == MODULE_UART){
         // Generate function prototypes for UART modules
-        fprintf(output_source, "\n/* UART: '%s' */\n", current_module->name);
+        fprintf(output_source, "\n// UART: '%s'\n", current_module->name);
         fprintf(output_source, "void BSP_%s_TransmitChar(uint8_t ch);\n", current_module->name);
         fprintf(output_source, "void BSP_%s_TransmitMessage(const char *msg);\n", current_module->name);
         fprintf(output_source, "bool BSP_%s_ReceiveChar(uint8_t *ch);\n", current_module->name);

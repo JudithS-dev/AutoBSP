@@ -207,7 +207,7 @@ static void generate_source_gpio_init_func(FILE* output_source, ast_dsl_node_t* 
   while(current_module != NULL){
     if(current_module->enable){
       if(current_module->kind == MODULE_OUTPUT){
-        fprintf(output_source, "  \n  /* Configure OUTPUT GPIO pin: '%s' */\n", current_module->name);
+        fprintf(output_source, "  \n  // Configure OUTPUT GPIO pin: '%s'\n", current_module->name);
         fprintf(output_source, "  const gpio_config_t cfg_%s = {\n", current_module->name);
         fprintf(output_source, "    .pin_bit_mask = (1ULL << GPIO_NUM_%u),\n", current_module->pin.pin_number);
         fprintf(output_source, "    .mode         = ");
@@ -248,7 +248,7 @@ static void generate_source_gpio_init_func(FILE* output_source, ast_dsl_node_t* 
         }
       }
       else if(current_module->kind == MODULE_INPUT){
-        fprintf(output_source, "  \n  /* Configure INPUT GPIO pin: '%s' */\n", current_module->name);
+        fprintf(output_source, "  \n  // Configure INPUT GPIO pin: '%s'\n", current_module->name);
         fprintf(output_source, "  const gpio_config_t cfg_%s = {\n", current_module->name);
         fprintf(output_source, "    .pin_bit_mask = (1ULL << GPIO_NUM_%u),\n", current_module->pin.pin_number);
         fprintf(output_source, "    .mode         = GPIO_MODE_INPUT,\n");
@@ -298,7 +298,7 @@ static void generate_source_pwm_init_func(FILE* output_source, ast_dsl_node_t* d
       fprintf(output_source, " */\n");
       fprintf(output_source, "static void BSP_Init_PWM_TIM%u(void){\n", current_module->data.pwm.tim_number);
       
-      fprintf(output_source, "  /* Configure LEDC timer TIM%u for PWM */\n", current_module->data.pwm.tim_number);
+      fprintf(output_source, "  // Configure LEDC timer TIM%u for PWM\n", current_module->data.pwm.tim_number);
       fprintf(output_source, "  const ledc_timer_config_t cfg_timer = {\n");
       fprintf(output_source, "    .speed_mode       = LEDC_HIGH_SPEED_MODE,\n"); // always use high speed (4 high speed modes on ESP32)
       fprintf(output_source, "    .duty_resolution  = LEDC_TIMER_10_BIT,\n");    // always use 10-bit resolution, as it maps well to 0..1000 permille
@@ -308,7 +308,7 @@ static void generate_source_pwm_init_func(FILE* output_source, ast_dsl_node_t* d
       fprintf(output_source, "  };\n");
       fprintf(output_source, "  ESP_ERROR_CHECK(ledc_timer_config(&cfg_timer));\n  \n");
       
-      fprintf(output_source, "  /* Configure LEDC channel */\n");
+      fprintf(output_source, "  // Configure LEDC channel\n");
       fprintf(output_source, "  const ledc_channel_config_t cfg_channel = {\n");
       fprintf(output_source, "    .gpio_num   = GPIO_NUM_%u,\n", current_module->pin.pin_number);
       fprintf(output_source, "    .speed_mode = LEDC_HIGH_SPEED_MODE,\n");           // always use high speed (4 high speed modes on ESP32)
@@ -324,7 +324,7 @@ static void generate_source_pwm_init_func(FILE* output_source, ast_dsl_node_t* d
       fprintf(output_source, "  };\n");
       fprintf(output_source, "  ESP_ERROR_CHECK(ledc_channel_config(&cfg_channel));\n  \n");
       
-      fprintf(output_source, "  /* Ensure PWM is stopped initially */\n");
+      fprintf(output_source, "  // Ensure PWM is stopped initially\n");
       fprintf(output_source, "  ESP_ERROR_CHECK(ledc_set_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_%u, 0));\n", current_module->data.pwm.tim_channel);
       fprintf(output_source, "  ESP_ERROR_CHECK(ledc_update_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_%u));\n", current_module->data.pwm.tim_channel);
       
@@ -357,7 +357,7 @@ static void generate_source_uart_init_func(FILE* output_source, ast_dsl_node_t* 
       fprintf(output_source, " */\n");
       fprintf(output_source, "static void BSP_Init_UART_UART%u(void){\n", current_module->data.uart.usart_number);
       
-      fprintf(output_source, "  /* Install UART%u driver */\n", current_module->data.uart.usart_number);
+      fprintf(output_source, "  // Install UART%u driver\n", current_module->data.uart.usart_number);
       fprintf(output_source, "  ESP_ERROR_CHECK(uart_driver_install(");
       fprintf(output_source, "UART_NUM_%u, ", current_module->data.uart.usart_number);
       fprintf(output_source, "1024, ");     // RX buffer size
@@ -366,7 +366,7 @@ static void generate_source_uart_init_func(FILE* output_source, ast_dsl_node_t* 
       fprintf(output_source, "NULL, ");     // No event queue handle
       fprintf(output_source, "0));\n  \n"); // No interrupt allocation flags
       
-      fprintf(output_source, "  /* Set communication parameters */\n");
+      fprintf(output_source, "  // Set communication parameters\n");
       fprintf(output_source, "  const uart_config_t cfg_uart = {\n");
       fprintf(output_source, "    .baud_rate = %u,\n", current_module->data.uart.baudrate);
       fprintf(output_source, "    .data_bits = UART_DATA_%u_BITS,\n", current_module->data.uart.databits);
@@ -391,7 +391,7 @@ static void generate_source_uart_init_func(FILE* output_source, ast_dsl_node_t* 
       fprintf(output_source, "  };\n");
       fprintf(output_source, "  ESP_ERROR_CHECK(uart_param_config(UART_NUM_%u, &cfg_uart));\n  \n", current_module->data.uart.usart_number);
       
-      fprintf(output_source, "  /* Set communication pins */\n");
+      fprintf(output_source, "  // Set communication pins\n");
       fprintf(output_source, "  ESP_ERROR_CHECK(uart_set_pin(");
       fprintf(output_source, "UART_NUM_%u, ", current_module->data.uart.usart_number);
       fprintf(output_source, "GPIO_NUM_%u, ", current_module->pin.pin_number); // TX pin
@@ -571,7 +571,7 @@ static void generate_source_pwm_output_func(FILE* output_source, ast_dsl_node_t*
       fprintf(output_source, "#define BSP_PWM_%s_MAX_SCALED_DUTY ((1U << 10) - 1U) // 10-bit resolution (0..1023)\n\n", pwm_module->name);
       
       // Generate needed variables
-      fprintf(output_source, "/* Internal state for PWM module '%s' */\n", pwm_module->name);
+      fprintf(output_source, "// Internal state for PWM module '%s'\n", pwm_module->name);
       fprintf(output_source, "static bool s_pwm_%s_running = false;\n", pwm_module->name);
       fprintf(output_source, "static uint16_t s_pwm_%s_duty_permille = %d; // Duty cycle in permille (0..1000)\n\n", pwm_module->name, pwm_module->data.pwm.duty_cycle);
       
@@ -581,10 +581,10 @@ static void generate_source_pwm_output_func(FILE* output_source, ast_dsl_node_t*
       fprintf(output_source, " */\n");
       fprintf(output_source, "void BSP_%s_Start(void){\n", pwm_module->name);
       fprintf(output_source, "  if(!s_pwm_%s_running){\n", pwm_module->name);
-      fprintf(output_source, "    /* Ensure the last set duty cycle is applied before starting */\n");
+      fprintf(output_source, "    // Ensure the last set duty cycle is applied before starting\n");
       fprintf(output_source, "    uint32_t scaled_duty = ((uint32_t)s_pwm_%s_duty_permille * BSP_PWM_%s_MAX_SCALED_DUTY + 500u) / 1000u; // Rounded calculation\n", pwm_module->name, pwm_module->name);
       fprintf(output_source, "    ESP_ERROR_CHECK(ledc_set_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_%u, scaled_duty));\n    \n", pwm_module->data.pwm.tim_channel);
-      fprintf(output_source, "    /* Start PWM signal generation */\n");
+      fprintf(output_source, "    // Start PWM signal generation\n");
       fprintf(output_source, "    ESP_ERROR_CHECK(ledc_update_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_%u));\n", pwm_module->data.pwm.tim_channel);
       fprintf(output_source, "    s_pwm_%s_running = true;\n", pwm_module->name);
       fprintf(output_source, "  }\n");
@@ -596,7 +596,7 @@ static void generate_source_pwm_output_func(FILE* output_source, ast_dsl_node_t*
       fprintf(output_source, " */\n");
       fprintf(output_source, "void BSP_%s_Stop(void){\n", pwm_module->name);
       fprintf(output_source, "  if(s_pwm_%s_running){\n", pwm_module->name);
-      fprintf(output_source, "    /* Force output to inactive level by setting duty to 0 */\n");
+      fprintf(output_source, "    // Force output to inactive level by setting duty to 0\n");
       fprintf(output_source, "    ESP_ERROR_CHECK(ledc_set_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_%u, 0));\n", pwm_module->data.pwm.tim_channel);
       fprintf(output_source, "    ESP_ERROR_CHECK(ledc_update_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_%u));\n", pwm_module->data.pwm.tim_channel);
       fprintf(output_source, "    s_pwm_%s_running = false;\n", pwm_module->name);
@@ -613,7 +613,7 @@ static void generate_source_pwm_output_func(FILE* output_source, ast_dsl_node_t*
       fprintf(output_source, "    permille = 1000;\n  \n");
       fprintf(output_source, "  s_pwm_%s_duty_permille = permille;\n  \n", pwm_module->name);
       
-      fprintf(output_source, "  /* Only affect the PWM output if the PWM is currently running */\n");
+      fprintf(output_source, "  // Only affect the PWM output if the PWM is currently running\n");
       fprintf(output_source, "  if(s_pwm_%s_running){\n", pwm_module->name);
       fprintf(output_source, "    uint32_t scaled_duty = ((uint32_t)permille * BSP_PWM_%s_MAX_SCALED_DUTY + 500u) / 1000u; // Rounded calculation\n", pwm_module->name);
       fprintf(output_source, "    ESP_ERROR_CHECK(ledc_set_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_%u, scaled_duty));\n", pwm_module->data.pwm.tim_channel);

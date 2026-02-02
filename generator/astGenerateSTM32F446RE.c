@@ -150,7 +150,7 @@ static void generate_source_timer_handle_declaration(FILE* output_source, ast_ds
     if(current_module->enable){
       if(current_module->kind == MODULE_PWM_OUTPUT){
         if(first_declaration){
-          fprintf(output_source, "\n/* Timer handle declarations for PWM modules */\n");
+          fprintf(output_source, "\n// Timer handle declarations for PWM modules\n");
           first_declaration = false;
         }
         fprintf(output_source, "static TIM_HandleTypeDef htim%u;\n", current_module->data.pwm.tim_number);
@@ -178,7 +178,7 @@ static void generate_source_uart_handle_declaration(FILE* output_source, ast_dsl
     if(current_module->enable){
       if(current_module->kind == MODULE_UART){
         if(first_declaration){
-          fprintf(output_source, "\n/* UART handle declarations for UART modules */\n");
+          fprintf(output_source, "\n// UART handle declarations for UART modules\n");
           first_declaration = false;
         }
         fprintf(output_source, "static UART_HandleTypeDef huart%u;\n", current_module->data.uart.usart_number);
@@ -279,7 +279,7 @@ static void generate_source_gpio_init_func(FILE* output_source, ast_dsl_node_t* 
   fprintf(output_source,"static void BSP_Init_GPIO(void){\n");
   
   // Enable all needed GPIO port clocks
-  fprintf(output_source,"  /* Enable GPIO Ports Clock */\n");
+  fprintf(output_source,"  // Enable GPIO ports clock\n");
   char current_port = 'A';
   while(current_port <= STM32F446RE_MAX_PORT){
     ast_module_node_t *current_module = dsl_node->modules_root;
@@ -305,7 +305,7 @@ static void generate_source_gpio_init_func(FILE* output_source, ast_dsl_node_t* 
   while(current_module != NULL){
     if(current_module->enable){
       if(current_module->kind == MODULE_OUTPUT){
-        fprintf(output_source, "  /* Configure OUTPUT GPIO pin: '%s' */\n", current_module->name);
+        fprintf(output_source, "  // Configure OUTPUT GPIO pin: '%s'\n", current_module->name);
         fprintf(output_source, "  GPIO_InitTypeDef cfg_%s = {\n", current_module->name);
         fprintf(output_source, "    .Pin   = GPIO_PIN_%u,\n", current_module->pin.pin_number);
         fprintf(output_source, "    .Mode  = ");
@@ -345,7 +345,7 @@ static void generate_source_gpio_init_func(FILE* output_source, ast_dsl_node_t* 
         }
       }
       else if(current_module->kind == MODULE_INPUT){
-        fprintf(output_source, "  \n  /* Configure INPUT GPIO pin: '%s' */\n", current_module->name);
+        fprintf(output_source, "  \n  // Configure INPUT GPIO pin: '%s'\n", current_module->name);
         fprintf(output_source, "  GPIO_InitTypeDef cfg_%s = {\n", current_module->name);
         fprintf(output_source, "    .Pin  = GPIO_PIN_%u,\n", current_module->pin.pin_number);
         fprintf(output_source, "    .Mode = GPIO_MODE_INPUT,\n");
@@ -387,12 +387,12 @@ static void generate_source_pwm_init_func(FILE* output_source, ast_dsl_node_t* d
       fprintf(output_source, " */\n");
       fprintf(output_source, "static void BSP_Init_PWM_TIM%u(void){\n", current_module->data.pwm.tim_number);
       
-      fprintf(output_source, "  /* Enable clocks */\n");
+      fprintf(output_source, "  // Enable clocks\n");
       fprintf(output_source, "  __HAL_RCC_GPIO%c_CLK_ENABLE();\n", current_module->pin.port);
       fprintf(output_source, "  __HAL_RCC_TIM%u_CLK_ENABLE();\n", current_module->data.pwm.tim_number);
       fprintf(output_source, "  \n");
       
-      fprintf(output_source, "  /* Configure GPIO pin for PWM output */\n");
+      fprintf(output_source, "  // Configure GPIO pin for PWM output\n");
       fprintf(output_source, "  GPIO_InitTypeDef GPIO_InitStruct = {0};\n");
       fprintf(output_source, "  GPIO_InitStruct.Pin       = GPIO_PIN_%u;\n", current_module->pin.pin_number);
       fprintf(output_source, "  GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;\n");
@@ -415,7 +415,7 @@ static void generate_source_pwm_init_func(FILE* output_source, ast_dsl_node_t* d
       fprintf(output_source, "  HAL_GPIO_Init(GPIO%c, &GPIO_InitStruct);\n", current_module->pin.port);
       fprintf(output_source, "  \n");
       
-      fprintf(output_source, "  /* Configure TIM%u for PWM */\n", current_module->data.pwm.tim_number);
+      fprintf(output_source, "  // Configure TIM%u for PWM\n", current_module->data.pwm.tim_number);
       fprintf(output_source, "  htim%u.Instance               = TIM%u;\n", current_module->data.pwm.tim_number, current_module->data.pwm.tim_number);
       fprintf(output_source, "  htim%u.Init.Prescaler         = %u;\n", current_module->data.pwm.tim_number, current_module->data.pwm.prescaler);
       fprintf(output_source, "  htim%u.Init.CounterMode       = TIM_COUNTERMODE_UP;\n", current_module->data.pwm.tim_number);
@@ -426,7 +426,7 @@ static void generate_source_pwm_init_func(FILE* output_source, ast_dsl_node_t* d
       fprintf(output_source, "    Error_Handler();\n");
       fprintf(output_source, "  \n");
       
-      fprintf(output_source, "  /* Configure PWM channel */\n");
+      fprintf(output_source, "  // Configure PWM channel\n");
       fprintf(output_source, "  TIM_OC_InitTypeDef sConfigOC = {0};\n");
       fprintf(output_source, "  sConfigOC.OCMode        = TIM_OCMODE_PWM1;\n"); // Is always PWM1 (PWM2 would be inverted)
       fprintf(output_source, "  sConfigOC.Pulse         = 0;\n");
@@ -440,7 +440,7 @@ static void generate_source_pwm_init_func(FILE* output_source, ast_dsl_node_t* d
       fprintf(output_source, "    Error_Handler();\n");
       fprintf(output_source, "  \n");
       
-      fprintf(output_source, "  /* Ensure PWM is stopped initially */\n");
+      fprintf(output_source, "  // Ensure PWM is stopped initially\n");
       fprintf(output_source, "  __HAL_TIM_SET_COMPARE(&htim%u, TIM_CHANNEL_%u, 0);\n", current_module->data.pwm.tim_number, current_module->data.pwm.tim_channel);
       
       fprintf(output_source, "}\n");
@@ -477,11 +477,11 @@ static void generate_source_uart_init_func(FILE* output_source, ast_dsl_node_t* 
       else
         fprintf(output_source, "SART%u(void){\n", current_module->data.uart.usart_number);
       
-      fprintf(output_source, "  /* Enable GPIO port clock */\n");
+      fprintf(output_source, "  // Enable GPIO port clock\n");
       fprintf(output_source, "  __HAL_RCC_GPIO%c_CLK_ENABLE();\n", current_module->pin.port);
       fprintf(output_source, "  \n");
       
-      fprintf(output_source, "  /* Configure GPIO pins for UART TX and RX */\n");
+      fprintf(output_source, "  // Configure GPIO pins for UART TX and RX\n");
       fprintf(output_source, "  GPIO_InitTypeDef GPIO_InitStruct = {0};\n");
       fprintf(output_source, "  GPIO_InitStruct.Pin       = GPIO_PIN_%u|GPIO_PIN_%u;\n", current_module->pin.pin_number, current_module->data.uart.rx_pin.pin_number);
       fprintf(output_source, "  GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;\n");
@@ -494,7 +494,7 @@ static void generate_source_uart_init_func(FILE* output_source, ast_dsl_node_t* 
         fprintf(output_source, "SART%u;\n", current_module->data.uart.usart_number);
       fprintf(output_source, "  HAL_GPIO_Init(GPIO%c, &GPIO_InitStruct);\n  \n", current_module->pin.port);
       
-      fprintf(output_source, "  /* Enable UART%u peripheral clock */\n", current_module->data.uart.usart_number);
+      fprintf(output_source, "  // Enable UART%u peripheral clock\n", current_module->data.uart.usart_number);
       fprintf(output_source, "  __HAL_RCC_U");
       if(current_module->data.uart.is_uart)
         fprintf(output_source, "ART%u_CLK_ENABLE();\n  \n", current_module->data.uart.usart_number);
@@ -502,7 +502,7 @@ static void generate_source_uart_init_func(FILE* output_source, ast_dsl_node_t* 
         fprintf(output_source, "SART%u_CLK_ENABLE();\n  \n", current_module->data.uart.usart_number);
       
       // UART configuration
-      fprintf(output_source, "  /* Configure UART%u */\n", current_module->data.uart.usart_number);
+      fprintf(output_source, "  // Configure UART%u\n", current_module->data.uart.usart_number);
       
       fprintf(output_source, "  huart%u.Instance          = U", current_module->data.uart.usart_number);
       if(current_module->data.uart.is_uart)
@@ -517,14 +517,14 @@ static void generate_source_uart_init_func(FILE* output_source, ast_dsl_node_t* 
       else if(current_module->data.uart.databits == 9)
         fprintf(output_source, "  huart%u.Init.WordLength   = UART_WORDLENGTH_9B;\n", current_module->data.uart.usart_number);
       else
-        log_error("ast_generate_source_stm32f446re", 0, "Unsupported databits value '%u' for UART module '%s'", current_module->data.uart.databits, current_module->name);
+        log_error("generate_source_uart_init_func", 0, "Unsupported databits value '%u' for UART module '%s'", current_module->data.uart.databits, current_module->name);
       
       if(current_module->data.uart.stopbits == 1.0f)
         fprintf(output_source, "  huart%u.Init.StopBits     = UART_STOPBITS_1;\n", current_module->data.uart.usart_number);
       else if(current_module->data.uart.stopbits == 2.0f)
         fprintf(output_source, "  huart%u.Init.StopBits     = UART_STOPBITS_2;\n", current_module->data.uart.usart_number);
       else
-        log_error("ast_generate_source_stm32f446re", 0, "Unsupported stopbits value '%u' for UART module '%s'", current_module->data.uart.stopbits, current_module->name);
+        log_error("generate_source_uart_init_func", 0, "Unsupported stopbits value '%u' for UART module '%s'", current_module->data.uart.stopbits, current_module->name);
       
       if(current_module->data.uart.parity == UART_PARITY_NONE)
         fprintf(output_source, "  huart%u.Init.Parity       = UART_PARITY_NONE;\n", current_module->data.uart.usart_number);
@@ -533,7 +533,7 @@ static void generate_source_uart_init_func(FILE* output_source, ast_dsl_node_t* 
       else if(current_module->data.uart.parity == UART_PARITY_ODD)
         fprintf(output_source, "  huart%u.Init.Parity       = UART_PARITY_ODD;\n", current_module->data.uart.usart_number);
       else
-        log_error("ast_generate_source_stm32f446re", 0, "Unsupported parity enum value '%d' for UART module '%s'", current_module->data.uart.parity, current_module->name);
+        log_error("generate_source_uart_init_func", 0, "Unsupported parity enum value '%d' for UART module '%s'", current_module->data.uart.parity, current_module->name);
       
       fprintf(output_source, "  huart%u.Init.Mode         = UART_MODE_TX_RX;\n", current_module->data.uart.usart_number);
       fprintf(output_source, "  huart%u.Init.HwFlowCtl    = UART_HWCONTROL_NONE;\n", current_module->data.uart.usart_number);
@@ -711,7 +711,7 @@ static void generate_source_pwm_output_func(FILE* output_source, ast_dsl_node_t*
       fprintf(output_source, "\n\n// ---------- PWM OUTPUT: '%s' ----------\n", pwm_module->name);
       
       // Generate needed variables
-      fprintf(output_source, "/* Internal state for PWM module '%s' */\n", pwm_module->name);
+      fprintf(output_source, "// Internal state for PWM module '%s'\n", pwm_module->name);
       fprintf(output_source, "static bool s_pwm_%s_running = false;\n", pwm_module->name);
       fprintf(output_source, "static uint16_t s_pwm_%s_duty_permille = %d; // Duty cycle in permille (0..1000)\n\n", pwm_module->name, pwm_module->data.pwm.duty_cycle);
       
@@ -721,9 +721,9 @@ static void generate_source_pwm_output_func(FILE* output_source, ast_dsl_node_t*
       fprintf(output_source, " */\n");
       fprintf(output_source, "void BSP_%s_Start(void){\n", pwm_module->name);
       fprintf(output_source, "  if(!s_pwm_%s_running){\n", pwm_module->name);
-      fprintf(output_source, "    /* Ensure the last set duty cycle is applied before starting */\n");
+      fprintf(output_source, "    // Ensure the last set duty cycle is applied before starting\n");
       fprintf(output_source, "    BSP_%s_SetDuty(s_pwm_%s_duty_permille);\n    \n", pwm_module->name, pwm_module->name);
-      fprintf(output_source, "    /* Start PWM signal generation */\n");
+      fprintf(output_source, "    // Start PWM signal generation\n");
       fprintf(output_source, "    if(HAL_TIM_PWM_Start(&htim%u, TIM_CHANNEL_%u) != HAL_OK)\n", pwm_module->data.pwm.tim_number, pwm_module->data.pwm.tim_channel);
       fprintf(output_source, "      Error_Handler();\n");
       fprintf(output_source, "    s_pwm_%s_running = true;\n", pwm_module->name);
@@ -740,7 +740,7 @@ static void generate_source_pwm_output_func(FILE* output_source, ast_dsl_node_t*
       fprintf(output_source, "      Error_Handler();\n");
       fprintf(output_source, "    s_pwm_%s_running = false;\n", pwm_module->name);
       fprintf(output_source, "  }\n  \n");
-      fprintf(output_source, "  /* Force output to inactive level */\n");
+      fprintf(output_source, "  // Force output to inactive level\n");
       fprintf(output_source, "  __HAL_TIM_SET_COMPARE(&htim%u, TIM_CHANNEL_%u, 0);\n", pwm_module->data.pwm.tim_number, pwm_module->data.pwm.tim_channel);
       fprintf(output_source, "}\n\n");
       
@@ -754,15 +754,15 @@ static void generate_source_pwm_output_func(FILE* output_source, ast_dsl_node_t*
       fprintf(output_source, "    permille = 1000;\n  \n");
       fprintf(output_source, "  s_pwm_%s_duty_permille = permille;\n  \n", pwm_module->name);
       if(pwm_module->data.pwm.active_level == LOW){
-        fprintf(output_source, "  /* Invert duty cycle for active LOW configuration */\n");
+        fprintf(output_source, "  // Invert duty cycle for active LOW configuration\n");
         fprintf(output_source, "  permille = 1000u - permille;\n  \n");
       }
-      fprintf(output_source, "  /* ARR is the PWM top value */\n");
+      fprintf(output_source, "  // ARR is the PWM top value\n");
       fprintf(output_source, "  uint32_t arr = __HAL_TIM_GET_AUTORELOAD(&htim%u);\n  \n", pwm_module->data.pwm.tim_number);
-      fprintf(output_source, "  /* Convert 0..1000 permille to timer compare value */\n");
+      fprintf(output_source, "  // Convert 0..1000 permille to timer compare value\n");
       fprintf(output_source, "  uint32_t crr = (arr * (uint32_t)permille + 500u) / 1000u; // Rounded calculation\n  \n");
       fprintf(output_source, "  if(crr > arr) crr = arr;\n  \n");
-      fprintf(output_source, "  /* Set the compare register to update duty cycle */\n");
+      fprintf(output_source, "  // Set the compare register to update duty cycle\n");
       fprintf(output_source, "  __HAL_TIM_SET_COMPARE(&htim%u, TIM_CHANNEL_%u, crr);\n", pwm_module->data.pwm.tim_number, pwm_module->data.pwm.tim_channel);
       fprintf(output_source, "}\n\n");
       
