@@ -4,12 +4,22 @@
 // idf.py monitor
 // Quit: Ctrl + ]
 
+// sudo ls /dev/ttyUSB*
+// picocom -b 115200 -d 8 -y n -p 1 /dev/ttyUSB0 --echo
+// -b <baudrate>: Baud rate (e.g. 9600, 115200)
+// -d <data bits>: Number of data bits on the PC side
+//                 (ESP3232: <data bits> = databits of DSL)
+// -y <parity>: Parity (n = none, o = odd, e = even)
+// -p <stop bits>: Number of stop bits (1 or 2)
+// --echo: Echo back received characters
+// Quit: ctrl + A then ctrl + X
+
 AutoBSP{
   controller: ESP32
   
   OUTPUT{ // no speed parameter supported
     name:    "LED_RED"
-    pin:     GPIO12          // PA5 || PA6 TODO fix alternative Pins
+    pin:     GPIO0          // GPIO0 || GPIO2
     
     type:    pushpull
     pull:    none
@@ -27,7 +37,7 @@ AutoBSP{
   
   INPUT{
     name:    "BUTTON_BOARD"
-    pin:     GPIO33
+    pin:     GPIO18          // GPIO18 || GPIO19
     
     pull:    up
     active:  low
@@ -43,7 +53,7 @@ AutoBSP{
   
   PWM_OUTPUT{  // no speed or pull parameter supported
     name:       "PWM_SIGNAL_1"
-    pin:        GPIO5              // PC8 || PC6 TODO fix alternative Pins
+    pin:        GPIO22              // GPIO22 || GPIO23
     
     frequency:  2000
     duty:       500
@@ -60,8 +70,8 @@ AutoBSP{
   
   UART{ // picocom -b 115200 -d 8 -y n -p 1 /dev/ttyUSB0 --echo
     name:     "UART_USED"
-    tx_pin:    GPIO0         // PA0 || PC10 TODO fix alternative Pins
-    rx_pin:    GPIO1         // PA1 || PC11 TODO fix alternative Pins
+    tx_pin:    GPIO26         // GPIO26 || GPIO27
+    rx_pin:    GPIO32         // GPIO32 || GPIO33
     
     baudrate:  115200
     databits:  8
@@ -71,10 +81,10 @@ AutoBSP{
     enable:    false
   }
   
-  UART{ // picocom -b 9600 -d 6 -y o -p 2 /dev/ttyUSB0 --echo
+  UART{ // picocom -b 9600 -d 7 -y o -p 2 /dev/ttyUSB0 --echo
     name:     "UART_USED"
-    tx_pin:    GPIO0         // PA0 || PC10 TODO fix alternative Pins
-    rx_pin:    GPIO1         // PA1 || PC11 TODO fix alternative Pins
+    tx_pin:    GPIO26         // GPIO26 || GPIO27
+    rx_pin:    GPIO32         // GPIO32 || GPIO33
     
     baudrate:  9600
     databits:  7

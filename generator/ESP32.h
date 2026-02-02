@@ -30,42 +30,42 @@ typedef struct{
  * Each entry defines the capabilities of a specific pin.
  */
 static const pin_cap_t PINCAP_ESP32[] = {
-  /* GPIO0:
+  /* GPIO0: // input works, output works, pwm works
    */
   { .pin={0},
     .can_gpio_in=true, .can_gpio_out=true,
     .cost=0, .not_usable=false
   },
   
-  /* GPIO1:
+  /* GPIO1: // input works, output works, pwm works
    */
   { .pin={1},
     .can_gpio_in=true, .can_gpio_out=true,
     .cost=0, .not_usable=false
   },
   
-  /* GPIO2:
+  /* GPIO2: // input works, output works, pwm works
    */
   { .pin={2},
     .can_gpio_in=true, .can_gpio_out=true,
     .cost=0, .not_usable=false
   },
   
-  /* GPIO3:
+  /* GPIO3: // input works, output works, pwm works
    */
   { .pin={3},
     .can_gpio_in=true, .can_gpio_out=true,
     .cost=0, .not_usable=false
   },
   
-  /* GPIO4:
+  /* GPIO4: // input works, output works, pwm works
    */
   { .pin={4},
     .can_gpio_in=true, .can_gpio_out=true,
     .cost=0, .not_usable=false
   },
   
-  /* GPIO5:
+  /* GPIO5: // input works, output works, pwm works
    */
   { .pin={5},
     .can_gpio_in=true, .can_gpio_out=true,
@@ -120,56 +120,56 @@ static const pin_cap_t PINCAP_ESP32[] = {
     .cost=255, .not_usable=true
   },
   
-  /* GPIO12:
+  /* GPIO12: // input works, output works, pwm works
    */
   { .pin={12},
     .can_gpio_in=true, .can_gpio_out=true,
     .cost=0, .not_usable=false
   },
   
-  /* GPIO13:
+  /* GPIO13: // input works, output works, pwm works
    */
   { .pin={13},
     .can_gpio_in=true, .can_gpio_out=true,
     .cost=0, .not_usable=false
   },
   
-  /* GPIO14:
+  /* GPIO14: // input works, output works, pwm works
    */
   { .pin={14},
     .can_gpio_in=true, .can_gpio_out=true,
     .cost=0, .not_usable=false
   },
   
-  /* GPIO15:
+  /* GPIO15: // input works, output works, pwm works
    */
   { .pin={15},
     .can_gpio_in=true, .can_gpio_out=true,
     .cost=0, .not_usable=false
   },
   
-  /* GPIO16:
+  /* GPIO16: // input works, output works, pwm works
    */
   { .pin={16},
     .can_gpio_in=true, .can_gpio_out=true,
     .cost=0, .not_usable=false
   },
   
-  /* GPIO17:
+  /* GPIO17: // input works, output works, pwm works
    */
   { .pin={17},
     .can_gpio_in=true, .can_gpio_out=true,
     .cost=0, .not_usable=false
   },
   
-  /* GPIO18:
+  /* GPIO18: // input works, output works, pwm works
    */
   { .pin={18},
     .can_gpio_in=true, .can_gpio_out=true,
     .cost=0, .not_usable=false
   },
   
-  /* GPIO19:
+  /* GPIO19: // input works, output works, pwm works
    */
   { .pin={19},
     .can_gpio_in=true, .can_gpio_out=true,
@@ -184,21 +184,21 @@ static const pin_cap_t PINCAP_ESP32[] = {
     .cost=255, .not_usable=true
   },
   
-  /* GPIO21:
+  /* GPIO21: // input works, output works, pwm works
    */
   { .pin={21},
     .can_gpio_in=true, .can_gpio_out=true,
     .cost=0, .not_usable=false
   },
   
-  /* GPIO22:
+  /* GPIO22: // input works, output works, pwm works
    */
   { .pin={22},
     .can_gpio_in=true, .can_gpio_out=true,
     .cost=0, .not_usable=false
   },
   
-  /* GPIO23:
+  /* GPIO23: // input works, output works, pwm works
    */
   { .pin={23},
     .can_gpio_in=true, .can_gpio_out=true,
@@ -213,21 +213,21 @@ static const pin_cap_t PINCAP_ESP32[] = {
     .cost=255, .not_usable=true
   },
   
-  /* GPIO25:
+  /* GPIO25: // input works, output works, pwm works
    */
   { .pin={25},
     .can_gpio_in=true, .can_gpio_out=true,
     .cost=0, .not_usable=false
   },
   
-  /* GPIO26:
+  /* GPIO26: // input works, output works, pwm works
    */
   { .pin={26},
     .can_gpio_in=true, .can_gpio_out=true,
     .cost=0, .not_usable=false
   },
   
-  /* GPIO27:
+  /* GPIO27: // input works, output works, pwm works
    */
   { .pin={27},
     .can_gpio_in=true, .can_gpio_out=true,
@@ -266,21 +266,21 @@ static const pin_cap_t PINCAP_ESP32[] = {
     .cost=255, .not_usable=true
   },
   
-  /* GPIO32:
+  /* GPIO32: // input works, output works, pwm works
    */
   { .pin={32},
     .can_gpio_in=true, .can_gpio_out=true,
     .cost=0, .not_usable=false
   },
   
-  /* GPIO33:
+  /* GPIO33: // input works, output works, pwm works
    */
   { .pin={33},
     .can_gpio_in=true, .can_gpio_out=true,
     .cost=0, .not_usable=false
   },
   
-  /* GPIO34:
+  /* GPIO34: // input works
    * Input only
    */
   { .pin={34},
@@ -288,7 +288,7 @@ static const pin_cap_t PINCAP_ESP32[] = {
     .cost=0, .not_usable=false
   },
   
-  /* GPIO35:
+  /* GPIO35: // input works
    * Input only
    */
   { .pin={35},
