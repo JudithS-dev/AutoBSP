@@ -83,13 +83,13 @@ static void generate_header(FILE* output_header, ast_dsl_node_t* dsl_node){
   fprintf(output_header,"#define __GENERATED_BSP_H__\n");
   
   fprintf(output_header,"\n#include <stdbool.h>");
+  fprintf(output_header,"\n#include <stdint.h>");
   
-  if(has_enabled_pwm_module(dsl_node) || has_enabled_uart_module(dsl_node))
-    fprintf(output_header,"\n#include <stdint.h>");
-  
-  // TODO: Add function to delay to make main.c more independent of controller
-  
-  fprintf(output_header,"\n\nvoid BSP_Init(void);\n");
+  // TODO: use delay function in main.c and test if it works for all controllers
+  fprintf(output_header,"\n\n// Initialization function\n");
+  fprintf(output_header,"void BSP_Init(void);\n\n");
+  fprintf(output_header,"// Delay function\n");
+  fprintf(output_header,"void BSP_DelayMs(uint32_t ms);\n");
   
   generate_header_gpio_output_func(output_header, dsl_node);
   generate_header_gpio_input_func(output_header, dsl_node);

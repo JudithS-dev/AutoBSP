@@ -558,6 +558,17 @@ static void generate_source_func(FILE* output_source, ast_dsl_node_t* dsl_node){
   if(dsl_node == NULL)
     log_error("generate_source_func", 0, "DSL node is NULL.");
   
+  // Generate delay function
+  fprintf(output_source, "\n\n// ---------- Delay function ----------\n");
+  fprintf(output_source, "/**\n");
+  fprintf(output_source, " * @brief Delays execution for a specified number of milliseconds.\n");
+  fprintf(output_source, " * @param ms Number of milliseconds to delay.\n");
+  fprintf(output_source, " */\n");
+  fprintf(output_source, "void BSP_DelayMs(uint32_t ms){\n");
+  fprintf(output_source, "  HAL_Delay(ms);\n");
+  fprintf(output_source, "}\n");
+  
+  // Generate functions for each module kind
   generate_source_gpio_output_func(output_source, dsl_node);
   generate_source_gpio_input_func(output_source, dsl_node);
   generate_source_pwm_output_func(output_source, dsl_node);
