@@ -181,7 +181,7 @@ static void is_valid_esp32_pin(const char *module_name, int line_nr, pin_t pin){
               pin.port);
   
   if(pin.pin_number >= 36) // ESP32 has GPIO0 to GPIO35
-    log_error("is_valid_esp32_pin", line_nr, "Invalid pin number '%u' for port '%c' for module '%s' on ESP32. Valid range: 0-35.", pin.pin_number, pin.port, module_name);
+    log_error("is_valid_esp32_pin", line_nr, "Invalid pin number '%u' for module '%s' on ESP32. Valid range: 0-35.", pin.pin_number, module_name);
   
   // Unusable pins on ESP32: GPIO6 to GPIO11 (used for flash memory)
   if((pin.pin_number >= 6) && (pin.pin_number <= 11))

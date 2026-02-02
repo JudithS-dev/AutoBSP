@@ -47,8 +47,7 @@ void ast_generate_source_esp32(FILE* output_source, ast_dsl_node_t* dsl_node){
   fprintf(output_source, "#include \"freertos/FreeRTOS.h\"\n");
   fprintf(output_source, "#include \"freertos/task.h\"\n\n");
   
-  if(has_enabled_gpio_module(dsl_node))
-    fprintf(output_source, "#include \"driver/gpio.h\"\n");
+  fprintf(output_source, "#include \"driver/gpio.h\"\n"); // Always needed for GPIO_NUM_x definitions
   if(has_enabled_pwm_module(dsl_node))
     fprintf(output_source, "#include \"driver/ledc.h\"\n");
   if(has_enabled_uart_module(dsl_node))
