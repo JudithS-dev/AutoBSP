@@ -85,7 +85,6 @@ static void generate_header(FILE* output_header, ast_dsl_node_t* dsl_node){
   fprintf(output_header,"\n#include <stdbool.h>");
   fprintf(output_header,"\n#include <stdint.h>");
   
-  // TODO: use delay function in main.c and test if it works for all controllers
   fprintf(output_header,"\n\n// Initialization function\n");
   fprintf(output_header,"void BSP_Init(void);\n\n");
   fprintf(output_header,"// Delay function\n");

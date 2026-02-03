@@ -21,7 +21,7 @@ if ! [ -x "./generator/AutoBSP" ]; then
 fi
 
 # List of programs to execute
-PROGRAMS=("ESP32.dsl")
+PROGRAMS=("STM32.dsl" "ESP32.dsl")
 LENGTH=${#PROGRAMS[@]}
 
 # Check if program list is empty
@@ -119,6 +119,7 @@ elif [ "$PROGRAM" == "ESP32.dsl" ]; then
 fi
 echo -n ": "
 read -r COPY_CHOICE
+#COPY_CHOICE="1" # Just always copy for testing
 
 if [ "$COPY_CHOICE" == "1" ]; then
   if [ "$PROGRAM" == "STM32.dsl" ]; then
