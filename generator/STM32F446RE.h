@@ -766,7 +766,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
   
   /* PC12: // input works, output works
    * (no PWM)
-   * AF8: UART5_TX
+   * AF8: UART5_TX (port split with PD2)
    */
   { .pin={'C',12},
     .can_gpio_in=true, .can_gpio_out=true,
@@ -810,6 +810,47 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
    * (no UART)
    */
   { .pin={'C',15},
+    .can_gpio_in=true, .can_gpio_out=true,
+    .pwm = { },
+    .pwm_count = 0,
+    .uart = { },
+    .uart_count = 0,
+    .cost=0, .not_usable=true
+  },
+  
+  /* PD2: // input works, output works
+   * (no PWM)
+   * AF8: UART5_RX (port split with PC12)
+   */
+  { .pin={'D',2},
+    .can_gpio_in=true, .can_gpio_out=true,
+    .pwm = { },
+    .pwm_count = 0,
+    .uart = {
+      { .usart=5, .is_uart=true,  .is_tx=false, .af=8 },  // UART5_RX @ AF8
+    },
+    .uart_count = 1,
+    .cost=0, .not_usable=false
+  },
+  
+  /* PH0: // doesn't work (OSC_IN)
+   * (no PWM)
+   * (no UART)
+   */
+  { .pin={'H',0},
+    .can_gpio_in=true, .can_gpio_out=true,
+    .pwm = { },
+    .pwm_count = 0,
+    .uart = { },
+    .uart_count = 0,
+    .cost=0, .not_usable=true
+  },
+  
+  /* PH1: // doesn't work (OSC_OUT)
+   * (no PWM)
+   * (no UART)
+   */
+  { .pin={'H',1},
     .can_gpio_in=true, .can_gpio_out=true,
     .pwm = { },
     .pwm_count = 0,

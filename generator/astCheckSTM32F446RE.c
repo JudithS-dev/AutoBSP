@@ -85,8 +85,11 @@ void ast_check_stm32f446re_valid_pins(ast_dsl_node_t* dsl_node){
                     pin_to_string(current_module->data.uart.rx_pin),
                     current_module->name);
         
-        // Check if tx and rx pins are on the same port (required by hardware)
-        if(current_module->pin.port != current_module->data.uart.rx_pin.port)
+        // Check if tx and rx pins are on the same port (required by hardware) (except for PC12 and PD2)
+        if( (current_module->pin.port == 'C') && (current_module->pin.pin_number == 12) &&
+            (current_module->data.uart.rx_pin.port == 'D') && (current_module->data.uart.rx_pin.pin_number == 2)){
+          // Special case: PC12 and PD2 are allowed to be used together for UART5
+        } else if(current_module->pin.port != current_module->data.uart.rx_pin.port)
           log_error("ast_check_stm32f446re_valid_pins", current_module->line_nr, "TX Pin '%s' and RX Pin '%s' must be on the same port for module '%s'.",
                     pin_to_string(current_module->pin),
                     pin_to_string(current_module->data.uart.rx_pin),
@@ -164,9 +167,21 @@ static void is_valid_stm32f446re_pin(const char *module_name, int line_nr, pin_t
               pin_to_string(pin),
               module_name);
   
-  if((pin.port < 'A') || (pin.port > 'C'))
-    log_error("is_valid_stm32f446re_pin", line_nr, "Invalid port '%c' for module '%s' on STM32F446RE. Valid ports: A, B, C.",
+  if(((pin.port < 'A') || (pin.port > 'D')) && (pin.port != 'H'))
+    log_error("is_valid_stm32f446re_pin", line_nr, "Invalid port '%c' for module '%s' on STM32F446RE. Valid ports: A, B, C, D, H.",
               pin.port,
+              module_name);
+  
+  // Port D only has pin 2
+  if((pin.port == 'D') && (pin.pin_number != 2))
+    log_error("is_valid_stm32f446re_pin", line_nr, "Invalid pin number '%u' for port 'D' for module '%s' on STM32F446RE. Valid pins on port D: 2.",
+              pin.pin_number,
+              module_name);
+  
+  // Port H only has pin 0 and 1
+  if((pin.port == 'H') && (pin.pin_number > 1))
+    log_error("is_valid_stm32f446re_pin", line_nr, "Invalid pin number '%u' for port 'H' for module '%s' on STM32F446RE. Valid pins on port H: 0, 1.",
+              pin.pin_number,
               module_name);
   
   if(pin.pin_number > 15)

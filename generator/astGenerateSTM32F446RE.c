@@ -3,7 +3,7 @@
 #include "astHelper.h"
 #include "logging.h"
 
-#define STM32F446RE_MAX_PORT 'C' // Maximum port letter for STM32F446RE
+#define STM32F446RE_MAX_PORT 'D' // Maximum port letter for STM32F446RE (Port H has no usable pins)
 
 static void generate_source_pwm_init_declaration(FILE* output_source, ast_dsl_node_t* dsl_node);
 static void generate_source_uart_init_declaration(FILE* output_source, ast_dsl_node_t* dsl_node);
@@ -480,30 +480,64 @@ static void generate_source_uart_init_func(FILE* output_source, ast_dsl_node_t* 
       else
         fprintf(output_source, "SART%u(void){\n", current_module->data.uart.usart_number);
       
-      fprintf(output_source, "  // Enable GPIO port clock\n");
-      fprintf(output_source, "  __HAL_RCC_GPIO%c_CLK_ENABLE();\n", current_module->pin.port);
-      fprintf(output_source, "  \n");
-      
-      fprintf(output_source, "  // Configure GPIO pins for UART TX and RX\n");
-      fprintf(output_source, "  GPIO_InitTypeDef GPIO_InitStruct = {0};\n");
-      fprintf(output_source, "  GPIO_InitStruct.Pin       = GPIO_PIN_%u|GPIO_PIN_%u;\n", current_module->pin.pin_number, current_module->data.uart.rx_pin.pin_number);
-      fprintf(output_source, "  GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;\n");
-      fprintf(output_source, "  GPIO_InitStruct.Pull      = GPIO_NOPULL;\n");
-      fprintf(output_source, "  GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;\n");
-      fprintf(output_source, "  GPIO_InitStruct.Alternate = GPIO_AF%u_U", current_module->data.uart.gpio_af);
-      if(current_module->data.uart.is_uart)
-        fprintf(output_source, "ART%u;\n", current_module->data.uart.usart_number);
-      else
-        fprintf(output_source, "SART%u;\n", current_module->data.uart.usart_number);
-      fprintf(output_source, "  HAL_GPIO_Init(GPIO%c, &GPIO_InitStruct);\n  \n", current_module->pin.port);
-      
+      // Configure GPIO pins if UART/USART is on the same port (all cases except UART5 with tx PC12 and rx PD2)
+      if(current_module->pin.port == current_module->data.uart.rx_pin.port){
+        fprintf(output_source, "  // Enable GPIO port clock\n");
+        fprintf(output_source, "  __HAL_RCC_GPIO%c_CLK_ENABLE();\n", current_module->pin.port);
+        fprintf(output_source, "  \n");
+        
+        fprintf(output_source, "  // Configure GPIO pins for UART TX and RX\n");
+        fprintf(output_source, "  GPIO_InitTypeDef GPIO_InitStruct = {0};\n");
+        fprintf(output_source, "  GPIO_InitStruct.Pin       = GPIO_PIN_%u|GPIO_PIN_%u;\n", current_module->pin.pin_number, current_module->data.uart.rx_pin.pin_number);
+        fprintf(output_source, "  GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;\n");
+        fprintf(output_source, "  GPIO_InitStruct.Pull      = GPIO_NOPULL;\n");
+        fprintf(output_source, "  GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;\n");
+        fprintf(output_source, "  GPIO_InitStruct.Alternate = GPIO_AF%u_U", current_module->data.uart.gpio_af);
+        if(current_module->data.uart.is_uart)
+          fprintf(output_source, "ART%u;\n", current_module->data.uart.usart_number);
+        else
+          fprintf(output_source, "SART%u;\n", current_module->data.uart.usart_number);
+        fprintf(output_source, "  HAL_GPIO_Init(GPIO%c, &GPIO_InitStruct);\n  \n", current_module->pin.port);
+      } else{ // Special case TX and RX are not on the same port (e.g. UART5 with tx PC12 and rx PD2)
+        fprintf(output_source, "  // Enable GPIO port clocks\n");
+        fprintf(output_source, "  __HAL_RCC_GPIO%c_CLK_ENABLE();\n", current_module->pin.port);
+        fprintf(output_source, "  __HAL_RCC_GPIO%c_CLK_ENABLE();\n", current_module->data.uart.rx_pin.port);
+        fprintf(output_source, "  \n");
+        
+        fprintf(output_source, "  // Configure GPIO pin for UART TX\n");
+        fprintf(output_source, "  GPIO_InitTypeDef GPIO_InitStruct_TX = {0};\n");
+        fprintf(output_source, "  GPIO_InitStruct_TX.Pin       = GPIO_PIN_%u;\n", current_module->pin.pin_number);
+        fprintf(output_source, "  GPIO_InitStruct_TX.Mode      = GPIO_MODE_AF_PP;\n");
+        fprintf(output_source, "  GPIO_InitStruct_TX.Pull      = GPIO_NOPULL;\n");
+        fprintf(output_source, "  GPIO_InitStruct_TX.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;\n");
+        fprintf(output_source, "  GPIO_InitStruct_TX.Alternate = GPIO_AF%u_U", current_module->data.uart.gpio_af);
+        if(current_module->data.uart.is_uart)
+          fprintf(output_source, "ART%u;\n", current_module->data.uart.usart_number);
+        else
+          fprintf(output_source, "SART%u;\n", current_module->data.uart.usart_number);
+        fprintf(output_source, "  HAL_GPIO_Init(GPIO%c, &GPIO_InitStruct_TX);\n  \n", current_module->pin.port);
+        
+        fprintf(output_source, "  // Configure GPIO pin for UART RX\n");
+        fprintf(output_source, "  GPIO_InitTypeDef GPIO_InitStruct_RX = {0};\n");
+        fprintf(output_source, "  GPIO_InitStruct_RX.Pin       = GPIO_PIN_%u;\n", current_module->data.uart.rx_pin.pin_number);
+        fprintf(output_source, "  GPIO_InitStruct_RX.Mode      = GPIO_MODE_AF_PP;\n");
+        fprintf(output_source, "  GPIO_InitStruct_RX.Pull      = GPIO_NOPULL;\n");
+        fprintf(output_source, "  GPIO_InitStruct_RX.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;\n");
+        fprintf(output_source, "  GPIO_InitStruct_RX.Alternate = GPIO_AF%u_U", current_module->data.uart.gpio_af);
+        if(current_module->data.uart.is_uart)
+          fprintf(output_source, "ART%u;\n", current_module->data.uart.usart_number);
+        else
+          fprintf(output_source, "SART%u;\n", current_module->data.uart.usart_number);
+        fprintf(output_source, "  HAL_GPIO_Init(GPIO%c, &GPIO_InitStruct_RX);\n  \n", current_module->data.uart.rx_pin.port);
+      }
+        
       fprintf(output_source, "  // Enable UART%u peripheral clock\n", current_module->data.uart.usart_number);
       fprintf(output_source, "  __HAL_RCC_U");
       if(current_module->data.uart.is_uart)
         fprintf(output_source, "ART%u_CLK_ENABLE();\n  \n", current_module->data.uart.usart_number);
       else
         fprintf(output_source, "SART%u_CLK_ENABLE();\n  \n", current_module->data.uart.usart_number);
-      
+    
       // UART configuration
       fprintf(output_source, "  // Configure UART%u\n", current_module->data.uart.usart_number);
       
