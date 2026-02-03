@@ -34,6 +34,16 @@ static void sendDuty(uint16_t duty){
   BSP_UART_USED_TransmitMessage(buffer);
 }
 
+/**
+ * @brief Main program entry point
+ * 
+ * @return int
+ * 
+ * This program initializes the BSP and PWM, then enters an infinite loop where it:
+ * 1) Monitors a button press to toggle a red LED.
+ * 2) Listens for '+' and '-' commands via UART to adjust the PWM duty cycle, controlling brightness.
+ *    Feedback is provided via UART messages.
+ */
 void app_main(void){
   // Initialize BSP
   BSP_Init();
@@ -49,7 +59,7 @@ void app_main(void){
   while(1){
     /* --- 1) Button pressed -> Toggle red LED --- */
     last_button = button;
-    button = BSP_BUTTON_BOARD_IsActive();
+    button = BSP_BUTTON_EXTERNAL_IsActive();
     if(button && !last_button)
       BSP_LED_RED_Toggle();
     
@@ -59,7 +69,7 @@ void app_main(void){
     
     //If byte could not be read => continue
     if(!BSP_UART_USED_TryReceiveChar(&ch)){
-      vTaskDelay(pdMS_TO_TICKS(20));
+      BSP_DelayMs(20);
       continue;
     }
     
@@ -93,6 +103,6 @@ void app_main(void){
       BSP_UART_USED_TransmitMessage("\r\nUnknown command (use '+' or '-')\r\n");
     
     // Small delay to reduce CPU load
-    vTaskDelay(pdMS_TO_TICKS(20));
+    BSP_DelayMs(20);
   }
 }

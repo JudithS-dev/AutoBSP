@@ -36,7 +36,7 @@ AutoBSP{
   }
   
   INPUT{
-    name:    "BUTTON_BOARD"
+    name:    "BUTTON_EXTERNAL"
     pin:     GPIO18          // GPIO18 || GPIO19
     
     pull:    up

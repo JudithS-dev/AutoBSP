@@ -46,9 +46,9 @@ static void sendDuty(uint16_t duty){
  *    Feedback is provided via UART messages.
  */
 int main(void){
-  HAL_Init();
   SystemClock_Config();
 
+  // Initialize BSP
   BSP_Init();
   BSP_PWM_SIGNAL_1_Start();
 
@@ -62,7 +62,7 @@ int main(void){
   while(1){
     /* --- 1) Button pressed -> Toggle red LED --- */
     last_button = button;
-    button = BSP_BUTTON_BOARD_IsActive();
+    button = BSP_BUTTON_EXTERNAL_IsActive();
     if(button && !last_button)
       BSP_LED_RED_Toggle();
 
@@ -72,7 +72,7 @@ int main(void){
 
     //If byte could not be read => continue
     if(!BSP_UART_USED_TryReceiveChar(&ch)){
-      HAL_Delay(20);
+      BSP_DelayMs(20);
       continue;
     }
 
@@ -106,7 +106,7 @@ int main(void){
       BSP_UART_USED_TransmitMessage("\r\nUnknown command (use '+' or '-')\r\n");
 
     // Small delay to reduce CPU load
-    HAL_Delay(20);
+    BSP_DelayMs(20);
   }
 }
 

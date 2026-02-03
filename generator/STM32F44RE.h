@@ -66,7 +66,7 @@ typedef struct{
  * Each entry defines the capabilities of a specific pin, including GPIO, PWM, and UART functionalities.
  */
 static const pin_cap_t PINCAP_STM32F446RE[] = {
-  /* PA0: // works
+  /* PA0: // input works, output works, pwm works
    * AF1: TIM2_CH1
    * AF2: TIM5_CH1
    * AF8: UART4_TX
@@ -85,7 +85,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PA1: // works
+  /* PA1: // input works, output works, pwm works
    * AF1: TIM2_CH2
    * AF2: TIM5_CH2
    * AF8: UART4_RX
@@ -146,7 +146,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=true
   },
   
-  /* PA4: // works
+  /* PA4: // input works, output works
    * (no PWM)
    * (no UART)
    */
@@ -159,7 +159,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PA5: // works
+  /* PA5: // input works, output works, pwm works
    * AF1: TIM2_CH1
    * (no UART)
    */
@@ -174,7 +174,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PA6: // works
+  /* PA6: // input works, output works, pwm works
    * AF2: TIM3_CH1
    * AF9: TIM13_CH1
    * (no UART)
@@ -191,7 +191,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PA7: // works
+  /* PA7: // input works, output works, pwm works
    * AF2: TIM3_CH2
    * AF9: TIM14_CH1
    * (no UART)
@@ -208,7 +208,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PA8: // works
+  /* PA8: // input works, output works, pwm works
    * AF1: TIM1_CH1
    * (no UART)
    */
@@ -223,7 +223,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PA9: // works
+  /* PA9: // input works, output works, pwm works
    * AF1: TIM1_CH2
    * AF7: USART1_TX
    */
@@ -240,7 +240,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PA10: // works
+  /* PA10: // input works, output works, pwm works
    * AF1: TIM1_CH3
    * AF7: USART1_RX
    */
@@ -257,7 +257,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PA11: // works
+  /* PA11: // input works, output works, pwm works
    * AF1: TIM1_CH4
    * (no UART)
    */
@@ -272,7 +272,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PA12: // works
+  /* PA12: // input works, output works
    * (no PWM)
    * (no UART)
    */
@@ -285,7 +285,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PA13: // works
+  /* PA13: // doesn't work (SWDIO)
    * (no PWM)
    * (no UART)
    */
@@ -295,10 +295,10 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .pwm_count = 0,
     .uart = { },
     .uart_count = 0,
-    .cost=0, .not_usable=false
+    .cost=0, .not_usable=true
   },
   
-  /* PA14: // works
+  /* PA14: // doesn't work (SWCLK)
    * (no PWM)
    * (no UART)
    */
@@ -308,10 +308,10 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .pwm_count = 0,
     .uart = { },
     .uart_count = 0,
-    .cost=0, .not_usable=false
+    .cost=0, .not_usable=true
   },
   
-  /* PA15: // works
+  /* PA15: // input works, output works, pwm works
    * AF1: TIM2_CH1
    * (no UART)
    */
@@ -326,7 +326,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PB0: // works
+  /* PB0: // input works, output works, pwm works
    * AF2: TIM3_CH3
    * (no UART)
    */
@@ -341,7 +341,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PB1: // works
+  /* PB1: // input works, output works, pwm works
    * AF2: TIM3_CH4
    * (no UART)
    */
@@ -356,7 +356,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PB2: // works
+  /* PB2: // input works, output works, pwm works
    * AF1: TIM2_CH4
    * (no UART)
    */
@@ -371,7 +371,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PB3: // works
+  /* PB3: // input works, output works, pwm works
    * AF1: TIM2_CH2
    * (no UART)
    */
@@ -386,7 +386,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PB4: // works
+  /* PB4: // input works, output works, pwm works
    * AF2: TIM3_CH1
    * (no UART)
    */
@@ -401,7 +401,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PB5: // works
+  /* PB5: // input works, output works, pwm works
    * AF2: TIM3_CH2
    * (no UART)
    */
@@ -416,7 +416,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PB6: // works
+  /* PB6: // input works, output works, pwm works
    * AF2: TIM4_CH1
    * AF7: USART1_TX
    */
@@ -433,7 +433,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PB7: // works
+  /* PB7: // input works, output works, pwm works
    * AF2: TIM4_CH2
    * AF7: USART1_RX
    */
@@ -450,7 +450,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PB8: // works
+  /* PB8: // input works, output works, pwm works
    * AF1: TIM2_CH1
    * AF2: TIM4_CH3
    * AF3: TIM10_CH1
@@ -469,7 +469,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PB9: // works
+  /* PB9: // input works, output works, pwm works
    * AF1: TIM2_CH2
    * AF2: TIM4_CH4
    * AF3: TIM11_CH1
@@ -488,7 +488,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PB10: // works
+  /* PB10: // input works, output works, pwm works
    * AF1: TIM2_CH3
    * AF7: USART3_TX
    */
@@ -522,7 +522,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=true
   },
   
-  /* PB12: // works
+  /* PB12: // input works, output works
    * (no PWM)
    * (no UART)
    */
@@ -535,7 +535,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PB13: // works
+  /* PB13: // input works, output works
    * (no PWM)
    * (no UART)
    */
@@ -548,7 +548,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PB14: // works
+  /* PB14: // input works, output works, pwm works
    * AF9: TIM12_CH1
    * (no UART)
    */
@@ -563,7 +563,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PB15: // works
+  /* PB15: // input works, output works, pwm works
    * AF9: TIM12_CH2
    * (no UART)
    */
@@ -578,7 +578,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PC0: // works
+  /* PC0: // input works, output works
    * (no PWM)
    * (no UART)
    */
@@ -591,7 +591,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PC1: // works
+  /* PC1: // input works, output works
    * (no PWM)
    * (no UART)
    */
@@ -604,7 +604,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PC2: // works
+  /* PC2: // input works, output works
    * (no PWM)
    * (no UART)
    */
@@ -617,7 +617,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PC3: // works
+  /* PC3: // input works, output works
    * (no PWM)
    * (no UART)
    */
@@ -630,7 +630,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PC4: // works
+  /* PC4: // input works, output works
    * (no PWM)
    * (no UART)
    */
@@ -643,7 +643,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PC5: // works
+  /* PC5: // input works, output works
    * (no PWM)
    * AF7: USART3_RX
    */
@@ -658,7 +658,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PC6: // works
+  /* PC6: // input works, output works, pwm works
    * AF2: TIM3_CH1
    * AF3: TIM8_CH1
    * AF8: UART6_TX
@@ -677,7 +677,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PC7: // works
+  /* PC7: // input works, output works, pwm works
    * AF2: TIM3_CH2
    * AF3: TIM8_CH2
    * AF8: UART6_RX
@@ -696,7 +696,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PC8: // works
+  /* PC8: // input works, output works, pwm works
    * AF2: TIM3_CH3
    * AF3: TIM8_CH3
    * (no UART)
@@ -713,7 +713,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PC9: // works
+  /* PC9: // input works, output works, pwm works
    * AF2: TIM3_CH4
    * AF3: TIM8_CH4
    * (no UART)
@@ -730,7 +730,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PC10: // works
+  /* PC10: // input works, output works
    * (no PWM)
    * AF7: USART3_TX
    * AF8: UART4_TX
@@ -747,7 +747,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PC11: // works
+  /* PC11: // input works, output works
    * (no PWM)
    * AF7: USART3_RX
    * AF8: UART4_RX
@@ -764,7 +764,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PC12: // works
+  /* PC12: // input works, output works
    * (no PWM)
    * AF8: UART5_TX
    */
@@ -779,7 +779,7 @@ static const pin_cap_t PINCAP_STM32F446RE[] = {
     .cost=0, .not_usable=false
   },
   
-  /* PC13: // works
+  /* PC13: // input works, output works
    * (no PWM)
    * (no UART)
    */

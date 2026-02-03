@@ -33,18 +33,22 @@ AutoBSP{
   }
   
   INPUT{
+    name:    "BUTTON_EXTERNAL"
+    pin:     PC0              // PC0 || PC1
+
+    pull:    up
+    active:  low
+    
+    enable:  true
+  }
+
+  INPUT{
     name:    "BUTTON_BOARD"
     pin:     PC13
     
     pull:    none
     active:  low
     
-    enable:  true
-  }
-  
-  INPUT{
-    name:    "BUTTON_OTHER"
-    pin:     PA5
     enable:  false
   }
   

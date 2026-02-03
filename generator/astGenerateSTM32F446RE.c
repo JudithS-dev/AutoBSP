@@ -204,6 +204,9 @@ static void generate_source_BSP_init_function(FILE* output_source, ast_dsl_node_
   fprintf(output_source," * @brief Initializes the board support package (BSP) peripherals and GPIOs.\n");
   fprintf(output_source," */\n");
   fprintf(output_source,"void BSP_Init(void){\n");
+  fprintf(output_source,"  // Initialize HAL Library\n");
+  fprintf(output_source,"  HAL_Init();\n  \n");
+  fprintf(output_source,"  // Initialize other peripherals\n");
   if(has_enabled_gpio_module(dsl_node))
     fprintf(output_source,"  BSP_Init_GPIO();\n");
   generate_source_pwm_init_call(output_source, dsl_node);
