@@ -2,7 +2,7 @@
 
 #include <stdlib.h>
 
-#include "STM32F44RE.h"
+#include "STM32F446RE.h"
 #include "logging.h"
 #include "astEnums2Str.h"
 

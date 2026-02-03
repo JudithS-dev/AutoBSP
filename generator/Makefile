@@ -18,7 +18,7 @@ astPrint.o: astPrint.c astPrint.h logging.h astEnums.h moduleEnums.h astEnums2St
 
 astCheck.o: astCheck.c astCheck.h logging.h astEnums.h moduleEnums.h astCheckSTM32F446RE.h  astCheckESP32.h astEnums2Str.h
 
-astCheckSTM32F446RE.o: astCheckSTM32F446RE.c astCheckSTM32F446RE.h STM32F44RE.h logging.h astEnums.h moduleEnums.h astEnums2Str.h
+astCheckSTM32F446RE.o: astCheckSTM32F446RE.c astCheckSTM32F446RE.h STM32F446RE.h logging.h astEnums.h moduleEnums.h astEnums2Str.h
 
 astCheckESP32.o: astCheckESP32.c astCheckESP32.h ESP32.h logging.h astEnums.h moduleEnums.h astEnums2Str.h
 
