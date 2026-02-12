@@ -17,7 +17,7 @@
  */
 static const char *lexer_keywords[] = {
   "AutoBSP",
-  "Controller",
+  "controller",
   "OUTPUT",
   "INPUT",
   "PWM_OUTPUT",
